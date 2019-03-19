@@ -13,37 +13,26 @@ library("tidyr")
 amr <- function(time, state, parameters) {
   with(as.list(c(state, parameters)), {
     dSa = ua + ra*(Ia + Ira) + tau*Ia - (betaAA*Ia*Sa) - (betaAH*Ih*Sa) - (betaAH*Irh*Sa) - (betaAA*Ira*Sa) - ua*Sa  
-    dIa = betaAA*Ia*Sa + betaAH*Ih*Sa + phi*Ira - tau*Ia - tau*theta*Ia - ra*Ia - ua*Ia
-    dIra = betaAH*Irh*Sa + betaAA*Ira*Sa + tau*theta*Ia - phi*Ira - ra*Ira - ua*Ira
+    dIa = betaAA*Ia*Sa + betaAH*Ih*Sa + phi*Ira - tau*Ia - tau*theta*Ia - ra*Ia - ua*Ia - kappa*Ia
+    dIra = betaAH*Irh*Sa + betaAA*Ira*Sa + tau*theta*Ia - phi*Ira - ra*Ira - ua*Ira - kappa*Ira
     
-    dSh = uh + rh*(Ih+Irh) - (betaHH*Ih*Sh) - (betaHH*Irh*Sh) - (betaHA*Ia*Sh) - (betaHA*Ira*Sh) - uh*Sh 
-    dIh = betaHH*Ih*Sh + betaHA*Ia*Sh - rh*Ih - uh*Ih 
-    dIrh = betaHH*Irh*Sh + betaHA*Ira*Sh - rh*Irh - uh*Irh 
-    return(list(c(dSa,dIa,dIra,dSh,dIh,dIrh)))
+    dFi = kappa*Ia - delta*Fi - lambda*Fi + lambda*Fr
+    dFr = kappa*Ira - delta*Fr + lambda*Fi - lambda*Fr
+    
+    dSh = uh + rh*(Ih+Irh) - (betaHH*Ih*Sh) - (betaHH*Irh*Sh) - (betaHA*Ia*Sh) - (betaHA*Ira*Sh) - uh*Sh - delta*Fi*Sh  - delta*Fr*Sh 
+    dIh = betaHH*Ih*Sh + betaHA*Ia*Sh - rh*Ih - uh*Ih + delta*Fi*Sh
+    dIrh = betaHH*Irh*Sh + betaHA*Ira*Sh - rh*Irh - uh*Irh + delta*Fr*Sh 
+    return(list(c(dSa,dIa,dIra,dFi, dFr, dSh,dIh,dIrh)))
   })
 }
 
 #### Model Testbed - Basic Model Output ####
-
-amr <- function(time, state, parameters) {
-  with(as.list(c(state, parameters)), {
-    dSa = ua + ra*(Ia + Ira) + tau*Ia - (betaAA*Ia*Sa) - (betaAH*Ih*Sa) - (betaAH*Irh*Sa) - (betaAA*Ira*Sa) - ua*Sa  
-    dIa = betaAA*Ia*Sa + betaAH*Ih*Sa + phi*Ira - tau*Ia - tau*theta*Ia - ra*Ia - ua*Ia
-    dIra = betaAH*Irh*Sa + betaAA*Ira*Sa + tau*theta*Ia - phi*Ira - ra*Ira - ua*Ira
-    
-    dSh = uh + rh*(Ih+Irh) - (betaHH*Ih*Sh) - (betaHH*Irh*Sh) - (betaHA*Ia*Sh) - (betaHA*Ira*Sh) - uh*Sh 
-    dIh = betaHH*Ih*Sh + betaHA*Ia*Sh - rh*Ih - uh*Ih 
-    dIrh = betaHH*Irh*Sh + betaHA*Ira*Sh - rh*Irh - uh*Irh 
-    return(list(c(dSa,dIa,dIra,dSh,dIh,dIrh)))
-  })
-}
-
-init <- c(Sa=0.99, Ia=0.01, Ira=0, Sh=1, Ih=0, Irh=0)
-times1 <- seq(0,1000,by=10)
+init <- c(Sa=0.99, Ia=0.01, Ira=0, Fi = 0.5, Fr = 0.5, Sh=1, Ih=0, Irh=0)
+times1 <- seq(0,10000,by=10)
 
 #Need to Specify Model Parameters
 parms = c(ra = 0.01, rh =  0.5, ua = 0.01, uh = 0.001, betaAA = 0.1, betaAH = 0.001, betaHH = 0.001, 
-           betaHA = 0.01, phi = 0.1, tau = 0.05, theta = 0.5)
+           betaHA = 0.01, phi = 0.1, tau = 0.05, theta = 0.5, delta = 0.0005, kappa = 0.01, lambda = 0.5)
 
 out <- ode(y = init, func = amr, times = times1, parms = parms)
 
@@ -55,10 +44,14 @@ lines(out[,"time"],out[,"Ia"], type="l", lwd=2, col="red")
 lines(out[,"time"],out[,"Ira"],type="l", lwd=2, col="blue")
 legend(x=500, y=0.97, legend= c("Susceptible", "Infected (S)", "Infected (R)"),col=c("green","red","blue"),lty=1,cex=0.9)
 
-plot(out[,"time"],out[,"Sh"], xlab = "Time (Days)",ylab="Proportion(Humans)", type="l", lwd=2, col="green", ylim = c(-0.01, 0.1))
+plot(out[,"time"],out[,"Sh"], xlab = "Time (Days)",ylab="Proportion(Humans)", type="l", lwd=2, col="green", ylim = c(-0.01, 1))
 lines(out[,"time"],out[,"Ih"], type="l", lwd=2, col="red")
 lines(out[,"time"],out[,"Irh"], type="l", lwd=2, col="blue")
 legend(x=500, y=0.045, legend= c("Susceptible", "Infected (S)", "Infected (R)"),col=c("green","red","blue"),lty=1,cex=0.9)
+
+plot(out[,"time"],out[,"Fi"], xlab = "Time (Days)",ylab="Proportion(Food)", type="l", lwd=2, col="green")
+lines(out[,"time"],out[,"Fr"], type="l", lwd=2, col="red")
+
 
 #plot(out[,"time"], out[,"Ia"]+ out[,"Ira"], type="l", lwd=2, col="black", ylab="IComb*", xlab="Time")
 
