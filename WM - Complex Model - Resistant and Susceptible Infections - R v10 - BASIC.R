@@ -42,8 +42,8 @@ init <- c(Sa=0.99, Ia=0.01, Ira=0, Sh=1, Ih=0, Irh=0)
 times1 <- seq(0,1000,by=10)
 
 #Need to Specify Model Parameters
-parms = c(ra = 0.01, rh =  0.5, ua = 0.01, uh = 0.001, betaAA = 0.1, betaAH = 0.001, betaHH = 0.001, 
-           betaHA = 0.01, phi = 0.1, tau = 0.05, theta = 0.5)
+parms = c(ra = 52^-1, rh =  6^-1, ua = 28835^-1, uh = 240^-1, betaAA = 0.1, betaAH = 0.0001, betaHH = 0.0001, 
+           betaHA = 0.001, phi = 0.1, tau = 0.05, theta = 0.5)
 
 out <- ode(y = init, func = amr, times = times1, parms = parms)
 
@@ -55,7 +55,7 @@ lines(out[,"time"],out[,"Ia"], type="l", lwd=2, col="red")
 lines(out[,"time"],out[,"Ira"],type="l", lwd=2, col="blue")
 legend(x=500, y=0.97, legend= c("Susceptible", "Infected (S)", "Infected (R)"),col=c("green","red","blue"),lty=1,cex=0.9)
 
-plot(out[,"time"],out[,"Sh"], xlab = "Time (Days)",ylab="Proportion(Humans)", type="l", lwd=2, col="green", ylim = c(-0.01, 0.1))
+plot(out[,"time"],out[,"Sh"], xlab = "Time (Days)",ylab="Proportion(Humans)", type="l", lwd=2, col="green", ylim = c(0, 0.01))
 lines(out[,"time"],out[,"Ih"], type="l", lwd=2, col="red")
 lines(out[,"time"],out[,"Irh"], type="l", lwd=2, col="blue")
 legend(x=500, y=0.045, legend= c("Susceptible", "Infected (S)", "Infected (R)"),col=c("green","red","blue"),lty=1,cex=0.9)
