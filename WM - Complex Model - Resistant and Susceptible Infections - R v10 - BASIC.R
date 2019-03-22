@@ -25,25 +25,12 @@ amr <- function(time, state, parameters) {
 
 #### Model Testbed - Basic Model Output ####
 
-amr <- function(time, state, parameters) {
-  with(as.list(c(state, parameters)), {
-    dSa = ua + ra*(Ia + Ira) + tau*Ia - (betaAA*Ia*Sa) - (betaAH*Ih*Sa) - (betaAH*Irh*Sa) - (betaAA*Ira*Sa) - ua*Sa  
-    dIa = betaAA*Ia*Sa + betaAH*Ih*Sa + phi*Ira - tau*Ia - tau*theta*Ia - ra*Ia - ua*Ia
-    dIra = betaAH*Irh*Sa + betaAA*Ira*Sa + tau*theta*Ia - phi*Ira - ra*Ira - ua*Ira
-    
-    dSh = uh + rh*(Ih+Irh) - (betaHH*Ih*Sh) - (betaHH*Irh*Sh) - (betaHA*Ia*Sh) - (betaHA*Ira*Sh) - uh*Sh 
-    dIh = betaHH*Ih*Sh + betaHA*Ia*Sh - rh*Ih - uh*Ih 
-    dIrh = betaHH*Irh*Sh + betaHA*Ira*Sh - rh*Irh - uh*Irh 
-    return(list(c(dSa,dIa,dIra,dSh,dIh,dIrh)))
-  })
-}
-
 init <- c(Sa=0.99, Ia=0.01, Ira=0, Sh=1, Ih=0, Irh=0)
 times1 <- seq(0,1000,by=10)
 
 #Need to Specify Model Parameters
-parms = c(ra = 52^-1, rh =  6^-1, ua = 28835^-1, uh = 240^-1, betaAA = 0.1, betaAH = 0.0001, betaHH = 0.0001, 
-           betaHA = 0.001, phi = 0.1, tau = 0.05, theta = 0.5)
+parms = c(ra = 52^-1, rh =  6^-1, ua = 28835^-1, uh = 240^-1, betaAA = 0.1, betaAH = 0.000001, betaHH = 0.000001, 
+           betaHA = 0.00001, phi = 0.1, tau = 0.05, theta = 0.5)
 
 out <- ode(y = init, func = amr, times = times1, parms = parms)
 
@@ -55,7 +42,7 @@ lines(out[,"time"],out[,"Ia"], type="l", lwd=2, col="red")
 lines(out[,"time"],out[,"Ira"],type="l", lwd=2, col="blue")
 legend(x=500, y=0.97, legend= c("Susceptible", "Infected (S)", "Infected (R)"),col=c("green","red","blue"),lty=1,cex=0.9)
 
-plot(out[,"time"],out[,"Sh"], xlab = "Time (Days)",ylab="Proportion(Humans)", type="l", lwd=2, col="green", ylim = c(0, 0.01))
+plot(out[,"time"],out[,"Sh"], xlab = "Time (Days)",ylab="Proportion(Humans)", type="l", lwd=2, col="green", ylim = c(0, 0.0001))
 lines(out[,"time"],out[,"Ih"], type="l", lwd=2, col="red")
 lines(out[,"time"],out[,"Irh"], type="l", lwd=2, col="blue")
 legend(x=500, y=0.045, legend= c("Susceptible", "Infected (S)", "Infected (R)"),col=c("green","red","blue"),lty=1,cex=0.9)
@@ -63,7 +50,11 @@ legend(x=500, y=0.045, legend= c("Susceptible", "Infected (S)", "Infected (R)"),
 #plot(out[,"time"], out[,"Ia"]+ out[,"Ira"], type="l", lwd=2, col="black", ylab="IComb*", xlab="Time")
 
 #### Function for Parameter Combinations - From FAST ####
-parms = fast_parameters(minimum = c(0,0,0,0,0,0,0,0,0,0,0), maximum = c(1,1,1,1,1,1,1,1,1,1,1), 
+parms1 = fast_parameters(minimum = c(0,0,0,0,0,0,0,0,0,0,0), maximum = c(1,1,1,1,1,1,1,1,1,1,1), 
+                        factor=11, names = c("ra", "rh" ,"ua", "uh", "betaAA", "betaAH", "betaHH", "betaHA",
+                                             "phi", "tau", "theta"))
+
+parms = fast_parameters(minimum = c(5.2^-1,0.6^-1,2883.5^-1,24^-1,0,0,0,0,0,0,0), maximum = c(520^-1,60^-1,288350^-1,240^-1,1,0.001,0.001,0.01,0.01,0.5,5), 
                         factor=11, names = c("ra", "rh" ,"ua", "uh", "betaAA", "betaAH", "betaHH", "betaHA",
                                              "phi", "tau", "theta"))
 
