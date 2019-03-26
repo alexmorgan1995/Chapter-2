@@ -25,7 +25,7 @@ amr <- function(time, state, parameters) {
 
 #### Model Testbed - Basic Model Output ####
 
-init <- c(Sa=0.99, Ia=0.01, Ira=0, Sh=1, Ih=0, Irh=0)
+init <- c(Sa=0.99, Ia=0.01, Ira=0.01, Sh=1, Ih=0, Irh=0)
 times1 <- seq(0,1000,by=10)
 
 #Need to Specify Model Parameters
@@ -54,7 +54,7 @@ parms1 = fast_parameters(minimum = c(0,0,0,0,0,0,0,0,0,0,0), maximum = c(1,1,1,1
                         factor=11, names = c("ra", "rh" ,"ua", "uh", "betaAA", "betaAH", "betaHH", "betaHA",
                                              "phi", "tau", "theta"))
 
-parms = fast_parameters(minimum = c(5.2^-1,0.6^-1,2883.5^-1,24^-1,0,0,0,0,0,0,0), maximum = c(520^-1,60^-1,288350^-1,240^-1,1,0.001,0.001,0.01,0.01,0.5,5), 
+parms = fast_parameters(minimum = c(5.2^-1,0.6^-1,2883.5^-1,24^-1,0,0,0,0,0,0,0), maximum = c(520^-1,60^-1,288350^-1,240^-1,1,0.00001,0.00001,0.0001,0.01,0.5,5), 
                         factor=11, names = c("ra", "rh" ,"ua", "uh", "betaAA", "betaAH", "betaHH", "betaHA",
                                              "phi", "tau", "theta"))
 
@@ -108,7 +108,7 @@ p + geom_bar(stat="identity", fill="grey23")
 #### Comb IRH and IH Measure Testing - Effect of Treatment ####
 
 # Testing for the Effect of Changing Treatment on the Combined Measure
-parmtau <- seq(0,1,by=0.01)
+parmtau <- seq(0,0.5,by=0.01)
 init <- c(Sa=0.99, Ia=0.01, Ira=0, Sh=0.99, Ih=0.01, Irh=0)
 output1 <- data.frame()
 times <- c(0,9999,10000)
@@ -137,12 +137,14 @@ legend(x=0.2, y=1, legend= c("Combined IRH* and IH*"),col=c("red"),lty=1,cex=0.9
 
 #### Testbed Parameter Space Testing ####
 
+#TEST
 #Ranges for Parameter Testing
-taurange <- seq(0,1, by=0.01)
+taurange <- seq(0,0.5, by=0.001)
 thetarange <- seq(0,1, by=0.01)
-betaHArange <- seq(0,1, by=0.01)
+betaHArange <- seq(0,0.0001, by=0.00001)
 
 #Creating Possible Combinations of Parameters
+combparm1 <- NULL
 combparm1 <- expand.grid(taurange, betaHArange)
 colnames(combparm1)[1:2] <- c("tau","betaHA")
 
@@ -156,8 +158,8 @@ surfaceoutput1 <- data.frame()
 #For Loop to Create Output for the Parameter Combinations
 for (i in 1:nrow(combparm1)) {
   temp <- data.frame(matrix(NA, nrow = 1, ncol=5))
-  parms1 = c(ra = 0.01, rh =  0.01, ua = 0.01, uh = 0.001, betaAA = 0.05, betaAH = 0.001, betaHH = 0.001, 
-             betaHA = combparm1[i,2], phi = 0.05, tau = combparm1[i,1], theta = 0.2)
+  parms1 = c(ra = 52^-1, rh =  6^-1, ua = 28835^-1, uh = 240^-1, betaAA = 0.1, betaAH = 0.000001, betaHH = 0.000001, 
+            betaHA = combparm1[i,2], phi = 0.5, tau = combparm1[i,1], theta = 0.5)
   out <- ode(y = init, func = amr, times = times, parms = parms1)
   print(out[nrow(out),7])
   temp[1,1] <- combparm1[i,1]
@@ -188,23 +190,24 @@ mat1 <- data.matrix(mat)
 
 #Plotting a vector plot and a surface plot
 
-p5 <- plot_ly(z = mat1, x = taurange, y = betaHArange) %>% add_surface(
-  cmin = 0, cmax = 1
+p5 <- plot_ly(z = mat1, x = betaHArange, y = taurange) %>% add_surface(
+  cmin = 0, cmax = 0.00045
   ) %>% layout(
     title = "Comb Equilibrium Prevalence of I<sub>H</sub>*",
     scene = list(
       camera = list(eye = list(x = -1.25, y = 1.25, z = 0.5)),
-      xaxis = list(title = "betaHA", nticks = 8, range = c(0,1)),
-      yaxis = list(title = "tau", nticks = 8, range = c(0,1)),
-      zaxis = list(title = 'IH* + IRH*', nticks = 8, range = c(-0.00001,1)),
+      xaxis = list(title = "betaHA", nticks = 8, range = c(0,0.0001)),
+      yaxis = list(title = "tau", nticks = 8, range = c(0,0.5)),
+      zaxis = list(title = 'IH* + IRH*', nticks = 8),
       aspectratio=list(x=0.8,y=0.8,z=0.8)))
 p5 
 
 p6 <- plot_ly(x = taurange, y = betaHArange, z = mat1, type = "contour", transpose = TRUE,
-              contours = list(start = -0.0001, end = 1, size = 0.05),
+              contours = list(start = -0.0000001, end = 0.00045, size = 0.00005),
               colorbar = list(title = "I<sub>RH</sub>* + I<sub>H</sub>*")) %>% 
   layout(title = "Comb Equilibrium Prevalence of I<sub>H</sub>*",
          xaxis = list(title = "Tau"),
          yaxis = list(title = "BetaHA"))
 p6
 
+# put next line after transpose: contours = list(start = -0.0001, end = 1, size = 0.05),
