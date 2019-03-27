@@ -159,7 +159,7 @@ surfaceoutput1 <- data.frame()
 for (i in 1:nrow(combparm1)) {
   temp <- data.frame(matrix(NA, nrow = 1, ncol=5))
   parms1 = c(ra = 52^-1, rh =  6^-1, ua = 28835^-1, uh = 240^-1, betaAA = 0.1, betaAH = 0.000001, betaHH = 0.000001, 
-            betaHA = combparm1[i,2], phi = 0.5, tau = combparm1[i,1], theta = 0.5)
+            betaHA = combparm1[i,2], phi = 0.1, tau = combparm1[i,1], theta = 0.5)
   out <- ode(y = init, func = amr, times = times, parms = parms1)
   print(out[nrow(out),7])
   temp[1,1] <- combparm1[i,1]
@@ -191,23 +191,24 @@ mat1 <- data.matrix(mat)
 #Plotting a vector plot and a surface plot
 
 p5 <- plot_ly(z = mat1, x = betaHArange, y = taurange) %>% add_surface(
-  cmin = 0, cmax = 0.00045
+  cmin = 0, cmax = 0.00045,
+  colorbar = list(title = "I<sub>RH</sub>* + I<sub>H</sub>*", exponentformat= "E")
   ) %>% layout(
-    title = "Comb Equilibrium Prevalence of I<sub>H</sub>*",
+    title = "Equilibrium Prevalence of I<sub>H</sub>*",
     scene = list(
       camera = list(eye = list(x = -1.25, y = 1.25, z = 0.5)),
-      xaxis = list(title = "betaHA", nticks = 8, range = c(0,0.0001)),
+      xaxis = list(title = "betaHA", nticks = 8, range = c(0,0.0001), exponentformat= "E"),
       yaxis = list(title = "tau", nticks = 8, range = c(0,0.5)),
-      zaxis = list(title = 'IH* + IRH*', nticks = 8),
+      zaxis = list(title = 'IComb*', nticks = 8, exponentformat= "E"),
       aspectratio=list(x=0.8,y=0.8,z=0.8)))
 p5 
 
 p6 <- plot_ly(x = taurange, y = betaHArange, z = mat1, type = "contour", transpose = TRUE,
               contours = list(start = -0.0000001, end = 0.00045, size = 0.00005),
-              colorbar = list(title = "I<sub>RH</sub>* + I<sub>H</sub>*")) %>% 
+              colorbar = list(title = "I<sub>RH</sub>* + I<sub>H</sub>*", exponentformat= "E")) %>% 
   layout(title = "Comb Equilibrium Prevalence of I<sub>H</sub>*",
-         xaxis = list(title = "Tau"),
-         yaxis = list(title = "BetaHA"))
+         xaxis = list(title = "Tau", autorange = "reversed"),
+         yaxis = list(title = "BetaHA", exponentformat= "E"))
 p6
 
 # put next line after transpose: contours = list(start = -0.0001, end = 1, size = 0.05),
