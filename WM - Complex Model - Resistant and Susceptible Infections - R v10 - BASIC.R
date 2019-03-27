@@ -108,32 +108,39 @@ p + geom_bar(stat="identity", fill="grey23")
 #### Comb IRH and IH Measure Testing - Effect of Treatment ####
 
 # Testing for the Effect of Changing Treatment on the Combined Measure
-parmtau <- seq(0,0.5,by=0.01)
-init <- c(Sa=0.99, Ia=0.01, Ira=0, Sh=0.99, Ih=0.01, Irh=0)
+parmtau <- seq(0,0.5,by=0.03)
+init <- c(Sa=0.99, Ia=0.01, Ira=0, Sh=1, Ih=0, Irh=0)
 output1 <- data.frame()
 times <- c(0,9999,10000)
 
 for (i in 1:length(parmtau)) {
-  temp <- data.frame(matrix(NA, nrow = 1, ncol=5))
-  parms2 = c(ra = 0.01, rh =  0.01, ua = 0.01, uh = 0.001, betaAA = 0.05, betaAH = 0.001, betaHH = 0.001, 
-             betaHA = 0.001, phi = 0.05, kappa = 0.05, nu = 0.05, tau = parmtau[i], theta = .8)
+  temp <- data.frame(matrix(NA, nrow = 1, ncol=8))
+  parms2 = c(ra = 52^-1, rh =  6^-1, ua = 28835^-1, uh = 240^-1, betaAA = 0.1, betaAH = 0.000001, betaHH = 0.000001, 
+            betaHA = 0.00001, phi = 0.1, tau = parmtau[i], theta = 0.5)
   out <- ode(y = init, func = amr, times = times, parms = parms2)
-  temp[1,1] <- i/100
+  temp[1,1] <- as.numeric(parms2[10])
   temp[1,2] <- as.numeric(out[nrow(out),3])
   temp[1,3] <- as.numeric(out[nrow(out),4])
   temp[1,4] <- out[nrow(out),3] + out[nrow(out),4]
   temp[1,5] <- as.numeric(out[nrow(out),6])
   temp[1,6] <- as.numeric(out[nrow(out),7])
   temp[1,7] <- out[nrow(out),6] + out[nrow(out),7]
+  temp[1,8] <- temp[1,5]/temp[1,7]
   output1 <- rbind.data.frame(output1, temp)
 }
 
-plot(output1$X1, output1$X4, type="l", lwd=2, col="red", xlim = c(0,1), ylim = c(0,1), ylab="Prevalence of Infected Fraction",
-     xlab = "Fraction of Animal Population Antibiotics are Used")
-legend(x=0.2, y=1, legend= c("Combined IRH* and IH*"),col=c("red"),lty=1,cex=0.9)
-plot(output1$X1, output1$V7, type="l", lwd=2, col="red", xlim = c(0,1), ylim = c(0,1), ylab="Prevalence of Infected Fraction",
-     xlab = "Fraction of Animal Population Antibiotics are Used")
-legend(x=0.2, y=1, legend= c("Combined IRH* and IH*"),col=c("red"),lty=1,cex=0.9)
+colnames(output1)[1:8] <- c("tau","IA","IRA","ICOMBA", "IH", "IRH", "ICOMBH", "IHTOT")
+output1$IHTOT <- signif(output1$IHTOT, digits = 3)
+
+p10 <- plot_ly(output1, x= ~tau, y = ~IH, type = "bar", name = "Sens Inf Humans") %>%
+  add_trace(y= ~IRH, name = "Res Inf Humans") %>% 
+  layout(yaxis = list(title = "Proportion Infected", exponentformat= "E", range = c(0,5E-5), showline = TRUE),
+         legend = list(orientation = "v", x = 1.0, y=0.5), showlegend = T,
+         barmode = "stack", 
+         annotations = list(x = ~tau, y = ~ICOMBH, text = ~IHTOT, yanchor = "bottom", showarrow = FALSE, textangle = 310,
+                            xshift =3))
+
+p10
 
 #### Testbed Parameter Space Testing ####
 
