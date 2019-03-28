@@ -125,7 +125,7 @@ for (i in 1:length(parmtau)) {
   temp[1,5] <- as.numeric(out[nrow(out),6])
   temp[1,6] <- as.numeric(out[nrow(out),7])
   temp[1,7] <- out[nrow(out),6] + out[nrow(out),7]
-  temp[1,8] <- temp[1,5]/temp[1,7]
+  temp[1,8] <- temp[1,6]/temp[1,7]
   output1 <- rbind.data.frame(output1, temp)
 }
 
@@ -135,6 +135,7 @@ output1$IHTOT <- signif(output1$IHTOT, digits = 3)
 p10 <- plot_ly(output1, x= ~tau, y = ~IH, type = "bar", name = "Sens Inf Humans") %>%
   add_trace(y= ~IRH, name = "Res Inf Humans") %>% 
   layout(yaxis = list(title = "Proportion Infected", exponentformat= "E", range = c(0,5E-5), showline = TRUE),
+         xaxis = list(title = "Tau (Antibiotic Usage)"),
          legend = list(orientation = "v", x = 1.0, y=0.5), showlegend = T,
          barmode = "stack", 
          annotations = list(x = ~tau, y = ~ICOMBH, text = ~IHTOT, yanchor = "bottom", showarrow = FALSE, textangle = 310,
