@@ -47,6 +47,8 @@ lines(out[,"time"],out[,"Ih"], type="l", lwd=2, col="red")
 lines(out[,"time"],out[,"Irh"], type="l", lwd=2, col="blue")
 legend(x=500, y=0.045, legend= c("Susceptible", "Infected (S)", "Infected (R)"),col=c("green","red","blue"),lty=1,cex=0.9)
 
+Icomb <- as.numeric(out[nrow(out),6]) + as.numeric(out[nrow(out),7])  
+
 #plot(out[,"time"], out[,"Ia"]+ out[,"Ira"], type="l", lwd=2, col="black", ylab="IComb*", xlab="Time")
 
 #### Function for Parameter Combinations - From FAST ####
@@ -113,6 +115,9 @@ init <- c(Sa=0.99, Ia=0.01, Ira=0, Sh=1, Ih=0, Irh=0)
 output1 <- data.frame()
 times <- c(0,9999,10000)
 
+parms2 = c(ra = 52^-1, rh =  6^-1, ua = 28835^-1, uh = 240^-1, betaAA = 0.1, betaAH = 0.000001, betaHH = 0.000001, 
+           betaHA = 0.00001, phi = 0.1, tau = parmtau[i], theta = 0.5)
+
 for (i in 1:length(parmtau)) {
   temp <- data.frame(matrix(NA, nrow = 1, ncol=8))
   parms2 = c(ra = 52^-1, rh =  6^-1, ua = 28835^-1, uh = 240^-1, betaAA = 0.1, betaAH = 0.000001, betaHH = 0.000001, 
@@ -140,6 +145,7 @@ p10 <- plot_ly(output1, x= ~tau, y = ~IH, type = "bar", name = "Sens Inf Humans"
          barmode = "stack", 
          annotations = list(x = ~tau, y = ~ICOMBH, text = ~IHTOT, yanchor = "bottom", showarrow = FALSE, textangle = 310,
                             xshift =3))
+  
 
 p10
 
