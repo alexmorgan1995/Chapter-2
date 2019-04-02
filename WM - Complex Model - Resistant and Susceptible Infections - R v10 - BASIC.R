@@ -40,12 +40,12 @@ par(mfrow=c(1,2))
 plot(out[,"time"],out[,"Sa"], xlab = "Time (Days)",ylab="Proportion (Animals)", type="l", lwd=2, col="green", ylim = c(-0.01, 1))
 lines(out[,"time"],out[,"Ia"], type="l", lwd=2, col="red")
 lines(out[,"time"],out[,"Ira"],type="l", lwd=2, col="blue")
-legend(x=500, y=0.97, legend= c("Susceptible", "Infected (S)", "Infected (R)"),col=c("green","red","blue"),lty=1,cex=0.9)
+legend(x=450, y=0.97, legend= c("Susceptible", "Infected (S)", "Infected (R)"),col=c("green","red","blue"),lty=1,cex=0.9)
 
 plot(out[,"time"],out[,"Sh"], xlab = "Time (Days)",ylab="Proportion(Humans)", type="l", lwd=2, col="green", ylim = c(0, 0.0001))
 lines(out[,"time"],out[,"Ih"], type="l", lwd=2, col="red")
 lines(out[,"time"],out[,"Irh"], type="l", lwd=2, col="blue")
-legend(x=500, y=0.045, legend= c("Susceptible", "Infected (S)", "Infected (R)"),col=c("green","red","blue"),lty=1,cex=0.9)
+legend(x=450, y=0.97e-04, legend= c("Susceptible", "Infected (S)", "Infected (R)"),col=c("green","red","blue"),lty=1,cex=0.9)
 
 Icomb <- as.numeric(out[nrow(out),6]) + as.numeric(out[nrow(out),7])  
 
@@ -110,7 +110,10 @@ p + geom_bar(stat="identity", fill="grey23")
 #### Comb IRH and IH Measure Testing - Effect of Treatment ####
 
 # Testing for the Effect of Changing Treatment on the Combined Measure
-parmtau <- seq(0,0.5,by=0.03)
+
+#parmtau <- seq(0,0.5,by=0.03)
+parmtau <- seq(0,0.5,by=0.01)
+
 init <- c(Sa=0.99, Ia=0.01, Ira=0, Sh=1, Ih=0, Irh=0)
 output1 <- data.frame()
 times <- c(0,9999,10000)
@@ -145,9 +148,18 @@ p10 <- plot_ly(output1, x= ~tau, y = ~IH, type = "bar", name = "Sens Inf Humans"
          barmode = "stack", 
          annotations = list(x = ~tau, y = ~ICOMBH, text = ~IHTOT, yanchor = "bottom", showarrow = FALSE, textangle = 310,
                             xshift =3))
-  
-
 p10
+
+p11 <- plot_ly(output1, x= ~tau, y = ~IH, type = "bar", name = "Sens Inf Humans") %>%
+  add_trace(y= ~IRH, name = "Res Inf Humans") %>% 
+  layout(yaxis = list(title = "Proportion Infected", exponentformat= "E", range = c(0,5E-5), showline = TRUE),
+         xaxis = list(title = "Tau (Antibiotic Usage)"),
+         legend = list(orientation = "v", x = 1.0, y=0.5), showlegend = T,
+         barmode = "stack") %>%
+  add_segments(x=-.01, xend = 0.500001, y=2.67e-05, yend = 2.67e-05, line = list(color = "black", dash = "dot", width = 4),
+               showlegend = FALSE)
+
+p11
 
 #### Testbed Parameter Space Testing ####
 
