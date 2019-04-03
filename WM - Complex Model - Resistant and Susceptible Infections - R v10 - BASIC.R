@@ -109,7 +109,7 @@ p + geom_bar(stat="identity", fill="grey23")
 
 #### Comb IRH and IH Measure Testing - Effect of Treatment ####
 
-# Testing for the Effect of Changing Treatment on the Combined Measure
+#Testing for the Effect of Changing Treatment on the Combined Measure
 
 #parmtau <- seq(0,0.5,by=0.03)
 parmtau <- seq(0,0.5,by=0.01)
@@ -124,7 +124,7 @@ parms2 = c(ra = 52^-1, rh =  6^-1, ua = 28835^-1, uh = 240^-1, betaAA = 0.1, bet
 for (i in 1:length(parmtau)) {
   temp <- data.frame(matrix(NA, nrow = 1, ncol=8))
   parms2 = c(ra = 52^-1, rh =  6^-1, ua = 28835^-1, uh = 240^-1, betaAA = 0.1, betaAH = 0.000001, betaHH = 0.000001, 
-            betaHA = 0.00001, phi = 0.1, tau = parmtau[i], theta = 0.5)
+            betaHA = 0.000005, phi = 0.1, tau = parmtau[i], theta = 0.5)
   out <- ode(y = init, func = amr, times = times, parms = parms2)
   temp[1,1] <- as.numeric(parms2[10])
   temp[1,2] <- as.numeric(out[nrow(out),3])
@@ -140,26 +140,49 @@ for (i in 1:length(parmtau)) {
 colnames(output1)[1:8] <- c("tau","IA","IRA","ICOMBA", "IH", "IRH", "ICOMBH", "IHTOT")
 output1$IHTOT <- signif(output1$IHTOT, digits = 3)
 
-p10 <- plot_ly(output1, x= ~tau, y = ~IH, type = "bar", name = "Sens Inf Humans") %>%
+#p10 <- plot_ly(output1, x= ~tau, y = ~IH, type = "bar", name = "Sens Inf Humans") %>%
+#  add_trace(y= ~IRH, name = "Res Inf Humans") %>% 
+#  layout(yaxis = list(title = "Proportion Infected", exponentformat= "E", range = c(0,5E-5), showline = TRUE),
+#         xaxis = list(title = "Tau (Antibiotic Usage)"),
+#         legend = list(orientation = "v", x = 1.0, y=0.5), showlegend = T,
+#         barmode = "stack", 
+#         annotations = list(x = ~tau, y = ~ICOMBH, text = ~IHTOT, yanchor = "bottom", showarrow = FALSE, textangle = 310,
+#                            xshift =3))
+#p10
+
+#p11 <- plot_ly(output1, x= ~tau, y = ~IH, type = "bar", name = "Sens Inf Humans") %>%
+#  add_trace(y= ~IRH, name = "Res Inf Humans") %>% 
+#  layout(yaxis = list(title = "Proportion Infected", exponentformat= "E", range = c(0,5E-5), showline = TRUE),
+#         xaxis = list(title = "Tau (Antibiotic Usage)"),
+#         legend = list(orientation = "v", x = 1.0, y=0.5), showlegend = T,
+#         barmode = "stack",
+#         annotations = list(x = 0.45, y = 2.67e-05, text = "Current Level of FB Disease", yanchor = "bottom",
+#                            showarrow = FALSE, xshift= -55, yshift = 3, font = list(size = 15))) %>%
+#  add_segments(x=-.01, xend = 0.500001, y=2.67e-05, yend = 2.67e-05, line = list(color = "black", dash = "dot", width = 2),
+#               showlegend = FALSE) 
+#p11
+
+p12 <- plot_ly(output1, x= ~tau, y = ~IH, type = "bar", name = "Sens Inf Humans") %>%
   add_trace(y= ~IRH, name = "Res Inf Humans") %>% 
   layout(yaxis = list(title = "Proportion Infected", exponentformat= "E", range = c(0,5E-5), showline = TRUE),
          xaxis = list(title = "Tau (Antibiotic Usage)"),
          legend = list(orientation = "v", x = 1.0, y=0.5), showlegend = T,
-         barmode = "stack", 
-         annotations = list(x = ~tau, y = ~ICOMBH, text = ~IHTOT, yanchor = "bottom", showarrow = FALSE, textangle = 310,
-                            xshift =3))
-p10
+         barmode = "stack",
+         annotations = list(
+           list(x = 0.45, y = 2.67e-05, text = "Baseline Level of FB Disease", yanchor = "bottom",
+                            showarrow = FALSE, xshift= -55, yshift = 3, font = list(size = 15)),
+           list(x = 0.45, y = output1$ICOMBH[6], text = "New Level of FB Disease", yanchor = "bottom",
+                            showarrow = FALSE, xshift= -55, yshift = 3, font = list(size = 15, color = "red")),
+           list(ax = 0.05, ay = 2.75e-05, x = 0.05, y = output1$ICOMBH[6],
+                axref = "x", ayref = "y", xref = "x", yref = "y", showarrow= TRUE, arrowhead=1, 
+                arrowsize = 1.2, arrowwidth=2.5, arrowcolor= "red", xshift = 3))) %>%
+  add_segments(x=-0.01, xend = 0.500001, y=2.67e-05, yend = 2.67e-05, line = list(color = "black", dash = "dot", width = 2),
+               showlegend = FALSE) %>%
+  add_segments(x=-0.01, xend = 0.500001, y=output1$ICOMBH[6], yend = output1$ICOMBH[6], 
+               line = list(color = "red", dash = "dot", width = 3), showlegend = FALSE)
 
-p11 <- plot_ly(output1, x= ~tau, y = ~IH, type = "bar", name = "Sens Inf Humans") %>%
-  add_trace(y= ~IRH, name = "Res Inf Humans") %>% 
-  layout(yaxis = list(title = "Proportion Infected", exponentformat= "E", range = c(0,5E-5), showline = TRUE),
-         xaxis = list(title = "Tau (Antibiotic Usage)"),
-         legend = list(orientation = "v", x = 1.0, y=0.5), showlegend = T,
-         barmode = "stack") %>%
-  add_segments(x=-.01, xend = 0.500001, y=2.67e-05, yend = 2.67e-05, line = list(color = "black", dash = "dot", width = 4),
-               showlegend = FALSE)
+p12 
 
-p11
 
 #### Testbed Parameter Space Testing ####
 
@@ -167,7 +190,9 @@ p11
 #Ranges for Parameter Testing
 taurange <- seq(0,0.5, by=0.001)
 thetarange <- seq(0,1, by=0.01)
-betaHArange <- seq(0,0.0001, by=0.00001)
+betaHArange <- seq(0.000001,0.00005, by=0.000005)
+
+#betaHArange <- seq(0,0.0001, by=0.00001)
 
 #Creating Possible Combinations of Parameters
 combparm1 <- NULL
@@ -215,22 +240,24 @@ mat$tau <- NULL
 mat1 <- data.matrix(mat)
 
 #Plotting a vector plot and a surface plot
+#cmin = 0, cmax = 0.00045,
+#contours = list(start = -0.0000001, end = 0.00045, size = 0.00005)
 
 p5 <- plot_ly(z = mat1, x = betaHArange, y = taurange) %>% add_surface(
-  cmin = 0, cmax = 0.00045,
+  cmin = 0, cmax = 2.5e-04,
   colorbar = list(title = "I<sub>RH</sub>* + I<sub>H</sub>*", exponentformat= "E")
   ) %>% layout(
     title = "Equilibrium Prevalence of I<sub>H</sub>*",
     scene = list(
       camera = list(eye = list(x = -1.25, y = 1.25, z = 0.5)),
-      xaxis = list(title = "betaHA", nticks = 8, range = c(0,0.0001), exponentformat= "E"),
+      xaxis = list(title = "betaHA", nticks = 8, range = c(0.000001,0.00005), exponentformat= "E"),
       yaxis = list(title = "tau", nticks = 8, range = c(0,0.5)),
       zaxis = list(title = 'IComb*', nticks = 8, exponentformat= "E"),
       aspectratio=list(x=0.8,y=0.8,z=0.8)))
 p5 
 
 p6 <- plot_ly(x = taurange, y = betaHArange, z = mat1, type = "contour", transpose = TRUE,
-              contours = list(start = -0.0000001, end = 0.00045, size = 0.00005),
+              contours = list(start = -0.0000001, end = 2.5e-04, size = 0.00002),
               colorbar = list(title = "I<sub>RH</sub>* + I<sub>H</sub>*", exponentformat= "E")) %>% 
   layout(title = "Comb Equilibrium Prevalence of I<sub>H</sub>*",
          xaxis = list(title = "Tau", autorange = "reversed"),
@@ -238,3 +265,82 @@ p6 <- plot_ly(x = taurange, y = betaHArange, z = mat1, type = "contour", transpo
 p6
 
 # put next line after transpose: contours = list(start = -0.0001, end = 1, size = 0.05),
+
+#### Tau and Phi Relationship Exploration ####
+
+#TEST
+#Ranges for Parameter Testing
+taurange <- seq(0,0.5, by=0.01)
+phirange <- seq(0,1.5, by=0.01)
+
+#betaHArange <- seq(0,0.0001, by=0.00001)
+
+#Creating Possible Combinations of Parameters
+combparm1 <- NULL
+combparm1 <- expand.grid(taurange, phirange)
+colnames(combparm1)[1:2] <- c("tau","phi")
+
+#Setting up the initial Conditions for the Model
+init <- c(Sa=0.99, Ia=0.01, Ira=0, Sh=1, Ih=0, Irh=0)
+times <- c(0,9999,10000)
+
+#Creating Dummy Data Frame for For Loop
+surfaceoutput1 <- data.frame()
+
+#For Loop to Create Output for the Parameter Combinations
+for (i in 1:nrow(combparm1)) {
+  temp <- data.frame(matrix(NA, nrow = 1, ncol=5))
+  parms1 = c(ra = 52^-1, rh =  6^-1, ua = 28835^-1, uh = 240^-1, betaAA = 0.1, betaAH = 0.000001, betaHH = 0.000001, 
+             betaHA = 0.00001, phi = combparm1[i,2], tau = combparm1[i,1], theta = 0.5)
+  out <- ode(y = init, func = amr, times = times, parms = parms1)
+  print(out[nrow(out),7])
+  temp[1,1] <- combparm1[i,1]
+  temp[1,2] <- combparm1[i,2]
+  temp[1,3] <- out[nrow(out),5]
+  temp[1,4] <- out[nrow(out),6]
+  temp[1,5] <- out[nrow(out),7]
+  temp[1,6] <- out[nrow(out),6] + out[nrow(out),7]
+  print(temp[1,6])
+  surfaceoutput1 <- rbind.data.frame(surfaceoutput1, temp)
+}
+
+colnames(surfaceoutput1)[1:6] <- c("tau","phi","SuscHum","InfSensHum", "InfResHum", "Comb Inf Res/Sens Humans")
+plot(surfaceoutput1$InfSensHum, surfaceoutput1$InfResHum, xlim = c(-0.001,1), ylim = c(-0.001,1))
+
+surfaceoutputplot <- surfaceoutput1[,c(1,2,6)]
+
+
+#surfaceoutputplot$new <- round(surfaceoutputplot$`Comb Inf Res/Sens Humans`, digits = 6)
+
+#Spread the Parameter Combinations out so it can be plotted
+surfaceoutputplot$new <- NULL
+
+mat <- spread(surfaceoutputplot, key = "phi", value = "Comb Inf Res/Sens Humans")
+row.names(mat) <- mat$tau
+mat$tau <- NULL
+mat1 <- data.matrix(mat)
+
+#Plotting a vector plot and a surface plot
+#cmin = 0, cmax = 0.00045,
+#contours = list(start = -0.0000001, end = 0.00045, size = 0.00005)
+
+p9 <- plot_ly(z = mat1, x = phirange, y = taurange) %>% add_surface(
+  cmin = 0, cmax = 5e-05,
+  colorbar = list(title = "I<sub>RH</sub>* + I<sub>H</sub>*", exponentformat= "E")
+) %>% layout(
+  title = "Equilibrium Prevalence of I<sub>H</sub>*",
+  scene = list(
+    camera = list(eye = list(x = -1.25, y = 1.25, z = 0.5)),
+    xaxis = list(title = "phi", nticks = 8, range = c(0,1.5)),
+    yaxis = list(title = "tau", nticks = 8, range = c(0,0.5)),
+    zaxis = list(title = 'IComb*', nticks = 8, exponentformat= "E"),
+    aspectratio=list(x=0.8,y=0.8,z=0.8)))
+p9 
+
+p8 <- plot_ly(x = taurange, y = phirange, z = mat1, type = "contour", transpose = TRUE,
+              contours = list(start = -0.00000001, end = 5e-05, size = 0.00001),
+              colorbar = list(title = "I<sub>RH</sub>* + I<sub>H</sub>*", exponentformat= "E")) %>% 
+  layout(title = "Comb Equilibrium Prevalence of I<sub>H</sub>*",
+         xaxis = list(title = "Tau"),
+         yaxis = list(title = "Phi"))
+p8
