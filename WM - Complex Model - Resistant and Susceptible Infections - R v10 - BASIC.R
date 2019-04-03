@@ -188,9 +188,9 @@ p12
 
 #TEST
 #Ranges for Parameter Testing
-taurange <- seq(0,0.5, by=0.001)
+taurange <- seq(0,0.5, by=0.01)
 thetarange <- seq(0,1, by=0.01)
-betaHArange <- seq(0.000001,0.00005, by=0.000005)
+betaHArange <- seq(0,0.00002, by=0.000001)
 
 #betaHArange <- seq(0,0.0001, by=0.00001)
 
@@ -244,20 +244,20 @@ mat1 <- data.matrix(mat)
 #contours = list(start = -0.0000001, end = 0.00045, size = 0.00005)
 
 p5 <- plot_ly(z = mat1, x = betaHArange, y = taurange) %>% add_surface(
-  cmin = 0, cmax = 2.5e-04,
+  cmin = 0, cmax = 0.8e-04,
   colorbar = list(title = "I<sub>RH</sub>* + I<sub>H</sub>*", exponentformat= "E")
   ) %>% layout(
     title = "Equilibrium Prevalence of I<sub>H</sub>*",
     scene = list(
       camera = list(eye = list(x = -1.25, y = 1.25, z = 0.5)),
-      xaxis = list(title = "betaHA", nticks = 8, range = c(0.000001,0.00005), exponentformat= "E"),
+      xaxis = list(title = "betaHA", nticks = 8, range = c(0,0.00002), exponentformat= "E"),
       yaxis = list(title = "tau", nticks = 8, range = c(0,0.5)),
       zaxis = list(title = 'IComb*', nticks = 8, exponentformat= "E"),
       aspectratio=list(x=0.8,y=0.8,z=0.8)))
 p5 
 
 p6 <- plot_ly(x = taurange, y = betaHArange, z = mat1, type = "contour", transpose = TRUE,
-              contours = list(start = -0.0000001, end = 2.5e-04, size = 0.00002),
+              contours = list(start = -0.0000001, end = 0.8e-04, size = 0.00001),
               colorbar = list(title = "I<sub>RH</sub>* + I<sub>H</sub>*", exponentformat= "E")) %>% 
   layout(title = "Comb Equilibrium Prevalence of I<sub>H</sub>*",
          xaxis = list(title = "Tau", autorange = "reversed"),
@@ -266,7 +266,7 @@ p6
 
 # put next line after transpose: contours = list(start = -0.0001, end = 1, size = 0.05),
 
-#### Tau and Phi Relationship Exploration ####
+#### Tau and Phi Relationship Exploration - ICOMB ####
 
 #TEST
 #Ranges for Parameter Testing
@@ -338,9 +338,89 @@ p9 <- plot_ly(z = mat1, x = phirange, y = taurange) %>% add_surface(
 p9 
 
 p8 <- plot_ly(x = taurange, y = phirange, z = mat1, type = "contour", transpose = TRUE,
-              contours = list(start = -0.00000001, end = 5e-05, size = 0.00001),
+              contours = list(start = -0.00000001, end = 5e-05, size = 0.000005),
               colorbar = list(title = "I<sub>RH</sub>* + I<sub>H</sub>*", exponentformat= "E")) %>% 
   layout(title = "Comb Equilibrium Prevalence of I<sub>H</sub>*",
+         xaxis = list(title = "Tau"),
+         yaxis = list(title = "Phi"))
+p8
+
+#### Tau and Phi Relationship Exploration - RATIO OF RESISTANCE ####
+
+#TEST
+#Ranges for Parameter Testing
+taurange <- seq(0,1, by=0.1)
+phirange <- seq(0,1, by=0.01)
+
+#Creating Possible Combinations of Parameters
+combparm1 <- NULL
+combparm1 <- expand.grid(taurange, phirange)
+colnames(combparm1)[1:2] <- c("tau","phi")
+
+#Setting up the initial Conditions for the Model
+init <- c(Sa=0.99, Ia=0.01, Ira=0, Sh=1, Ih=0, Irh=0)
+times <- c(0,9999,10000)
+
+#Creating Dummy Data Frame for For Loop
+surfaceoutput1 <- data.frame()
+
+#For Loop to Create Output for the Parameter Combinations
+for (i in 1:nrow(combparm1)) {
+  temp <- data.frame(matrix(NA, nrow = 1, ncol=7))
+  parms1 = c(ra = 52^-1, rh =  6^-1, ua = 28835^-1, uh = 240^-1, betaAA = 0.1, betaAH = 0.000001, betaHH = 0.000001, 
+             betaHA = 0.00001, phi = combparm1[i,2], tau = combparm1[i,1], theta = 0.1)
+  out <- ode(y = init, func = amr, times = times, parms = parms1)
+  print(out[nrow(out),7])
+  temp[1,1] <- combparm1[i,1]
+  temp[1,2] <- combparm1[i,2]
+  temp[1,3] <- out[nrow(out),5]
+  temp[1,4] <- out[nrow(out),6]
+  temp[1,5] <- out[nrow(out),7]
+  temp[1,6] <- temp[1,4] + temp[1,5]
+  temp[1,7] <- temp[1,5]/temp[1,6]
+  print(temp[1,5])
+  surfaceoutput1 <- rbind.data.frame(surfaceoutput1, temp)
+}
+
+#temp[1,4] <- ifelse(temp[1,3] >= 0.999999999 | temp[1,4] <= 0.000000001, 0, temp[1,4])
+#temp[1,5] <- ifelse(temp[1,3] >= 0.999999999 | temp[1,5] <= 0.000000001, 0, temp[1,5])
+
+colnames(surfaceoutput1)[1:7] <- c("tau","phi","SuscHum","InfSensHum", "InfResHum", "IHCOMB", "ResRatio")
+
+#surfaceoutput1$ResRatio[is.nan(surfaceoutput1$ResRatio)] <- 0
+
+surfaceoutputplot <- surfaceoutput1[,c(1,2,7)]
+
+#surfaceoutputplot$new <- round(surfaceoutputplot$`Comb Inf Res/Sens Humans`, digits = 6)
+
+#Spread the Parameter Combinations out so it can be plotted
+surfaceoutputplot$new <- NULL
+
+mat <- spread(surfaceoutputplot, key = "phi", value = "ResRatio")
+row.names(mat) <- mat$tau
+mat$tau <- NULL
+mat1 <- data.matrix(mat)
+
+#Plotting a vector plot and a surface plot
+#cmin = 0, cmax = 0.00045,
+#contours = list(start = -0.0000001, end = 0.00045, size = 0.00005)
+
+p9 <- plot_ly(z = mat1, x = phirange, y = taurange) %>% add_surface(
+  cmin = 0, cmax = 1,
+  colorbar = list(title = "Resistance Ratio")) %>% layout(
+  title = "Resistance Ratio",
+  scene = list(
+    camera = list(eye = list(x = -1.25, y = 1.25, z = 0.5)),
+    xaxis = list(title = "phi", nticks = 8, range = c(0,1)),
+    yaxis = list(title = "tau", nticks = 8, range = c(0,1)),
+    zaxis = list(title = 'ResRat', nticks = 8),
+    aspectratio=list(x=0.8,y=0.8,z=0.8)))
+p9 
+
+p8 <- plot_ly(x = taurange, y = phirange, z = mat1, type = "contour", transpose = TRUE,
+              contours = list(start = -0.00000001, end = 1, size = 0.1),
+              colorbar = list(title = "Resistance Ratio")) %>% 
+  layout(title = "Res Ratio",
          xaxis = list(title = "Tau"),
          yaxis = list(title = "Phi"))
 p8
