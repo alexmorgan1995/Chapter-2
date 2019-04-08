@@ -8,6 +8,7 @@ library("sensitivity")
 library("ggplot2")
 library("plotly")
 library("tidyr")
+library("Rmpfr")
 
 #### Model Functions + Output ####
 amr <- function(time, state, parameters) {
@@ -30,7 +31,7 @@ times1 <- seq(0,1000,by=10)
 
 #Need to Specify Model Parameters
 parms = c(ra = 52^-1, rh =  6^-1, ua = 28835^-1, uh = 240^-1, betaAA = 0.1, betaAH = 0.000001, betaHH = 0.000001, 
-           betaHA = 0.00001, phi = 0.1, tau = 0.05, theta = 0.5)
+          betaHA = 0.00001, phi = 0.1, tau = 0.05, theta = 0.5)
 
 out <- ode(y = init, func = amr, times = times1, parms = parms)
 
@@ -53,8 +54,8 @@ Icomb <- as.numeric(out[nrow(out),6]) + as.numeric(out[nrow(out),7])
 
 #### Function for Parameter Combinations - From FAST ####
 parms1 = fast_parameters(minimum = c(0,0,0,0,0,0,0,0,0,0,0), maximum = c(1,1,1,1,1,1,1,1,1,1,1), 
-                        factor=11, names = c("ra", "rh" ,"ua", "uh", "betaAA", "betaAH", "betaHH", "betaHA",
-                                             "phi", "tau", "theta"))
+                         factor=11, names = c("ra", "rh" ,"ua", "uh", "betaAA", "betaAH", "betaHH", "betaHA",
+                                              "phi", "tau", "theta"))
 
 parms = fast_parameters(minimum = c(5.2^-1,0.6^-1,2883.5^-1,24^-1,0,0,0,0,0,0,0), maximum = c(520^-1,60^-1,288350^-1,240^-1,1,0.00001,0.00001,0.0001,0.01,0.5,5), 
                         factor=11, names = c("ra", "rh" ,"ua", "uh", "betaAA", "betaAH", "betaHH", "betaHA",
@@ -64,40 +65,34 @@ parms = fast_parameters(minimum = c(5.2^-1,0.6^-1,2883.5^-1,24^-1,0,0,0,0,0,0,0)
 
 init <- c(Sa=0.99, Ia=0.01, Ira=0, Sh=1, Ih=0, Irh=0)
 times <- c(0,9999,10000) #Specified the time intervals to be massive as dynamics do not matter
+times <- seq(0,10000, by = 100) 
 
 output <- data.frame()
 
 for (i in 1:nrow(parms)) {
-  temp <- data.frame(matrix(NA, nrow = 1, ncol=4))
+  temp <- data.frame(matrix(NA, nrow = 1, ncol=5))
   parms1 = c(ra = parms$ra[i], rh = parms$rh[i] , ua = parms$ua[i], uh = parms$uh[i], betaAA = parms$betaAA[i],
              betaAH = parms$betaAH[i], betaHH = parms$betaHH[i], betaHA = parms$betaHA[i], phi=parms$phi[i],
              tau=parms$tau[i], theta=parms$theta[i])
   out <- ode(y = init, func = amr, times = times, parms = parms1)
-  print(out[nrow(out),7])
-  temp[1,1] <- as.numeric(out[nrow(out),5])
-  temp[1,2] <- as.numeric(out[nrow(out),6])
+  temp[1,1] <- as.numeric(out[nrow(out),5]) 
+  temp[1,2] <- as.numeric(out[nrow(out),6]) 
+  if(temp[1,2] < 1e-10) {temp[1,2] <- 0}
   temp[1,3] <- as.numeric(out[nrow(out),7])
-  temp[1,4] <- as.numeric(out[nrow(out),7]) + as.numeric(out[nrow(out),6])
-  if(as.numeric(out[nrow(out),6]) !=0 & (as.numeric(out[nrow(out),6])/ as.numeric(out[nrow(out)-1,6]))>0.99999999999 & 
-     (as.numeric(out[nrow(out),6])/ as.numeric(out[nrow(out)-1,6]))<1.00000000001){
-    temp[1,5] <- "Yes"
-  } 
-  else {
-    temp[1,5] <- "No - Changing"
-  }
-  if (as.numeric(out[nrow(out),5])>0.999999999 & as.numeric(out[nrow(out),5])< 1.000000001){
-    temp[1,5] <- "No"
-  }
+  if(temp[1,3] < 1e-10) {temp[1,3] <- 0}
+  temp[1,4] <- temp[1,2] + temp[1,3]
+  temp[1,5] <- temp[1,3]/temp[1,4]
+  print(temp[1,3])
   output <- rbind.data.frame(output, temp)
 }
 
-colnames(output)[1:5] <- c("SuscHumans","InfHumans","ResInfHumans","IComb","StdyEquilibrium")
+colnames(output)[1:5] <- c("SuscHumans","InfHumans","ResInfHumans","ICombH","IResRat")
 
 plot(output$InfHumans, output$ResInfHumans, xlim = c(-0.001,1)) #Plotting to Make Sure Model is Sensible
 
 #### Sensitivity Analysis ####
 
-sensit <- output$IComb #Creating Variable for the output variable of interest
+sensit <- output$ICombH #Creating Variable for the output variable of interest
 sens<-sensitivity(x=sensit, numberf=11, make.plot=T, names = c("ra", "rh" ,"ua", "uh", "betaAA", "betaAH", "betaHH", "betaHA",
                                                                "phi", "tau", "theta"))
 
@@ -122,67 +117,58 @@ parms2 = c(ra = 52^-1, rh =  6^-1, ua = 28835^-1, uh = 240^-1, betaAA = 0.1, bet
            betaHA = 0.00001, phi = 0.1, tau = parmtau[i], theta = 0.5)
 
 for (i in 1:length(parmtau)) {
-  temp <- data.frame(matrix(NA, nrow = 1, ncol=8))
+  temp <- data.frame(matrix(NA, nrow = 1, ncol=5))
   parms2 = c(ra = 52^-1, rh =  6^-1, ua = 28835^-1, uh = 240^-1, betaAA = 0.1, betaAH = 0.000001, betaHH = 0.000001, 
-            betaHA = 0.000005, phi = 0.1, tau = parmtau[i], theta = 0.5)
+             betaHA = 0.000005, phi = 0.1, tau = parmtau[i], theta = 0.5)
   out <- ode(y = init, func = amr, times = times, parms = parms2)
-  temp[1,1] <- as.numeric(parms2[10])
-  temp[1,2] <- as.numeric(out[nrow(out),3])
-  temp[1,3] <- as.numeric(out[nrow(out),4])
-  temp[1,4] <- out[nrow(out),3] + out[nrow(out),4]
-  temp[1,5] <- as.numeric(out[nrow(out),6])
-  temp[1,6] <- as.numeric(out[nrow(out),7])
-  temp[1,7] <- out[nrow(out),6] + out[nrow(out),7]
-  temp[1,8] <- temp[1,6]/temp[1,7]
+  temp[1,1] <- parmtau[i]
+  temp[1,2] <- as.numeric(out[nrow(out),5]) 
+  temp[1,3] <- as.numeric(out[nrow(out),6]) 
+  if(temp[1,3] < 1e-10) {temp[1,3] <- 0}
+  temp[1,4] <- as.numeric(out[nrow(out),7])
+  if(temp[1,4] < 1e-10) {temp[1,4] <- 0}
+  temp[1,5] <- temp[1,3] + temp[1,4]
+  temp[1,6] <- temp[1,4]/temp[1,5]
+  print(temp[1,3])
   output1 <- rbind.data.frame(output1, temp)
 }
 
-colnames(output1)[1:8] <- c("tau","IA","IRA","ICOMBA", "IH", "IRH", "ICOMBH", "IHTOT")
-output1$IHTOT <- signif(output1$IHTOT, digits = 3)
+colnames(output1)[1:6] <- c("tau", "SuscHumans","InfHumans","ResInfHumans","ICombH","IResRat")
+output1$IResRat <- signif(output1$IResRat, digits = 3)
 
-#p10 <- plot_ly(output1, x= ~tau, y = ~IH, type = "bar", name = "Sens Inf Humans") %>%
-#  add_trace(y= ~IRH, name = "Res Inf Humans") %>% 
+#p10 <- plot_ly(output1, x= ~tau, y = ~InfHumans, type = "bar", name = "Sens Inf Humans") %>%
+#  add_trace(y= ~ResInfHumans, name = "Res Inf Humans") %>% 
 #  layout(yaxis = list(title = "Proportion Infected", exponentformat= "E", range = c(0,5E-5), showline = TRUE),
 #         xaxis = list(title = "Tau (Antibiotic Usage)"),
 #         legend = list(orientation = "v", x = 1.0, y=0.5), showlegend = T,
 #         barmode = "stack", 
-#         annotations = list(x = ~tau, y = ~ICOMBH, text = ~IHTOT, yanchor = "bottom", showarrow = FALSE, textangle = 310,
+#         annotations = list(x = ~tau, y = ~ICombH, text = ~IResRat, yanchor = "bottom", showarrow = FALSE, textangle = 310,
 #                            xshift =3))
 #p10
 
-#p11 <- plot_ly(output1, x= ~tau, y = ~IH, type = "bar", name = "Sens Inf Humans") %>%
-#  add_trace(y= ~IRH, name = "Res Inf Humans") %>% 
-#  layout(yaxis = list(title = "Proportion Infected", exponentformat= "E", range = c(0,5E-5), showline = TRUE),
-#         xaxis = list(title = "Tau (Antibiotic Usage)"),
-#         legend = list(orientation = "v", x = 1.0, y=0.5), showlegend = T,
-#         barmode = "stack",
-#         annotations = list(x = 0.45, y = 2.67e-05, text = "Current Level of FB Disease", yanchor = "bottom",
-#                            showarrow = FALSE, xshift= -55, yshift = 3, font = list(size = 15))) %>%
-#  add_segments(x=-.01, xend = 0.500001, y=2.67e-05, yend = 2.67e-05, line = list(color = "black", dash = "dot", width = 2),
-#               showlegend = FALSE) 
-#p11
-
-p12 <- plot_ly(output1, x= ~tau, y = ~IH, type = "bar", name = "Sens Inf Humans") %>%
-  add_trace(y= ~IRH, name = "Res Inf Humans") %>% 
+p12 <- plot_ly(output1, x= ~tau, y = ~InfHumans, type = "bar", name = "Sens Inf Humans") %>%
+  add_trace(y= ~ResInfHumans, name = "Res Inf Humans") %>% 
   layout(yaxis = list(title = "Proportion Infected", exponentformat= "E", range = c(0,5E-5), showline = TRUE),
          xaxis = list(title = "Tau (Antibiotic Usage)"),
          legend = list(orientation = "v", x = 1.0, y=0.5), showlegend = T,
          barmode = "stack",
          annotations = list(
            list(x = 0.45, y = 2.67e-05, text = "Baseline Level of FB Disease", yanchor = "bottom",
-                            showarrow = FALSE, xshift= -55, yshift = 3, font = list(size = 15)),
-           list(x = 0.45, y = output1$ICOMBH[6], text = "New Level of FB Disease", yanchor = "bottom",
-                            showarrow = FALSE, xshift= -55, yshift = 3, font = list(size = 15, color = "red")),
-           list(ax = 0.05, ay = 2.75e-05, x = 0.05, y = output1$ICOMBH[6],
+                showarrow = FALSE, xshift= -55, yshift = 3, font = list(size = 15)),
+           list(x = 0.45, y = output1$ICombH[6], text = "New Level of FB Disease", yanchor = "bottom",
+                showarrow = FALSE, xshift= -55, yshift = 3, font = list(size = 15, color = "red")),
+           list(ax = 0.05, ay = 2.75e-05, x = 0.05, y = output1$ICombH[6],
                 axref = "x", ayref = "y", xref = "x", yref = "y", showarrow= TRUE, arrowhead=1, 
                 arrowsize = 1.2, arrowwidth=2.5, arrowcolor= "red", xshift = 3))) %>%
   add_segments(x=-0.01, xend = 0.500001, y=2.67e-05, yend = 2.67e-05, line = list(color = "black", dash = "dot", width = 2),
                showlegend = FALSE) %>%
-  add_segments(x=-0.01, xend = 0.500001, y=output1$ICOMBH[6], yend = output1$ICOMBH[6], 
+  add_segments(x=-0.01, xend = 0.500001, y=output1$ICombH[6], yend = output1$ICombH[6], 
                line = list(color = "red", dash = "dot", width = 3), showlegend = FALSE)
+#Have put 6 since that is where Tau is equal to 0.05
 
 p12 
 
+plot(output1$IHTOT,output1$ICOMBH, xlab = "% of Resistant Human FB Disease", ylab = "Total Level of FB Disease", type = "l")
 
 #### Testbed Parameter Space Testing ####
 
@@ -210,7 +196,7 @@ surfaceoutput1 <- data.frame()
 for (i in 1:nrow(combparm1)) {
   temp <- data.frame(matrix(NA, nrow = 1, ncol=5))
   parms1 = c(ra = 52^-1, rh =  6^-1, ua = 28835^-1, uh = 240^-1, betaAA = 0.1, betaAH = 0.000001, betaHH = 0.000001, 
-            betaHA = combparm1[i,2], phi = 0.1, tau = combparm1[i,1], theta = 0.5)
+             betaHA = combparm1[i,2], phi = 0.1, tau = combparm1[i,1], theta = 0.5)
   out <- ode(y = init, func = amr, times = times, parms = parms1)
   print(out[nrow(out),7])
   temp[1,1] <- combparm1[i,1]
@@ -246,14 +232,14 @@ mat1 <- data.matrix(mat)
 p5 <- plot_ly(z = mat1, x = betaHArange, y = taurange) %>% add_surface(
   cmin = 0, cmax = 0.8e-04,
   colorbar = list(title = "I<sub>RH</sub>* + I<sub>H</sub>*", exponentformat= "E")
-  ) %>% layout(
-    title = "Equilibrium Prevalence of I<sub>H</sub>*",
-    scene = list(
-      camera = list(eye = list(x = -1.25, y = 1.25, z = 0.5)),
-      xaxis = list(title = "betaHA", nticks = 8, range = c(0,0.00002), exponentformat= "E"),
-      yaxis = list(title = "tau", nticks = 8, range = c(0,0.5)),
-      zaxis = list(title = 'IComb*', nticks = 8, exponentformat= "E"),
-      aspectratio=list(x=0.8,y=0.8,z=0.8)))
+) %>% layout(
+  title = "Equilibrium Prevalence of I<sub>H</sub>*",
+  scene = list(
+    camera = list(eye = list(x = -1.25, y = 1.25, z = 0.5)),
+    xaxis = list(title = "betaHA", nticks = 8, range = c(0,0.00002), exponentformat= "E"),
+    yaxis = list(title = "tau", nticks = 8, range = c(0,0.5)),
+    zaxis = list(title = 'IComb*', nticks = 8, exponentformat= "E"),
+    aspectratio=list(x=0.8,y=0.8,z=0.8)))
 p5 
 
 p6 <- plot_ly(x = taurange, y = betaHArange, z = mat1, type = "contour", transpose = TRUE,
@@ -350,7 +336,7 @@ p8
 #TEST
 #Ranges for Parameter Testing
 taurange <- seq(0,1, by=0.1)
-phirange <- seq(0,1, by=0.01)
+phirange <- seq(0,1, by=0.1)
 
 #Creating Possible Combinations of Parameters
 combparm1 <- NULL
@@ -360,6 +346,7 @@ colnames(combparm1)[1:2] <- c("tau","phi")
 #Setting up the initial Conditions for the Model
 init <- c(Sa=0.99, Ia=0.01, Ira=0, Sh=1, Ih=0, Irh=0)
 times <- c(0,9999,10000)
+times1 <- seq(0, 10000, by = 10)
 
 #Creating Dummy Data Frame for For Loop
 surfaceoutput1 <- data.frame()
@@ -369,7 +356,7 @@ for (i in 1:nrow(combparm1)) {
   temp <- data.frame(matrix(NA, nrow = 1, ncol=7))
   parms1 = c(ra = 52^-1, rh =  6^-1, ua = 28835^-1, uh = 240^-1, betaAA = 0.1, betaAH = 0.000001, betaHH = 0.000001, 
              betaHA = 0.00001, phi = combparm1[i,2], tau = combparm1[i,1], theta = 0.1)
-  out <- ode(y = init, func = amr, times = times, parms = parms1)
+  out <- ode(y = init, func = amr, times = times1, parms = parms1)
   print(out[nrow(out),7])
   temp[1,1] <- combparm1[i,1]
   temp[1,2] <- combparm1[i,2]
@@ -386,6 +373,12 @@ for (i in 1:nrow(combparm1)) {
 #temp[1,5] <- ifelse(temp[1,3] >= 0.999999999 | temp[1,5] <= 0.000000001, 0, temp[1,5])
 
 colnames(surfaceoutput1)[1:7] <- c("tau","phi","SuscHum","InfSensHum", "InfResHum", "IHCOMB", "ResRatio")
+
+x <- mpfr(surfaceoutput1$InfResHum, 50)
+y <- mpfr(surfaceoutput1$IHCOMB, 50)
+
+z <- x/y
+
 
 #surfaceoutput1$ResRatio[is.nan(surfaceoutput1$ResRatio)] <- 0
 
@@ -408,13 +401,13 @@ mat1 <- data.matrix(mat)
 p9 <- plot_ly(z = mat1, x = phirange, y = taurange) %>% add_surface(
   cmin = 0, cmax = 1,
   colorbar = list(title = "Resistance Ratio")) %>% layout(
-  title = "Resistance Ratio",
-  scene = list(
-    camera = list(eye = list(x = -1.25, y = 1.25, z = 0.5)),
-    xaxis = list(title = "phi", nticks = 8, range = c(0,1)),
-    yaxis = list(title = "tau", nticks = 8, range = c(0,1)),
-    zaxis = list(title = 'ResRat', nticks = 8),
-    aspectratio=list(x=0.8,y=0.8,z=0.8)))
+    title = "Resistance Ratio",
+    scene = list(
+      camera = list(eye = list(x = -1.25, y = 1.25, z = 0.5)),
+      xaxis = list(title = "phi", nticks = 8, range = c(0,1)),
+      yaxis = list(title = "tau", nticks = 8, range = c(0,1)),
+      zaxis = list(title = 'ResRat', nticks = 8),
+      aspectratio=list(x=0.8,y=0.8,z=0.8)))
 p9 
 
 p8 <- plot_ly(x = taurange, y = phirange, z = mat1, type = "contour", transpose = TRUE,
