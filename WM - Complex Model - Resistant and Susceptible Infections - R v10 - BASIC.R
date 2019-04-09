@@ -113,13 +113,13 @@ init <- c(Sa=0.99, Ia=0.01, Ira=0, Sh=1, Ih=0, Irh=0)
 output1 <- data.frame()
 times <- c(0,9999,10000)
 
-parms2 = c(ra = 52^-1, rh =  6^-1, ua = 28835^-1, uh = 240^-1, betaAA = 0.1, betaAH = 0.000001, betaHH = 0.000001, 
-           betaHA = 0.00001, phi = 0.1, tau = parmtau[i], theta = 0.5)
+#parms2 = c(ra = 52^-1, rh =  6^-1, ua = 28835^-1, uh = 240^-1, betaAA = 0.1, betaAH = 0.000001, betaHH = 0.000001, 
+#           betaHA = 0.00001, phi = 0.1, tau = parmtau[i], theta = 0.5)
 
 for (i in 1:length(parmtau)) {
   temp <- data.frame(matrix(NA, nrow = 1, ncol=5))
   parms2 = c(ra = 52^-1, rh =  6^-1, ua = 28835^-1, uh = 240^-1, betaAA = 0.1, betaAH = 0.000001, betaHH = 0.000001, 
-             betaHA = 0.000003, phi = 0.1, tau = parmtau[i], theta = 0.5)
+             betaHA = 0.00001, phi = 0.05, tau = parmtau[i], theta = 0.5)
   out <- ode(y = init, func = amr, times = times, parms = parms2)
   temp[1,1] <- parmtau[i]
   temp[1,2] <- as.numeric(out[nrow(out),5]) 
@@ -146,6 +146,21 @@ output1$IResRat <- signif(output1$IResRat, digits = 3)
 #                            xshift =3))
 #p10
 
+#p20 <- plot_ly(output1, x= ~tau, y = ~InfHumans, type = "bar", name = "Sens Inf Humans") %>%
+#  add_trace(y= ~ResInfHumans, name = "Res Inf Humans") %>% 
+#  layout(yaxis = list(title = "Proportion Infected", exponentformat= "E", range = c(0,5E-5), showline = TRUE),
+#         xaxis = list(title = "Tau (Antibiotic Usage)"),
+#         legend = list(orientation = "v", x = 1.0, y=0.5), showlegend = T,
+#         barmode = "stack",
+#         annotations = list(
+#           list(x = 0.45, y = 1.82e-05, text = "Baseline Level of FB Disease", yanchor = "bottom",
+#                showarrow = FALSE, xshift= -55, yshift = 3, font = list(size = 15)),
+#           list(ax = 0.1, ay = 1.9e-05, x = 0.1, y = output1$ICombH[11]))) %>%
+#  add_segments(x=-0.01, xend = 0.500001, y=1.82e-05, yend = 1.82e-05, line = list(color = "black", dash = "dot", width = 2),
+#               showlegend = FALSE)
+#
+#p20 
+
 p12 <- plot_ly(output1, x= ~tau, y = ~InfHumans, type = "bar", name = "Sens Inf Humans") %>%
   add_trace(y= ~ResInfHumans, name = "Res Inf Humans") %>% 
   layout(yaxis = list(title = "Proportion Infected", exponentformat= "E", range = c(0,5E-5), showline = TRUE),
@@ -157,7 +172,7 @@ p12 <- plot_ly(output1, x= ~tau, y = ~InfHumans, type = "bar", name = "Sens Inf 
                 showarrow = FALSE, xshift= -55, yshift = 3, font = list(size = 15)),
            list(x = 0.45, y = output1$ICombH[11], text = "New Level of FB Disease", yanchor = "bottom",
                 showarrow = FALSE, xshift= -55, yshift = 3, font = list(size = 15, color = "red")),
-           list(ax = 0.1, ay = 1.9e-05, x = 0.1, y = output1$ICombH[11],
+           list(ax = 0.1, ay = 1.77e-05, x = 0.1, y = output1$ICombH[11],
                 axref = "x", ayref = "y", xref = "x", yref = "y", showarrow= TRUE, arrowhead=1, 
                 arrowsize = 1.2, arrowwidth=2.5, arrowcolor= "red"))) %>%
   add_segments(x=-0.01, xend = 0.500001, y=1.82e-05, yend = 1.82e-05, line = list(color = "black", dash = "dot", width = 2),
@@ -256,8 +271,8 @@ p6
 
 #TEST
 #Ranges for Parameter Testing
-taurange <- seq(0,0.5, by=0.1)
-phirange <- seq(0,1.5, by=0.01)
+taurange <- seq(0,0.2, by=0.01)
+phirange <- seq(0,0.2, by=0.01)
 
 #betaHArange <- seq(0,0.0001, by=0.00001)
 
@@ -338,8 +353,8 @@ p8
 
 #TEST
 #Ranges for Parameter Testing
-taurange <- seq(0,0.1, by=0.01)
-phirange <- seq(0,1, by=0.01)
+taurange <- seq(0,0.2, by=0.005)
+phirange <- seq(0,0.2, by=0.005)
 
 #Creating Possible Combinations of Parameters
 combparm1 <- NULL
@@ -463,4 +478,86 @@ colnames(surfaceoutput1)[1:12] <- c("betaAA","tau","InfSensHum0", "InfResHum0", 
                                     "tau","InfSensHum005", "InfResHum005", "IHCOMB005", "ResRatio005",
                                     "ICOMBRat0005")
 
-plot(betaAArange, surfaceoutput1$ICOMBRat0005, ylab = "ICombH", xlab = "BetaAA Range", type = "l", lwd = 2)
+plot_ly(surfaceoutput1, x= ~betaAA, y = ~ICOMBRat0005, type = "scatter")
+               
+###-----------------------------------------------
+
+#Ranges for Parameter Testing
+betaAArange<- seq(0,0.5, by=0.01)
+betaHArange <- seq(0,0.00005, by=0.000001)
+
+#betaHArange <- seq(0,0.0001, by=0.00001)
+
+#Creating Possible Combinations of Parameters
+combparm1 <- NULL
+combparm1 <- expand.grid(betaAArange, betaHArange)
+colnames(combparm1)[1:2] <- c("betaAA","betaHA")
+
+#Setting up the initial Conditions for the Model
+init <- c(Sa=0.99, Ia=0.01, Ira=0, Sh=1, Ih=0, Irh=0)
+times1 <- seq(0, 10000, by = 100)
+
+#Creating Dummy Data Frame for For Loop
+surfaceoutput1 <- data.frame()
+
+#For Loop to Create Output for the Parameter Combinations
+for (i in 1:nrow(combparm1)) {
+  temp <- data.frame(matrix(NA, nrow = 1, ncol=13))
+  parms1 = c(ra = 52^-1, rh =  6^-1, ua = 28835^-1, uh = 240^-1, betaAA = combparm1[i,1], betaAH = 0.000001, betaHH = 0.000001, 
+             betaHA = combparm1[i,2], phi = 0.5, tau = 0, theta = 0.5)
+  parms2 = c(ra = 52^-1, rh =  6^-1, ua = 28835^-1, uh = 240^-1, betaAA = combparm1[i,1], betaAH = 0.000001, betaHH = 0.000001, 
+             betaHA = combparm1[i,2], phi = 0.5, tau = 0.1, theta = 0.5)
+  out <- ode(y = init, func = amr, times = times1, parms = parms1)
+  out1 <- ode(y = init, func = amr, times = times1, parms = parms2)
+  temp[1,1] <- combparm1[i,1]
+  temp[1,2] <- combparm1[i,2]
+  temp[1,3] <- 0
+  temp[1,4] <- out[nrow(out),6]
+  if(temp[1,4] < 1e-10) {temp[1,4] <- 0}
+  temp[1,5] <- out[nrow(out),7]
+  if(temp[1,5] < 1e-10) {temp[1,5] <- 0}
+  temp[1,6] <- temp[1,4] + temp[1,5]
+  temp[1,7] <- temp[1,5]/temp[1,6]
+  
+  temp[1,8] <- 0.1
+  temp[1,9] <- out1[nrow(out1),6]
+  if(temp[1,9] < 1e-10) {temp[1,9] <- 0}
+  temp[1,10] <- out1[nrow(out1),7]
+  if(temp[1,10] < 1e-10) {temp[1,10] <- 0}
+  temp[1,11] <- temp[1,9] + temp[1,10]
+  temp[1,12] <- temp[1,10]/temp[1,11]
+  
+  temp[1,13] <- temp[1,11]/temp[1,6]
+  print(temp[1,13])
+  surfaceoutput1 <- rbind.data.frame(surfaceoutput1, temp)
+}
+
+colnames(surfaceoutput1)[1:13] <- c("betaAA","betaHA","tau1","InfSensHum0", "InfResHum0", "IHCOMB0", "ResRatio0",
+                                    "tau2","InfSensHum005", "InfResHum005", "IHCOMB005", "ResRatio005",
+                                    "ICOMBRat0005")
+
+surfaceoutputplot <- surfaceoutput1[,c(1,2,13)]
+
+#Spread the Parameter Combinations out so it can be plotted
+surfaceoutputplot$new <- NULL
+
+mat <- spread(surfaceoutputplot, key = "betaHA", value = "ICOMBRat0005")
+row.names(mat) <- mat$betaAA
+mat$betaAA<- NULL
+mat1 <- data.matrix(mat)
+
+#Plotting a vector plot and a surface plot
+#cmin = 0, cmax = 0.00045,
+#contours = list(start = -0.0000001, end = 0.00045, size = 0.00005)
+
+plot_ly(z = mat1, x = betaHArange, y = betaAArange) %>% add_surface(
+  cmin = 0, cmax = 1,
+  colorbar = list(title = "I<sub>RH</sub>* + I<sub>H</sub>*")
+) %>% layout(
+  title = "Equilibrium Prevalence Ratio of I<sub>H</sub>*",
+  scene = list(
+    camera = list(eye = list(x = -1.25, y = 1.25, z = 0.5)),
+    xaxis = list(title = "BetaHA", nticks = 8, range = c(0,0.00005), exponentformat= "E"),
+    yaxis = list(title = "BetaAA", nticks = 8, range = c(0,0.5)),
+    zaxis = list(title = 'ICombRat', nticks = 8),
+    aspectratio=list(x=0.8,y=0.8,z=0.8)))
