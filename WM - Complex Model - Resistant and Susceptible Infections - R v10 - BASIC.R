@@ -8,7 +8,7 @@ library("sensitivity")
 library("ggplot2")
 library("plotly")
 library("tidyr")
-library("Rmpfr")
+library("OneR")
 
 #### Model Functions + Output ####
 amr <- function(time, state, parameters) {
@@ -111,7 +111,7 @@ parmtau <- seq(0,0.5,by=0.01)
 
 init <- c(Sa=0.99, Ia=0.01, Ira=0, Sh=1, Ih=0, Irh=0)
 output1 <- data.frame()
-times <- c(0,9999,10000)
+times <- seq(0, 10000, by = 100)
 
 #parms2 = c(ra = 52^-1, rh =  6^-1, ua = 28835^-1, uh = 240^-1, betaAA = 0.1, betaAH = 0.000001, betaHH = 0.000001, 
 #           betaHA = 0.00001, phi = 0.1, tau = parmtau[i], theta = 0.5)
@@ -119,7 +119,7 @@ times <- c(0,9999,10000)
 for (i in 1:length(parmtau)) {
   temp <- data.frame(matrix(NA, nrow = 1, ncol=5))
   parms2 = c(ra = 52^-1, rh =  6^-1, ua = 28835^-1, uh = 240^-1, betaAA = 0.1, betaAH = 0.000001, betaHH = 0.000001, 
-             betaHA = 0.00001, phi = 0.05, tau = parmtau[i], theta = 0.5)
+             betaHA = 0.00001, phi = 0.1, tau = parmtau[i], theta = 0.5)
   out <- ode(y = init, func = amr, times = times, parms = parms2)
   temp[1,1] <- parmtau[i]
   temp[1,2] <- as.numeric(out[nrow(out),5]) 
@@ -172,13 +172,14 @@ p12 <- plot_ly(output1, x= ~tau, y = ~InfHumans, type = "bar", name = "Sens Inf 
                 showarrow = FALSE, xshift= -55, yshift = 3, font = list(size = 15)),
            list(x = 0.45, y = output1$ICombH[11], text = "New Level of FB Disease", yanchor = "bottom",
                 showarrow = FALSE, xshift= -55, yshift = 3, font = list(size = 15, color = "red")),
-           list(ax = 0.1, ay = 1.77e-05, x = 0.1, y = output1$ICombH[11],
+           list(ax = 0.1, ay = 1.9e-05, x = 0.1, y = output1$ICombH[11],
                 axref = "x", ayref = "y", xref = "x", yref = "y", showarrow= TRUE, arrowhead=1, 
                 arrowsize = 1.2, arrowwidth=2.5, arrowcolor= "red"))) %>%
   add_segments(x=-0.01, xend = 0.500001, y=1.82e-05, yend = 1.82e-05, line = list(color = "black", dash = "dot", width = 2),
                showlegend = FALSE) %>%
   add_segments(x=-0.01, xend = 0.500001, y=output1$ICombH[11], yend = output1$ICombH[11], 
                line = list(color = "red", dash = "dot", width = 3), showlegend = FALSE)
+
 #Have put 6 since that is where Tau is equal to 0.05
 
 p12 
@@ -353,8 +354,8 @@ p8
 
 #TEST
 #Ranges for Parameter Testing
-taurange <- seq(0,0.2, by=0.005)
-phirange <- seq(0,0.2, by=0.005)
+taurange <- seq(0.001,0.2, by=0.005)
+phirange <- seq(0.001,0.2, by=0.005)
 
 #Creating Possible Combinations of Parameters
 combparm1 <- NULL
@@ -373,7 +374,7 @@ surfaceoutput1 <- data.frame()
 for (i in 1:nrow(combparm1)) {
   temp <- data.frame(matrix(NA, nrow = 1, ncol=7))
   parms1 = c(ra = 52^-1, rh =  6^-1, ua = 28835^-1, uh = 240^-1, betaAA = 0.1, betaAH = 0.000001, betaHH = 0.000001, 
-             betaHA = 0.00001, phi = combparm1[i,2], tau = combparm1[i,1], theta = 1)
+             betaHA = 0.00001, phi = combparm1[i,2], tau = combparm1[i,1], theta = 0.5)
   out <- ode(y = init, func = amr, times = times1, parms = parms1)
   print(out[nrow(out),7])
   temp[1,1] <- combparm1[i,1]
@@ -432,6 +433,29 @@ p8 <- plot_ly(x = taurange, y = phirange, z = mat1, type = "contour", transpose 
          yaxis = list(title = "Phi"))
 p8
 
+#Phi Tau Ratio
+
+surfaceoutput2 <- surfaceoutput1
+surfaceoutput2$phitau <- surfaceoutput2$tau/surfaceoutput2$phi
+surfaceoutput2$logphitau <- log10(surfaceoutput2$phitau)
+
+df.unique <- surfaceoutput2[!duplicated(surfaceoutput2$logphitau), ]
+df.unique
+
+plot_ly(df.unique, x= ~logphitau, y = ~InfSensHum, type = "bar", name = "Sens Inf Humans") %>%
+  add_trace(y= ~InfResHum, name = "Res Inf Humans") %>% 
+  layout(yaxis = list(title = "Proportion Infected", exponentformat= "E", range = c(0,1E-4), showline = TRUE),
+         xaxis = list(title = "Log Phi/Tau"),
+         legend = list(orientation = "v", x = 1.0, y=0.5), showlegend = T,
+         barmode = "stack") 
+#         annotations = list(x = ~tau, y = ~ICombH, text = ~IResRat, yanchor = "bottom", showarrow = FALSE, textangle = 310,
+#                            xshift =3))
+test <- surfaceoutput2
+
+test2 <- data.frame(tapply(test$InfSensHum, cut(test$logphitau, seq(-2.3, 2.3, by=0.01)), mean))
+
+#test$bin <- bin(surfaceoutput2$logphitau, nbins = 200, labels = NULL, method = "content", na.omit= TRUE)
+
 #### Evaluating the Ratio of Foodborne Infection - Before and After the Intervention ####
 
 betaHArange <- seq(0, 0.00005, by = 0.000001)
@@ -448,9 +472,9 @@ surfaceoutput1 <- data.frame()
 for (i in 1:length(betaAArange)) {
   temp <- data.frame(matrix(NA, nrow = 1, ncol=12))
   parms1 = c(ra = 52^-1, rh =  6^-1, ua = 28835^-1, uh = 240^-1, betaAA = betaAArange[i], betaAH = 0.000001, betaHH = 0.000001, 
-             betaHA = 0.00001, phi = 0.5, tau = 0, theta = 0.5)
+             betaHA = 0.00001, phi = 0.1, tau = 0, theta = 0.5)
   parms2 = c(ra = 52^-1, rh =  6^-1, ua = 28835^-1, uh = 240^-1, betaAA = betaAArange[i], betaAH = 0.000001, betaHH = 0.000001, 
-             betaHA = 0.00001, phi = 0.5, tau = 0.05, theta = 0.5)
+             betaHA = 0.00001, phi = 0.1, tau = 0.05, theta = 0.5)
   out <- ode(y = init, func = amr, times = times1, parms = parms1)
   out1 <- ode(y = init, func = amr, times = times1, parms = parms2)
   temp[1,1] <- betaAArange[i]
@@ -504,9 +528,9 @@ surfaceoutput1 <- data.frame()
 for (i in 1:nrow(combparm1)) {
   temp <- data.frame(matrix(NA, nrow = 1, ncol=13))
   parms1 = c(ra = 52^-1, rh =  6^-1, ua = 28835^-1, uh = 240^-1, betaAA = combparm1[i,1], betaAH = 0.000001, betaHH = 0.000001, 
-             betaHA = combparm1[i,2], phi = 0.5, tau = 0, theta = 0.5)
+             betaHA = combparm1[i,2], phi = 0.1, tau = 0, theta = 0.5)
   parms2 = c(ra = 52^-1, rh =  6^-1, ua = 28835^-1, uh = 240^-1, betaAA = combparm1[i,1], betaAH = 0.000001, betaHH = 0.000001, 
-             betaHA = combparm1[i,2], phi = 0.5, tau = 0.1, theta = 0.5)
+             betaHA = combparm1[i,2], phi = 0.1, tau = 0.1, theta = 0.5)
   out <- ode(y = init, func = amr, times = times1, parms = parms1)
   out1 <- ode(y = init, func = amr, times = times1, parms = parms2)
   temp[1,1] <- combparm1[i,1]
@@ -527,7 +551,8 @@ for (i in 1:nrow(combparm1)) {
   temp[1,11] <- temp[1,9] + temp[1,10]
   temp[1,12] <- temp[1,10]/temp[1,11]
   
-  temp[1,13] <- temp[1,11]/temp[1,6]
+  temp[1,13] <- 1-(temp[1,11]/temp[1,6])
+  temp[1,14] <- temp[1,12]
   print(temp[1,13])
   surfaceoutput1 <- rbind.data.frame(surfaceoutput1, temp)
 }
@@ -535,7 +560,7 @@ for (i in 1:nrow(combparm1)) {
 colnames(surfaceoutput1)[1:13] <- c("betaAA","betaHA","tau1","InfSensHum0", "InfResHum0", "IHCOMB0", "ResRatio0",
                                     "tau2","InfSensHum005", "InfResHum005", "IHCOMB005", "ResRatio005",
                                     "ICOMBRat0005")
-
+surfaceanal <- surfaceoutput1[,c(1,2,6,11,13)]
 surfaceoutputplot <- surfaceoutput1[,c(1,2,13)]
 
 #Spread the Parameter Combinations out so it can be plotted
@@ -559,5 +584,5 @@ plot_ly(z = mat1, x = betaHArange, y = betaAArange) %>% add_surface(
     camera = list(eye = list(x = -1.25, y = 1.25, z = 0.5)),
     xaxis = list(title = "BetaHA", nticks = 8, range = c(0,0.00005), exponentformat= "E"),
     yaxis = list(title = "BetaAA", nticks = 8, range = c(0,0.5)),
-    zaxis = list(title = 'ICombRat', nticks = 8),
+    zaxis = list(title = '1-(W/W-out)', nticks = 8),
     aspectratio=list(x=0.8,y=0.8,z=0.8)))
