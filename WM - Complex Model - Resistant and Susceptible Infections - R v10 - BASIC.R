@@ -26,9 +26,8 @@ amr <- function(time, state, parameters) {
 
 rounding <- function(x) {
   if(as.numeric(x) < 1e-10) {x <- 0
-  } else{(as.numeric(x), digits = 6)}
+  } else{signif(as.numeric(x), digits = 6)}
 }
-
 
 #### Model Testbed - Basic Model Output ####
 
@@ -61,7 +60,6 @@ print(Icomb)
 #### Function for Parameter Combinations - From FAST ####
 start_time <- Sys.time()
 
-
 parms1 = fast_parameters(minimum = c(0,0,0,0,0,0,0,0,0,0,0), maximum = c(1,1,1,1,1,1,1,1,1,1,1), 
                          factor=11, names = c("ra", "rh" ,"ua", "uh", "betaAA", "betaAH", "betaHH", "betaHA",
                                               "phi", "tau", "theta"))
@@ -74,7 +72,7 @@ parms = fast_parameters(minimum = c(5.2^-1,0.6^-1,2883.5^-1,24^-1,0,0,0,0,0,0,0)
 
 init <- c(Sa=0.99, Ia=0.01, Ira=0, Sh=1, Ih=0, Irh=0)
 times <- c(0,9999,10000) #Specified the time intervals to be massive as dynamics do not matter
-times <- seq(0,10000, by = 0.5) 
+times <- seq(0,100000, by = 100) 
 
 output <- data.frame()
 
@@ -84,16 +82,13 @@ for (i in 1:nrow(parms)) {
              betaAH = parms$betaAH[i], betaHH = parms$betaHH[i], betaHA = parms$betaHA[i], phi=parms$phi[i],
              tau=parms$tau[i], theta=parms$theta[i])
   out <- ode(y = init, func = amr, times = times, parms = parms1)
-  temp[1,1] <- as.numeric(out[nrow(out),5]) 
-  temp[1,2] <- as.numeric(out[nrow(out),6]) 
-  if(temp[1,2] < 1e-10) {temp[1,2] <- 0}
-  temp[1,3] <- as.numeric(out[nrow(out),7])
-  if(temp[1,3] < 1e-10) {temp[1,3] <- 0}
+  temp[1,1] <- rounding(out[nrow(out),5]) 
+  temp[1,2] <- rounding(out[nrow(out),6]) 
+  temp[1,3] <- rounding(out[nrow(out),7])
   temp[1,4] <- temp[1,2] + temp[1,3]
   temp[1,5] <- temp[1,3]/temp[1,4]
-  temp[1,6] <- (signif(as.numeric(out[nrow(out),6], digits = 6) + signif(out[nrow(out)-1,6], digits = 6) + signif(out[nrow(out)-2,6]), digits = 6)/3)
-  if((signif(as.numeric(out[nrow(out),6], digits = 6) + signif(out[nrow(out)-1,6], digits = 6) + signif(out[nrow(out)-2,6]), digits = 6)/3) 
-     == signif(as.numeric(out[nrow(out),6]), digits = 6)) {temp[1,7] <- "YES"}
+  temp[1,6] <- signif(((rounding(out[nrow(out),6]) + rounding(out[nrow(out)-1,6]) + rounding(out[nrow(out)-2,6]))/3), digits = 6)
+  if(temp[1,6] == temp[1,2]) {temp[1,7] <- "YES"}
   print(temp[1,3])
   output <- rbind.data.frame(output, temp)
 }
@@ -127,7 +122,7 @@ parmtau <- seq(0,0.5,by=0.01)
 
 init <- c(Sa=0.99, Ia=0.01, Ira=0, Sh=1, Ih=0, Irh=0)
 output1 <- data.frame()
-times <- seq(0, 10000, by = 100)
+times <- seq(0, 100000, by = 100)
 
 #parms2 = c(ra = 52^-1, rh =  6^-1, ua = 28835^-1, uh = 240^-1, betaAA = 0.1, betaAH = 0.000001, betaHH = 0.000001, 
 #           betaHA = 0.00001, phi = 0.1, tau = parmtau[i], theta = 0.5)
@@ -135,14 +130,12 @@ times <- seq(0, 10000, by = 100)
 for (i in 1:length(parmtau)) {
   temp <- data.frame(matrix(NA, nrow = 1, ncol=5))
   parms2 = c(ra = 52^-1, rh =  6^-1, ua = 28835^-1, uh = 240^-1, betaAA = 0.1, betaAH = 0.000001, betaHH = 0.000001, 
-             betaHA = 0.00001, phi = 0.01, tau = parmtau[i], theta = 0.5)
+             betaHA = 0.00001, phi = 0.1, tau = parmtau[i], theta = 0.5)
   out <- ode(y = init, func = amr, times = times, parms = parms2)
   temp[1,1] <- parmtau[i]
-  temp[1,2] <- as.numeric(out[nrow(out),5]) 
-  temp[1,3] <- as.numeric(out[nrow(out),6]) 
-  if(temp[1,3] < 1e-10) {temp[1,3] <- 0}
-  temp[1,4] <- as.numeric(out[nrow(out),7])
-  if(temp[1,4] < 1e-10) {temp[1,4] <- 0}
+  temp[1,2] <- rounding(out[nrow(out),5]) 
+  temp[1,3] <- rounding(out[nrow(out),6]) 
+  temp[1,4] <- rounding(out[nrow(out),7])
   temp[1,5] <- temp[1,3] + temp[1,4]
   temp[1,6] <- temp[1,4]/temp[1,5]
   print(temp[1,3])
@@ -216,7 +209,7 @@ colnames(combparm1)[1:2] <- c("tau","betaHA")
 
 #Setting up the initial Conditions for the Model
 init <- c(Sa=0.99, Ia=0.01, Ira=0, Sh=1, Ih=0, Irh=0)
-times <- seq(0, 10000, by = 100)
+times <- seq(0, 100000, by = 100)
 
 #Creating Dummy Data Frame for For Loop
 surfaceoutput1 <- data.frame()
@@ -224,27 +217,25 @@ surfaceoutput1 <- data.frame()
 #For Loop to Create Output for the Parameter Combinations
 for (i in 1:nrow(combparm1)) {
   temp <- data.frame(matrix(NA, nrow = 1, ncol=5))
-  parms1 = c(ra = 52^-1, rh =  6^-1, ua = 28835^-1, uh = 240^-1, betaAA = 0.06, betaAH = 0.000001, betaHH = 0.000001, 
+  parms1 = c(ra = 52^-1, rh =  6^-1, ua = 28835^-1, uh = 240^-1, betaAA = 0.1, betaAH = 0.000001, betaHH = 0.000001, 
              betaHA = combparm1[i,2], phi = 0.1, tau = combparm1[i,1], theta = 0.5)
   out <- ode(y = init, func = amr, times = times, parms = parms1)
   print(out[nrow(out),7])
   temp[1,1] <- combparm1[i,1]
   temp[1,2] <- combparm1[i,2]
-  temp[1,3] <- out[nrow(out),5]
-  temp[1,4] <- out[nrow(out),6]
-  if(temp[1,4] < 1e-10) {temp[1,4] <- 0}
-  temp[1,5] <- out[nrow(out),7]
-  if(temp[1,5] < 1e-10) {temp[1,5] <- 0}
+  temp[1,3] <- rounding(out[nrow(out),5]) 
+  temp[1,4] <- rounding(out[nrow(out),6])
+  temp[1,5] <- rounding(out[nrow(out),7])
   temp[1,6] <- temp[1,4] + temp[1,5]
   print(temp[1,6])
   surfaceoutput1 <- rbind.data.frame(surfaceoutput1, temp)
 }
+
 #temp[1,6] <- out[nrow(out),6] + out[nrow(out),7]
 colnames(surfaceoutput1)[1:6] <- c("tau","betaHA","SuscHum","InfSensHum", "InfResHum", "Comb Inf Res/Sens Humans")
 plot(surfaceoutput1$InfSensHum, surfaceoutput1$InfResHum, xlim = c(-0.001,1), ylim = c(-0.001,1))
 
 surfaceoutputplot <- surfaceoutput1[,c(1,2,6)]
-
 
 #surfaceoutputplot$new <- round(surfaceoutputplot$`Comb Inf Res/Sens Humans`, digits = 6)
 
@@ -287,8 +278,8 @@ p6
 
 #TEST
 #Ranges for Parameter Testing
-taurange <- seq(0,0.2, by=0.01)
-phirange <- seq(0,0.2, by=0.01)
+taurange <- seq(0,0.5, by=0.01)
+phirange <- seq(0,0.5, by=0.01)
 
 #betaHArange <- seq(0,0.0001, by=0.00001)
 
@@ -300,7 +291,7 @@ colnames(combparm1)[1:2] <- c("tau","phi")
 #Setting up the initial Conditions for the Model
 init <- c(Sa=0.99, Ia=0.01, Ira=0, Sh=1, Ih=0, Irh=0)
 times <- c(0,9999,10000)
-times <- seq(0,10000,by= 100)
+times <- seq(0,100000,by= 100)
 
 #Creating Dummy Data Frame for For Loop
 surfaceoutput1 <- data.frame()
@@ -314,11 +305,9 @@ for (i in 1:nrow(combparm1)) {
   print(out[nrow(out),7])
   temp[1,1] <- combparm1[i,1]
   temp[1,2] <- combparm1[i,2]
-  temp[1,3] <- out[nrow(out),5]
-  temp[1,4] <- out[nrow(out),6]
-  if(temp[1,4] < 1e-10) {temp[1,4] <- 0}
-  temp[1,5] <- out[nrow(out),7]
-  if(temp[1,5] < 1e-10) {temp[1,5] <- 0}
+  temp[1,3] <- rounding(out[nrow(out),5]) 
+  temp[1,4] <- rounding(out[nrow(out),6])
+  temp[1,5] <- rounding(out[nrow(out),7])
   temp[1,6] <- temp[1,4] + temp[1,5]
   print(temp[1,6])
   surfaceoutput1 <- rbind.data.frame(surfaceoutput1, temp)
@@ -367,10 +356,12 @@ p8
 
 #### Tau and Phi Relationship Exploration - RATIO OF RESISTANCE ####
 
+start_time <- Sys.time()
+
 #TEST
 #Ranges for Parameter Testing
-taurange <- seq(0.001,0.15, by=0.005)
-phirange <- seq(0.001,0.15, by=0.005)
+taurange <- seq(0.001,0.5, by=0.005)
+phirange <- seq(0.001,0.5, by=0.005)
 
 #Creating Possible Combinations of Parameters
 combparm1 <- NULL
@@ -380,7 +371,7 @@ colnames(combparm1)[1:2] <- c("tau","phi")
 #Setting up the initial Conditions for the Model
 init <- c(Sa=0.99, Ia=0.01, Ira=0, Sh=1, Ih=0, Irh=0)
 times <- c(0,9999,10000)
-times1 <- seq(0, 10000, by = 1)
+times1 <- seq(0, 100000, by = 100)
 
 #Creating Dummy Data Frame for For Loop
 surfaceoutput1 <- data.frame()
@@ -467,6 +458,11 @@ plot_ly(surfaceoutput2, x= ~logphitau, y = ~InfSensHum, type = "bar", name = "Se
          xaxis = list(title = "Log Phi/Tau"),
          legend = list(orientation = "v", x = 1.0, y=0.5), showlegend = T,
          barmode = "stack") 
+
+end_time <- Sys.time()
+
+end_time - start_time
+
 #         annotations = list(x = ~tau, y = ~ICombH, text = ~IResRat, yanchor = "bottom", showarrow = FALSE, textangle = 310,
 #                            xshift =3))
 test <- surfaceoutput2
