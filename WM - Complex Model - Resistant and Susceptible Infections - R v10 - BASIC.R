@@ -24,6 +24,12 @@ amr <- function(time, state, parameters) {
   })
 }
 
+rounding <- function(x) {
+  if(as.numeric(x) < 1e-10) {x <- 0
+  } else{(as.numeric(x), digits = 6)}
+}
+
+
 #### Model Testbed - Basic Model Output ####
 
 init <- c(Sa=0.99, Ia=0.01, Ira=0.01, Sh=1, Ih=0, Irh=0)
@@ -53,6 +59,9 @@ print(Icomb)
 #plot(out[,"time"], out[,"Ia"]+ out[,"Ira"], type="l", lwd=2, col="black", ylab="IComb*", xlab="Time")
 
 #### Function for Parameter Combinations - From FAST ####
+start_time <- Sys.time()
+
+
 parms1 = fast_parameters(minimum = c(0,0,0,0,0,0,0,0,0,0,0), maximum = c(1,1,1,1,1,1,1,1,1,1,1), 
                          factor=11, names = c("ra", "rh" ,"ua", "uh", "betaAA", "betaAH", "betaHH", "betaHA",
                                               "phi", "tau", "theta"))
@@ -65,12 +74,12 @@ parms = fast_parameters(minimum = c(5.2^-1,0.6^-1,2883.5^-1,24^-1,0,0,0,0,0,0,0)
 
 init <- c(Sa=0.99, Ia=0.01, Ira=0, Sh=1, Ih=0, Irh=0)
 times <- c(0,9999,10000) #Specified the time intervals to be massive as dynamics do not matter
-times <- seq(0,10000, by = 100) 
+times <- seq(0,10000, by = 0.5) 
 
 output <- data.frame()
 
 for (i in 1:nrow(parms)) {
-  temp <- data.frame(matrix(NA, nrow = 1, ncol=5))
+  temp <- data.frame(matrix(NA, nrow = 1, ncol=7))
   parms1 = c(ra = parms$ra[i], rh = parms$rh[i] , ua = parms$ua[i], uh = parms$uh[i], betaAA = parms$betaAA[i],
              betaAH = parms$betaAH[i], betaHH = parms$betaHH[i], betaHA = parms$betaHA[i], phi=parms$phi[i],
              tau=parms$tau[i], theta=parms$theta[i])
@@ -82,6 +91,9 @@ for (i in 1:nrow(parms)) {
   if(temp[1,3] < 1e-10) {temp[1,3] <- 0}
   temp[1,4] <- temp[1,2] + temp[1,3]
   temp[1,5] <- temp[1,3]/temp[1,4]
+  temp[1,6] <- (signif(as.numeric(out[nrow(out),6], digits = 6) + signif(out[nrow(out)-1,6], digits = 6) + signif(out[nrow(out)-2,6]), digits = 6)/3)
+  if((signif(as.numeric(out[nrow(out),6], digits = 6) + signif(out[nrow(out)-1,6], digits = 6) + signif(out[nrow(out)-2,6]), digits = 6)/3) 
+     == signif(as.numeric(out[nrow(out),6]), digits = 6)) {temp[1,7] <- "YES"}
   print(temp[1,3])
   output <- rbind.data.frame(output, temp)
 }
@@ -101,6 +113,10 @@ df.equilibrium <- data.frame(parameter=rbind("ra", "rh" ,"ua", "uh", "betaAA", "
 
 p <- ggplot(df.equilibrium, aes(parameter, value))
 p + geom_bar(stat="identity", fill="grey23")
+
+end_time <- Sys.time()
+
+end_time - start_time
 
 #### Comb IRH and IH Measure Testing - Effect of Treatment ####
 
@@ -364,7 +380,7 @@ colnames(combparm1)[1:2] <- c("tau","phi")
 #Setting up the initial Conditions for the Model
 init <- c(Sa=0.99, Ia=0.01, Ira=0, Sh=1, Ih=0, Irh=0)
 times <- c(0,9999,10000)
-times1 <- seq(0, 10000, by = 100)
+times1 <- seq(0, 10000, by = 1)
 
 #Creating Dummy Data Frame for For Loop
 surfaceoutput1 <- data.frame()
@@ -509,6 +525,8 @@ plot_ly(surfaceoutput1, x= ~betaAA, y = ~ICOMBRat0005, type = "scatter")
 
 ###-----------------------------------------------
 
+start_time <- Sys.time()
+
 #Ranges for Parameter Testing
 betaAArange<- seq(0,0.5, by=0.01)
 betaHArange <- seq(0,0.00005, by=0.000001)
@@ -522,7 +540,7 @@ colnames(combparm1)[1:2] <- c("betaAA","betaHA")
 
 #Setting up the initial Conditions for the Model
 init <- c(Sa=0.99, Ia=0.01, Ira=0, Sh=1, Ih=0, Irh=0)
-times1 <- seq(0, 10000, by = 100)
+times1 <- seq(0, 10000, by = 10)
 
 #Creating Dummy Data Frame for For Loop
 surfaceoutput1 <- data.frame()
@@ -590,6 +608,9 @@ plot_ly(z = mat1, x = betaHArange, y = betaAArange) %>% add_surface(
     zaxis = list(title = '1-(W/W-out)', nticks = 8),
     aspectratio=list(x=0.8,y=0.8,z=0.8)))
 
+end_time <- Sys.time()
+
+end_time - start_time
 ###----------------------BETAAH-------------------------
 
 #Ranges for Parameter Testing
