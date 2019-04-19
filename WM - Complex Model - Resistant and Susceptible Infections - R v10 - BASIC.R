@@ -9,6 +9,7 @@ library("ggplot2")
 library("plotly")
 library("tidyr")
 library("nlmeODE")
+library("phaseR")
 
 #### Model Functions + Output ####
 amr <- function(time, state, parameters) {
@@ -193,14 +194,15 @@ plot_ly(output1, x= ~tau, y = ~InfHumans, type = "bar", name = "Sens Inf Humans"
 
 #### Curve Fitting for Treatment Analysis ####
 
+#Obtaining data for use in model fitting
+
 parmtau <- seq(0,0.5,by=0.01)
 
 init <- c(Sa=0.99, Ia=0.01, Ira=0, Sh=1, Ih=0, Irh=0)
 output1 <- data.frame()
 times <- seq(0, 200000, by = 100)
 
-#parms2 = c(ra = 52^-1, rh =  6^-1, ua = 28835^-1, uh = 240^-1, betaAA = 0.1, betaAH = 0.000001, betaHH = 0.000001, 
-#           betaHA = 0.00001, phi = 0.1, tau = parmtau[i], theta = 0.5)
+#These parameters are obtained from the FAST parameter analysis
 
 for (i in 1:length(parmtau)) {
   temp <- data.frame(matrix(NA, nrow = 1, ncol=5))
@@ -220,11 +222,12 @@ for (i in 1:length(parmtau)) {
 colnames(output1)[1:6] <- c("tau", "SuscHumans","InfHumans","ResInfHumans","ICombH","IResRat")
 output1$IResRat <- signif(output1$IResRat, digits = 3)
 
-
-
 write.csv(output1,"//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Mathematical Models/AMRfit.csv")
 
+parms = c(ra = 52^-1, rh =  6^-1, ua = 28835^-1, uh = 240^-1, betaAA = 0.1, betaAH = 0.000001, betaHH = 0.000001, 
+          betaHA = 0.00001, phi = 0.1, tau = 0.1, theta = 0.5)
 
+nullclines(amr, xlim=c(0,10000), ylim=c(0, 0.0001), parameters = parms, system = "one.dim" )
 
 plot_ly(output1, x= ~tau, y = ~ICombH, type = "scatter")
 
@@ -243,6 +246,8 @@ nlmeODE(amr,output1$InfHumans)
 
 plot(output1$tau, output1$ICombH)
 lines(range1,predict(fit1,data.frame(x=range1)))
+
+
 #### Testbed Parameter Space Testing ####
 
 #TEST
