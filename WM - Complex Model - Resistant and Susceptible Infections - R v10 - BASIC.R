@@ -8,7 +8,7 @@ library("sensitivity")
 library("ggplot2")
 library("plotly")
 library("tidyr")
-library("OneR")
+library("nlmeODE")
 
 #### Model Functions + Output ####
 amr <- function(time, state, parameters) {
@@ -32,7 +32,7 @@ rounding <- function(x) {
 #### Model Testbed - Basic Model Output ####
 
 init <- c(Sa=0.99, Ia=0.01, Ira=0.01, Sh=1, Ih=0, Irh=0)
-times1 <- seq(0,1000,by=1)
+times1 <- seq(0,1000000,by=10)
 
 #Need to Specify Model Parameters
 parms = c(ra = 52^-1, rh =  6^-1, ua = 28835^-1, uh = 240^-1, betaAA = 0.1, betaAH = 0.000001, betaHH = 0.000001, 
@@ -122,7 +122,7 @@ parmtau <- seq(0,0.5,by=0.01)
 
 init <- c(Sa=0.99, Ia=0.01, Ira=0, Sh=1, Ih=0, Irh=0)
 output1 <- data.frame()
-times <- seq(0, 100000, by = 100)
+times <- seq(0, 200000, by = 100)
 
 #parms2 = c(ra = 52^-1, rh =  6^-1, ua = 28835^-1, uh = 240^-1, betaAA = 0.1, betaAH = 0.000001, betaHH = 0.000001, 
 #           betaHA = 0.00001, phi = 0.1, tau = parmtau[i], theta = 0.5)
@@ -191,7 +191,58 @@ plot_ly(output1, x= ~tau, y = ~InfHumans, type = "bar", name = "Sens Inf Humans"
 
 #Have put 6 since that is where Tau is equal to 0.05
 
+#### Curve Fitting for Treatment Analysis ####
 
+parmtau <- seq(0,0.5,by=0.01)
+
+init <- c(Sa=0.99, Ia=0.01, Ira=0, Sh=1, Ih=0, Irh=0)
+output1 <- data.frame()
+times <- seq(0, 200000, by = 100)
+
+#parms2 = c(ra = 52^-1, rh =  6^-1, ua = 28835^-1, uh = 240^-1, betaAA = 0.1, betaAH = 0.000001, betaHH = 0.000001, 
+#           betaHA = 0.00001, phi = 0.1, tau = parmtau[i], theta = 0.5)
+
+for (i in 1:length(parmtau)) {
+  temp <- data.frame(matrix(NA, nrow = 1, ncol=5))
+  parms2 = c(ra = 52^-1, rh =  6^-1, ua = 28835^-1, uh = 240^-1, betaAA = 0.1, betaAH = 0.000001, betaHH = 0.000001, 
+             betaHA = 0.00001, phi = 0.1, tau = parmtau[i], theta = 0.5)
+  out <- ode(y = init, func = amr, times = times, parms = parms2)
+  temp[1,1] <- parmtau[i]
+  temp[1,2] <- rounding(out[nrow(out),5]) 
+  temp[1,3] <- rounding(out[nrow(out),6]) 
+  temp[1,4] <- rounding(out[nrow(out),7])
+  temp[1,5] <- temp[1,3] + temp[1,4]
+  temp[1,6] <- temp[1,4]/temp[1,5]
+  print(temp[1,3])
+  output1 <- rbind.data.frame(output1, temp)
+}
+
+colnames(output1)[1:6] <- c("tau", "SuscHumans","InfHumans","ResInfHumans","ICombH","IResRat")
+output1$IResRat <- signif(output1$IResRat, digits = 3)
+
+
+
+write.csv(output1,"//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Mathematical Models/AMRfit.csv")
+
+
+
+plot_ly(output1, x= ~tau, y = ~ICombH, type = "scatter")
+
+fit <- lm(output1$ICombH~poly(output1$tau,5,raw=TRUE))
+range1 <- seq(0,0.5,by=0.01)
+
+ggplot(output1, aes(x=tau, y=ICombH)) +
+  geom_point() + 
+  stat_smooth(method="nls", formula = y ~ SSasymp(x,Asym, R0, lrc), se = FALSE)
+
+fit1 <- nls(output1$ICombH ~ SSasymp(output1$tau, Asym, R0, lrc), data = output1)
+
+formula.nls(fit1)
+
+nlmeODE(amr,output1$InfHumans)
+
+plot(output1$tau, output1$ICombH)
+lines(range1,predict(fit1,data.frame(x=range1)))
 #### Testbed Parameter Space Testing ####
 
 #TEST
