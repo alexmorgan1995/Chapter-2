@@ -122,7 +122,7 @@ times <- seq(0, 200000, by = 100)
 
 for (i in 1:length(parmtau)) {
   temp <- data.frame(matrix(NA, nrow = 1, ncol=5))
-  parms2 = c(ra = 52^-1, rh =  6^-1, ua = 240^-1, uh = 28835^-1, betaAA = 0.09, betaAH = 0.000001, betaHH = 0.000001, 
+  parms2 = c(ra = 52^-1, rh =  6^-1, ua = 240^-1, uh = 28835^-1, betaAA = 0.1, betaAH = 0.000001, betaHH = 0.000001, 
              betaHA = 0.00001, phi = 0.1, tau = parmtau[i], theta = 0.5)
   out <- ode(y = init, func = amr, times = times, parms = parms2)
   temp[1,1] <- parmtau[i]
@@ -184,7 +184,7 @@ times <- seq(0, 200000, by = 100)
 for (i in 1:length(parmtau)) {
   temp <- data.frame(matrix(NA, nrow = 1, ncol=5))
   parms2 = c(ra = 52^-1, rh =  6^-1, ua = 240^-1, uh = 28835^-1, betaAA = 0.1, betaAH = 0.000001, betaHH = 0.000001, 
-             betaHA = 0.000007, phi = 0.1, tau = parmtau[i], theta = 0.5)
+             betaHA = 0.00001, phi = 0.1, tau = parmtau[i], theta = 0.5)
   out <- ode(y = init, func = amr, times = times, parms = parms2)
   temp[1,1] <- parmtau[i]
   temp[1,2] <- rounding(out[nrow(out),5]) 
@@ -216,17 +216,162 @@ ggplot(output1, aes(x=tau, y=IResRat)) %>%  + # tau is from the output1 datafram
   geom_point() + 
   stat_smooth(method="nls", formula = y ~ SSasymp(x,Asym, R0, lrc), se = FALSE)
 
-
 fit2 <- nls(output1$IResRat ~ SSasymp(output1$tau, Asym, R0, lrc), data = output1)
 summary(fit2)
 formula(fit1)
 
+nls(y~a*exp(b*x),start=list(a=13,b=0.1)) 
+tempoutput1$ICombH
+#Test
+fittest <- nls(tempoutput1$ICombH ~ yf + (y0-yf) * exp(-alpha*tempoutput1$tau), data = tempoutput1, start = list(y0 = tempoutput1$ICombH[[1]],
+                                                                                  yf = tempoutput1$ICombH[[51]]))  
+                 
+                
+fittest <- nls()
+summary(fittest)
+
+ggplot(tempoutput1, aes(x=tau, y=ICombH)) %>%  + # tau is from the output1 dataframe
+  geom_point() + 
+  stat_smooth(method="nls", formula = y ~ SSasymp(x,Asym, R0, lrc), se = FALSE)
+
+#### Sensitivity Analysis for Alpha Extractions ####
+
+#Parameters for the analysis - Tau removed
+parms = fast_parameters(minimum = c(5.2^-1,0.6^-1,24^-1,2883.5^-1,0,0,0,0,0,0), maximum = c(520^-1,60^-1,240^-1,288350^-1,1,0.00001,0.00001,0.0001,1,5), 
+                        factor=10, names = c("ra", "rh" ,"ua", "uh", "betaAA", "betaAH", "betaHH", "betaHA",
+                                             "phi", "theta"))
+
+parmtau <- seq(0,0.5,by=0.01)
+
+#Model Initial Conditions and Specifications
+init <- c(Sa=0.99, Ia=0.01, Ira=0, Sh=1, Ih=0, Irh=0)
+output1 <- data.frame()
+times <- seq(0, 200000, by = 100)
+
+output1 <- data.frame()
+errorparms1 <- data.frame(matrix(NA, nrow = 1, ncol=11))
+colnames(errorparms1)[1:11] <- c("ra", "rh" ,"ua", "uh", "betaAA", "betaAH", "betaHH", "betaHA",
+                            "phi", "tau", "theta")
 
 
+for (i in 1:10) {
+  temp2 <- data.frame(matrix(NA, nrow = 1, ncol=2))
+  errorparms <- data.frame(matrix(NA, nrow = 1, ncol = 11))
+  colnames(errorparms)[1:11] <- c("ra", "rh" ,"ua", "uh", "betaAA", "betaAH", "betaHH", "betaHA",
+                                   "phi", "tau", "theta")
+  tryCatch(expr = {
+    if (i==7) stop("This is an Error")
+    temp2[1,1] <- i
+    temp2[1,2] <- i
+  },
+  error = function(e){
+    message("**ERR at ", Sys.time(), "**")
+    test <- print(e)
+    temp2[1,1] <<- "Error"
+    temp2[1,2] <<- "Error"
+    errorparms <<- parms[1,]
+    return(list(temp2, errorparms))
+    })
+  output1 <- rbind.data.frame(output1, temp2)
+  errorparms1 <- rbind.data.frame(errorparms1, errorparms)
+}
 
-#plot(output1$tau, output1$ICombH)
-#lines(range1,predict(fit1,data.frame(x=range1)))
 
+#
+
+for (i in 1:nrow(parms)) {
+  tempoutput1 <- data.frame()
+  newtemp <- data.frame()
+  for (j in 1:length(parmtau)) {
+    temp <- data.frame(matrix(NA, nrow = 1, ncol=5))
+    parms2 = c(ra = parms$ra[i], rh =  parms$rh[i], ua = parms$ua[i], uh = parms$uh[i], betaAA = parms$betaAA[i], 
+               betaAH = parms$betaAH[i], betaHH = parms$betaHH[i], betaHA = parms$betaHA[i], phi = parms$phi[i], 
+               tau = parmtau[j], theta = parms$theta[i])
+    out <- ode(y = init, func = amr, times = times, parms = parms2)
+    temp[1,1] <- parmtau[j]
+    temp[1,2] <- rounding(out[nrow(out),5]) 
+    temp[1,3] <- rounding(out[nrow(out),6]) 
+    temp[1,4] <- rounding(out[nrow(out),7])
+    temp[1,5] <- temp[1,3] + temp[1,4]
+    temp[1,6] <- temp[1,4]/temp[1,5]
+    tempoutput1 <- rbind.data.frame(tempoutput1, temp)  
+  }
+  colnames(tempoutput1)[1:6] <- c("tau", "SuscHumans","InfHumans","ResInfHumans","ICombH","IResRat")
+  if(tempoutput1$ICombH[[1]] != 0 & tempoutput1$ICombH[[2]] & tempoutput1$ICombH[[3]] & tempoutput1$ICombH[[4]]) {
+    fit2 <- nls(tempoutput1$ICombH ~ SSasymp(tempoutput1$tau, Asym, R0, lrc), data = tempoutput1)
+    newtemp[1,1] <- (summary(fit2)$parameters[[2]]) - (summary(fit2)$parameters[[1]])
+    newtemp[1,2] <- exp(summary(fit2)$parameters[[3]])
+  }
+  else{
+    newtemp[1,1] <- "N/A"
+    newtemp[1,2] <- "N/A"
+  }
+  output1 <- rbind.data.frame(output1, newtemp)
+  print(newtemp[1,1])
+}
+
+colnames(output1)[1:2] <- c("Y0-Yf", "AlphaDecay")
+
+testparms <- parms[c(1:112),]
+
+dataframe.curve <- data.frame(output1=rbind("Y0-Yf", "AlphaDecay"), value=testparms)
+#### Sensitivity Analysis for YDiff ####
+
+start_time <- Sys.time()
+
+#Parameters for the analysis - Tau removed
+parms = fast_parameters(minimum = c(5.2^-1,0.6^-1,24^-1,2883.5^-1,0,0,0,0,0,0), maximum = c(520^-1,60^-1,240^-1,288350^-1,1,0.00001,0.00001,0.0001,1,5), 
+                        factor=10, names = c("ra", "rh" ,"ua", "uh", "betaAA", "betaAH", "betaHH", "betaHA",
+                                             "phi", "theta"))
+
+parmtau <- seq(0,0.5,by=0.01)
+
+#Model Initial Conditions and Specifications
+init <- c(Sa=0.99, Ia=0.01, Ira=0, Sh=1, Ih=0, Irh=0)
+output1 <- data.frame()
+times <- seq(0, 200000, by = 100)
+
+for (i in 1:nrow(parms)) {
+  tempoutput1 <- data.frame()
+  newtemp <- data.frame()
+  for (j in 1:length(parmtau)) {
+    temp <- data.frame(matrix(NA, nrow = 1, ncol=5))
+    parms2 = c(ra = parms$ra[i], rh =  parms$rh[i], ua = parms$ua[i], uh = parms$uh[i], betaAA = parms$betaAA[i], 
+               betaAH = parms$betaAH[i], betaHH = parms$betaHH[i], betaHA = parms$betaHA[i], phi = parms$phi[i], 
+               tau = parmtau[j], theta = parms$theta[i])
+    out <- ode(y = init, func = amr, times = times, parms = parms2)
+    temp[1,1] <- parmtau[j]
+    temp[1,2] <- rounding(out[nrow(out),5]) 
+    temp[1,3] <- rounding(out[nrow(out),6]) 
+    temp[1,4] <- rounding(out[nrow(out),7])
+    temp[1,5] <- temp[1,3] + temp[1,4]
+    temp[1,6] <- temp[1,4]/temp[1,5]
+    tempoutput1 <- rbind.data.frame(tempoutput1, temp)  
+  }
+  colnames(tempoutput1)[1:6] <- c("tau", "SuscHumans","InfHumans","ResInfHumans","ICombH","IResRat")
+  newtemp[1,1] <- tempoutput1$ICombH[tempoutput1$tau == 0]
+  newtemp[1,2] <- tempoutput1$ICombH[tempoutput1$tau == 0.5]
+  newtemp[1,3] <- newtemp[1,1] - newtemp[1,2]
+  output1 <- rbind.data.frame(output1, newtemp)
+  print(i)
+  print(newtemp[1,3])
+}
+
+colnames(output1)[1:3] <- c("ICombH0", "ICombH05", "YDiff")
+
+sensit1 <- output1$YDiff #Creating Variable for the output variable of interest
+
+end_time <- Sys.time()
+end_time - start_time
+
+sens<-sensitivity(x=sensit1, numberf=10, make.plot=T, names = c("ra", "rh" ,"ua", "uh", "betaAA", "betaAH", "betaHH", "betaHA",
+                                                               "phi","theta"))
+
+df.equilibrium <- data.frame(parameter=rbind("ra", "rh" ,"ua", "uh", "betaAA", "betaAH", "betaHH", "betaHA",
+                                             "phi", "theta"), value=sens)
+
+p1 <- ggplot(df.equilibrium, aes(parameter, value))
+p1 + geom_bar(stat="identity", fill="grey23")
 
 #### Testbed Parameter Space Testing ####
 
