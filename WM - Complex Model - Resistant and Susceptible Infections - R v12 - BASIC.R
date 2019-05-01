@@ -61,19 +61,19 @@ print(Icomb)
 #### Function for Parameter Combinations - From FAST ####
 start_time <- Sys.time()
 
-parms = fast_parameters(minimum = c(5.2^-1,0.6^-1,24^-1,2883.5^-1,0,0,0,0,0,0,0), maximum = c(520^-1,60^-1,240^-1,288350^-1,1,0.00001,0.00001,0.0001,1,1,5), 
+parms = fast_parameters(minimum = c(5.2^-1,0.6^-1,24^-1,2883.5^-1,0,0,0,0,0,0,0), maximum = c(520^-1,60^-1,2400^-1,288350^-1,1,0.00001,0,0.0001,1,1,5), 
                         factor=11, names = c("ra", "rh" ,"ua", "uh", "betaAA", "betaAH", "betaHH", "betaHA",
                                              "phi", "tau", "theta"))
 
 #### Creating Model Output for Parameter Combinations from FAST Parameters #### 
 
 init <- c(Sa=0.99, Ia=0.01, Ira=0, Sh=1, Ih=0, Irh=0)
-times <- seq(0,100000, by = 1000) 
+times <- seq(0,100000, by = 100) 
 
 output <- data.frame()
 
 for (i in 1:nrow(parms)) {
-  temp <- data.frame(matrix(NA, nrow = 1, ncol=7))
+  temp <- data.frame(matrix(NA, nrow = 1, ncol=8))
   parms1 = c(ra = parms$ra[i], rh = parms$rh[i] , ua = parms$ua[i], uh = parms$uh[i], betaAA = parms$betaAA[i],
              betaAH = parms$betaAH[i], betaHH = parms$betaHH[i], betaHA = parms$betaHA[i], phi=parms$phi[i],
              tau=parms$tau[i], theta=parms$theta[i])
@@ -85,17 +85,21 @@ for (i in 1:nrow(parms)) {
   temp[1,5] <- temp[1,3]/temp[1,4]
   temp[1,6] <- signif(((rounding(out[nrow(out),6]) + rounding(out[nrow(out)-1,6]) + rounding(out[nrow(out)-2,6]))/3), digits = 6)
   if(temp[1,6] == temp[1,2]) {temp[1,7] <- "YES"}
+  temp[1,8] <- rounding(out[nrow(out),3]) + rounding(out[nrow(out),4]) 
   print(temp[1,3])
   output <- rbind.data.frame(output, temp)
 }
 
-colnames(output)[1:5] <- c("SuscHumans","InfHumans","ResInfHumans","ICombH","IResRat")
+colnames(output)[1:8] <- c("SuscHumans","InfHumans","ResInfHumans","ICombH","IResRat", "ValueatEqui","Equi?","ICombA")
 
-test <- output[complete.cases(output),] # to get rid of NA found in the dataframe - make it analysable int he sensitivity analysis
+end_time <- Sys.time()
+end_time - start_time
+
 
 #### Sensitivity Analysis ####
+#For iCombH
 
-sensit <- test$ICombH #Creating Variable for the output variable of interest
+sensit <- output$ICombH #Creating Variable for the output variable of interest
 sens<-sensitivity(x=sensit, numberf=11, make.plot=T, names = c("ra", "rh" ,"ua", "uh", "betaAA", "betaAH", "betaHH", "betaHA",
                                                                "phi", "tau", "theta"))
 
@@ -105,14 +109,34 @@ df.equilibrium <- data.frame(parameter=rbind("ra", "rh" ,"ua", "uh", "betaAA", "
 p <- ggplot(df.equilibrium, aes(parameter, value))
 p + geom_bar(stat="identity", fill="grey23")
 
-end_time <- Sys.time()
+#For ResRat
 
-end_time - start_time
+test <- output[complete.cases(output),] # to get rid of NA found in the dataframe - make it analysable int he sensitivity analysis
+
+sensit1 <- test$IResRat #Creating Variable for the output variable of interest
+sens1 <-sensitivity(x=sensit1, numberf=11, make.plot=T, names = c("ra", "rh" ,"ua", "uh", "betaAA", "betaAH", "betaHH", "betaHA",
+                                                               "phi", "tau", "theta"))
+
+df.equilibrium1 <- data.frame(parameter=rbind("ra", "rh" ,"ua", "uh", "betaAA", "betaAH", "betaHH", "betaHA",
+                                             "phi","tau", "theta"), value=sens1)
+
+p <- ggplot(df.equilibrium1, aes(parameter, value))
+p + geom_bar(stat="identity", fill="grey23")
+
+#Combined Bar Plot
+plot_ly(df.equilibrium, x= ~parameter, y= ~value, type = "bar", name = "parameter") %>% 
+  add_trace(data = df.equilibrium1, y = ~value, name = "parameter") %>%
+  layout(yaxis = list(title = 'Partial Variance'),
+         xaxis = list(title = "Parameters", ticktext = c("beta", "beta", "beta", "beta", "beta", "beta", "beta", 
+                                "beta", "beta", "beta", "beta")),
+         legend = list(title = list("Outcome Measure")), showlegend = T,
+         barmode = 'group')
 
 #### Comb IRH and IH Measure Testing - Effect of Treatment ####
 
 #Testing for the Effect of Changing Treatment on the Combined Measure
-
+6^-1
+240^-1
 #parmtau <- seq(0,0.5,by=0.03)
 parmtau <- seq(0,0.5,by=0.01)
 
@@ -122,7 +146,7 @@ times <- seq(0, 200000, by = 100)
 
 for (i in 1:length(parmtau)) {
   temp <- data.frame(matrix(NA, nrow = 1, ncol=5))
-  parms2 = c(ra = 52^-1, rh =  6^-1, ua = 240^-1, uh = 28835^-1, betaAA = 0.1, betaAH = 0.000001, betaHH = 0.000001, 
+  parms2 = c(ra = 52^-1, rh =  6^-1, ua = 240^-1, uh = 28835^-1, betaAA = 0.15, betaAH = 0.000001, betaHH = 0.000001, 
              betaHA = 0.00001, phi = 0.1, tau = parmtau[i], theta = 0.5)
   out <- ode(y = init, func = amr, times = times, parms = parms2)
   temp[1,1] <- parmtau[i]
@@ -136,7 +160,10 @@ for (i in 1:length(parmtau)) {
 }
 
 colnames(output1)[1:6] <- c("tau", "SuscHumans","InfHumans","ResInfHumans","ICombH","IResRat")
+icombrat <- output1$ICombH[output1$tau == 0.5]/output1$ICombH[output1$tau == 0]
 output1$IResRat <- signif(output1$IResRat, digits = 3)
+
+plot_ly(output1, x= ~tau, y = ~IResRat, type = "scatter")
 
 #p10 <- plot_ly(output1, x= ~tau, y = ~InfHumans, type = "bar", name = "Sens Inf Humans") %>%
 #  add_trace(y= ~ResInfHumans, name = "Res Inf Humans") %>% 
@@ -155,14 +182,14 @@ plot_ly(output1, x= ~tau, y = ~InfHumans, type = "bar", name = "Sens Inf Humans"
          legend = list(orientation = "v", x = 1.0, y=0.5), showlegend = T,
          barmode = "stack",
          annotations = list(
-           list(x = 0.45, y = 1.82e-05, text = "Baseline Level of FB Disease", yanchor = "bottom",
+           list(x = 0.45, y = 1.6e-05, text = "Baseline Level of FB Disease", yanchor = "bottom",
                 showarrow = FALSE, xshift= -55, yshift = 3, font = list(size = 15)),
            list(x = 0.45, y = output1$ICombH[11], text = "New Level of FB Disease", yanchor = "bottom",
                 showarrow = FALSE, xshift= -55, yshift = 3, font = list(size = 15, color = "red")),
-           list(ax = 0.1, ay = 1.9e-05, x = 0.1, y = output1$ICombH[11],
+           list(ax = 0.1, ay = 1.69e-05, x = 0.1, y = output1$ICombH[11],
                 axref = "x", ayref = "y", xref = "x", yref = "y", showarrow= TRUE, arrowhead=1, 
                 arrowsize = 1.2, arrowwidth=2.5, arrowcolor= "red"))) %>%
-  add_segments(x=-0.01, xend = 0.500001, y=1.82e-05, yend = 1.82e-05, line = list(color = "black", dash = "dot", width = 2),
+  add_segments(x=-0.01, xend = 0.500001, y=1.6e-05, yend = 1.6e-05, line = list(color = "black", dash = "dot", width = 2),
                showlegend = FALSE) %>%
   add_segments(x=-0.01, xend = 0.500001, y=output1$ICombH[11], yend = output1$ICombH[11], 
                line = list(color = "red", dash = "dot", width = 3), showlegend = FALSE)
@@ -216,12 +243,15 @@ ggplot(output1, aes(x=tau, y=IResRat)) %>%  + # tau is from the output1 datafram
   geom_point() + 
   stat_smooth(method="nls", formula = y ~ SSasymp(x,Asym, R0, lrc), se = FALSE)
 
-fit2 <- nls(output1$IResRat ~ SSasymp(output1$tau, Asym, R0, lrc), data = output1)
+fit2 <- nls(tempoutput1$IResRat ~ SSasymp(tempoutput1$tau, Asym, R0, lrc), data = output1)
 summary(fit2)
-formula(fit1)
+formula(fit2)
 
 nls(y~a*exp(b*x),start=list(a=13,b=0.1)) 
 tempoutput1$ICombH
+
+
+
 #Test
 fittest <- nls(tempoutput1$ICombH ~ yf + (y0-yf) * exp(-alpha*tempoutput1$tau), data = tempoutput1, start = list(y0 = tempoutput1$ICombH[[1]],
                                                                                   yf = tempoutput1$ICombH[[51]]))  
@@ -267,7 +297,7 @@ for (i in 1:10) {
 start_time <- Sys.time()
 
 #Parameters for the analysis - Tau removed
-parms = fast_parameters(minimum = c(5.2^-1,0.6^-1,24^-1,2883.5^-1,0,0,0,0,0,0), maximum = c(520^-1,60^-1,240^-1,288350^-1,1,0.00001,0.00001,0.0001,1,5), 
+parms = fast_parameters(minimum = c(5.2^-1,0.6^-1,24^-1,2883.5^-1,0,0,0,0,0,0), maximum = c(520^-1,60^-1,2400^-1,288350^-1,1,0.00001,0.00001,0.0001,1,5), 
                         factor=10, names = c("ra", "rh" ,"ua", "uh", "betaAA", "betaAH", "betaHH", "betaHA",
                                              "phi", "theta"))
 parmtau <- seq(0,0.5,by=0.01)
@@ -297,20 +327,23 @@ for (i in 1:nrow(parms)) {
   colnames(tempoutput1)[1:6] <- c("tau", "SuscHumans","InfHumans","ResInfHumans","ICombH","IResRat")
   newtemp[1,1] <- tempoutput1$ICombH[tempoutput1$tau == 0]
   newtemp[1,2] <- tempoutput1$ICombH[tempoutput1$tau == 0.5]
-  newtemp[1,3] <- newtemp[1,1] - newtemp[1,2]
+  newtemp[1,3] <- tempoutput1$IResRat[tempoutput1$tau == 0]
+  newtemp[1,4] <- tempoutput1$IResRat[tempoutput1$tau == 0.5]
+  newtemp[1,5] <- newtemp[1,1] - newtemp[1,2]
   output1 <- rbind.data.frame(output1, newtemp)
   print(i)
   print(newtemp[1,3])
+  print()
 }
 
-colnames(output1)[1:3] <- c("ICombH0", "ICombH05", "YDiff")
+colnames(output1)[1:5] <- c("ICombH0", "ICombH05","IResRatH0", "IResRat05", "YDiff")
 
 run0 <- output1  
 
 end_time <- Sys.time()
 time1 <- end_time - start_time
 
-#Alpha For Loop
+#Alpha For Loop - ICombH
 
 start_time <- Sys.time()
 
@@ -324,7 +357,6 @@ colnames(errordat1)[1] <- "data"
 errorparms1 <- data.frame(matrix(NA, nrow = 0, ncol=10))
 colnames(errorparms1)[1:10] <- c("ra", "rh" ,"ua", "uh", "betaAA", "betaAH", "betaHH", "betaHA",
                                  "phi", "theta")
-
 for (i in 1:nrow(parms)) {
   tempoutput1 <- data.frame() #Data.frame for IHComb and Tau values 
   newtemp <- data.frame(matrix(NA, nrow = 1, ncol=2)) #Alpha and Ydiff 
@@ -372,28 +404,169 @@ run1 <- output1
 
 colnames(run1)[1:2] <- c("Y0-Yf", "AlphaDecay")
 
+run1new <- run1
+run1new[run1new == "Error"] <- 0 
+
+squid <- readLines("//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/squidward.txt")
+print(squid)
+
+end_time <- Sys.time()
+time2 <- end_time - start_time
+
+#Alpha For Loop - For Res Ratio
+
+start_time <- Sys.time()
+
+parmtau <- seq(0,0.5,by=0.01)
+init <- c(Sa=0.99, Ia=0.01, Ira=0, Sh=1, Ih=0, Irh=0)
+times <- seq(0, 200000, by = 100)
+
+output1 <- data.frame()
+errordat1 <- data.frame(matrix(NA, nrow = 0, ncol=1))
+colnames(errordat1)[1] <- "data"
+errorparms1 <- data.frame(matrix(NA, nrow = 0, ncol=10))
+colnames(errorparms1)[1:10] <- c("ra", "rh" ,"ua", "uh", "betaAA", "betaAH", "betaHH", "betaHA",
+                                 "phi", "theta")
+
+for (i in 1:nrow(parms)) {
+  tempoutput1 <- data.frame() #Data.frame for IHComb and Tau values 
+  newtemp <- data.frame(matrix(NA, nrow = 1, ncol=2)) #Alpha and Ydiff 
+  errordat <- data.frame(matrix(NA, nrow = 1, ncol=1)) # Error Messages
+  colnames(errordat)[1] <- "data"
+  errorparms <- data.frame(matrix(NA, nrow = 1, ncol = 10)) #Faulty Parameters
+  colnames(errorparms)[1:10] <- c("ra", "rh" ,"ua", "uh", "betaAA", "betaAH", "betaHH", "betaHA",
+                                  "phi","theta")
+  for (j in 1:length(parmtau)) {
+    temp <- data.frame(matrix(NA, nrow = 1, ncol=5))
+    parms2 = c(ra = parms$ra[i], rh =  parms$rh[i], ua = parms$ua[i], uh = parms$uh[i], betaAA = parms$betaAA[i], 
+               betaAH = parms$betaAH[i], betaHH = parms$betaHH[i], betaHA = parms$betaHA[i], phi = parms$phi[i], 
+               tau = parmtau[j], theta = parms$theta[i])
+    out <- ode(y = init, func = amr, times = times, parms = parms2)
+    temp[1,1] <- parmtau[j]
+    temp[1,2] <- rounding(out[nrow(out),5]) 
+    temp[1,3] <- rounding(out[nrow(out),6]) 
+    temp[1,4] <- rounding(out[nrow(out),7])
+    temp[1,5] <- temp[1,3] + temp[1,4]
+    temp[1,6] <- temp[1,4]/temp[1,5]
+    tempoutput1 <- rbind.data.frame(tempoutput1, temp)  
+  }
+  colnames(tempoutput1)[1:6] <- c("tau", "SuscHumans","InfHumans","ResInfHumans","ICombH","IResRat")
+  tryCatch(expr = {
+    fit2 <- nls(tempoutput1$IResRat ~ SSasymp(tempoutput1$tau, Asym, R0, lrc), data = tempoutput1)
+    newtemp[1,1] <- (summary(fit2)$parameters[[1]])
+    newtemp[1,2] <- exp(summary(fit2)$parameters[[3]])
+    print(newtemp)
+  },
+  error = function(e){
+    message("**ERR at ", Sys.time(), "**")
+    newtemp[1,1] <<- "Error"
+    newtemp[1,2] <<- "Error"
+    errordat <<- e[[1]]
+    errorparms[1,] <<- parms[i,]
+    return(list(newtemp, errorparms, errordat, errorparms))
+  })
+  errordat1 <- rbind.data.frame(errordat1, errordat)
+  colnames(errordat1)[1] <- "data"
+  output1 <- rbind.data.frame(output1, newtemp)
+  errorparms1 <- rbind.data.frame(errorparms1, errorparms)
+}
+
+run2 <- output1
+colnames(run2new)[1:2] <- c("Yf", "AlphaDecay")
+
+run2new <- run2
+run2new[run2new == "Error"] <- 0 
 
 end_time <- Sys.time()
 time2 <- end_time - start_time
 
 #### Sensitivity Analysis for YDiff and Alpha Parameters ####
 
-sensit1 <- run0$YDiff
-sensit3 <- as.numeric(run1$AlphaDecay[run1$AlphaDecay != "Error"])
-                              
-sens<-sensitivity(x=sensit1, numberf=10, make.plot=T, names = c("ra", "rh" ,"ua", "uh", "betaAA", "betaAH", "betaHH", "betaHA",
-                                                               "phi","theta"))
-sens1<-sensitivity(x=sensit3, numberf=10, make.plot=T, names = c("ra", "rh" ,"ua", "uh", "betaAA", "betaAH", "betaHH", "betaHA",
+sensit7 <- as.numeric(run1$AlphaDecay[run1$AlphaDecay != "Error"])
+sensit8 <- as.numeric(run1$YDiff[run1$YDiff != "Error"])
+
+sens<-sensitivity(x=sensit7, numberf=10, make.plot=T, names = c("ra", "rh" ,"ua", "uh", "betaAA", "betaAH", "betaHH", "betaHA",
                                                                 "phi","theta"))
+sens1<-sensitivity(x=sensit8, numberf=10, make.plot=T, names = c("ra", "rh" ,"ua", "uh", "betaAA", "betaAH", "betaHH", "betaHA",
+                                                                 "phi","theta"))
 
 df.equilibrium <- data.frame(parameter=rbind("ra", "rh" ,"ua", "uh", "betaAA", "betaAH", "betaHH", "betaHA",
                                              "phi", "theta"), value=sens)
 df.equilibrium1 <- data.frame(parameter=rbind("ra", "rh" ,"ua", "uh", "betaAA", "betaAH", "betaHH", "betaHA",
-                                             "phi", "theta"), value=sens1)
+                                              "phi", "theta"), value=sens1)
 
 p1 <- ggplot(df.equilibrium, aes(parameter, value))
 p1 + geom_bar(stat="identity", fill="grey23")
 
+p2 <- ggplot(df.equilibrium1, aes(parameter, value))
+p2 + geom_bar(stat="identity", fill="grey23")
+
+#Analysis for ResRat
+
+colnames(run2)[1:2] <- c("YDiff", "AlphaDecay")
+sensit9 <- as.numeric(run2$AlphaDecay[run2$AlphaDecay != "Error"])
+sensit10 <- as.numeric(run2$YDiff[run2$YDiff != "Error"])
+
+sens2<-sensitivity(x=sensit9, numberf=10, make.plot=T, names = c("ra", "rh" ,"ua", "uh", "betaAA", "betaAH", "betaHH", "betaHA",
+                                                                 "phi","theta"))
+sens3<-sensitivity(x=sensit10, numberf=10, make.plot=T, names = c("ra", "rh" ,"ua", "uh", "betaAA", "betaAH", "betaHH", "betaHA",
+                                                                  "phi","theta"))
+
+df.equilibrium <- data.frame(parameter=rbind("ra", "rh" ,"ua", "uh", "betaAA", "betaAH", "betaHH", "betaHA",
+                                             "phi", "theta"), value=sens2)
+df.equilibrium1 <- data.frame(parameter=rbind("ra", "rh" ,"ua", "uh", "betaAA", "betaAH", "betaHH", "betaHA",
+                                              "phi", "theta"), value=sens3)
+
+p1 <- ggplot(df.equilibrium, aes(parameter, value))
+p1 + geom_bar(stat="identity", fill="grey23")
+p2 <- ggplot(df.equilibrium1, aes(parameter, value))
+p2 + geom_bar(stat="identity", fill="grey23")
+
+#### Sensitivity Analysis for YDiff and Alpha Parameters - Replace Errors with 0 ####
+
+#Analysis for ICombH
+run1new <- run1
+run1new[run1new == "Error"] <- 0 
+
+colnames(run1new)[colnames(run1new)=="Y0-Yf"] <- "YDiff"
+
+sensit7 <- as.numeric(run1new$AlphaDecay)
+sensit8 <- as.numeric(run1new$YDiff)
+
+sens<-sensitivity(x=sensit7, numberf=10, make.plot=T, names = c("ra", "rh" ,"ua", "uh", "betaAA", "betaAH", "betaHH", "betaHA",
+                                                                "phi","theta"))
+sens1<-sensitivity(x=sensit8, numberf=10, make.plot=T, names = c("ra", "rh" ,"ua", "uh", "betaAA", "betaAH", "betaHH", "betaHA",
+                                                                 "phi","theta"))
+
+df.equilibrium <- data.frame(parameter=rbind("ra", "rh" ,"ua", "uh", "betaAA", "betaAH", "betaHH", "betaHA",
+                                             "phi", "theta"), value=sens)
+df.equilibrium1 <- data.frame(parameter=rbind("ra", "rh" ,"ua", "uh", "betaAA", "betaAH", "betaHH", "betaHA",
+                                              "phi", "theta"), value=sens1)
+
+p1 <- ggplot(df.equilibrium, aes(parameter, value))
+p1 + geom_bar(stat="identity", fill="grey23")
+
+p2 <- ggplot(df.equilibrium1, aes(parameter, value))
+p2 + geom_bar(stat="identity", fill="grey23")
+
+#Analysis for ResRat
+run2new[run2new == "Error"] <- 0 
+
+sensit9 <- as.numeric(run2new$AlphaDecay)
+sensit10 <- as.numeric(run2new$Yf)
+
+sens2<-sensitivity(x=sensit9, numberf=10, make.plot=T, names = c("ra", "rh" ,"ua", "uh", "betaAA", "betaAH", "betaHH", "betaHA",
+                                                                "phi","theta"))
+sens3<-sensitivity(x=sensit10, numberf=10, make.plot=T, names = c("ra", "rh" ,"ua", "uh", "betaAA", "betaAH", "betaHH", "betaHA",
+                                                                 "phi","theta"))
+
+df.equilibrium <- data.frame(parameter=rbind("ra", "rh" ,"ua", "uh", "betaAA", "betaAH", "betaHH", "betaHA",
+                                             "phi", "theta"), value=sens2)
+df.equilibrium1 <- data.frame(parameter=rbind("ra", "rh" ,"ua", "uh", "betaAA", "betaAH", "betaHH", "betaHA",
+                                              "phi", "theta"), value=sens3)
+
+p1 <- ggplot(df.equilibrium, aes(parameter, value))
+p1 + geom_bar(stat="identity", fill="grey23")
 p2 <- ggplot(df.equilibrium1, aes(parameter, value))
 p2 + geom_bar(stat="identity", fill="grey23")
 
