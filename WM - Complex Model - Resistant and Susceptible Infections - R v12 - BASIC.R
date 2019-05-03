@@ -135,8 +135,7 @@ plot_ly(df.equilibrium, x= ~parameter, y= ~value, type = "bar", name = "paramete
 #### Comb IRH and IH Measure Testing - Effect of Treatment ####
 
 #Testing for the Effect of Changing Treatment on the Combined Measure
-6^-1
-240^-1
+
 #parmtau <- seq(0,0.5,by=0.03)
 parmtau <- seq(0,0.5,by=0.01)
 
@@ -146,7 +145,7 @@ times <- seq(0, 200000, by = 100)
 
 for (i in 1:length(parmtau)) {
   temp <- data.frame(matrix(NA, nrow = 1, ncol=5))
-  parms2 = c(ra = 52^-1, rh =  6^-1, ua = 240^-1, uh = 28835^-1, betaAA = 0.15, betaAH = 0.000001, betaHH = 0.000001, 
+  parms2 = c(ra = 52^-1, rh =  (6^-1), ua = 240^-1, uh = 28835^-1, betaAA = 0.1, betaAH = 0.000001, betaHH = 0.000001, 
              betaHA = 0.00001, phi = 0.1, tau = parmtau[i], theta = 0.5)
   out <- ode(y = init, func = amr, times = times, parms = parms2)
   temp[1,1] <- parmtau[i]
@@ -164,6 +163,88 @@ icombrat <- output1$ICombH[output1$tau == 0.5]/output1$ICombH[output1$tau == 0]
 output1$IResRat <- signif(output1$IResRat, digits = 3)
 
 plot_ly(output1, x= ~tau, y = ~IResRat, type = "scatter")
+
+#p10 <- plot_ly(output1, x= ~tau, y = ~InfHumans, type = "bar", name = "Sens Inf Humans") %>%
+#  add_trace(y= ~ResInfHumans, name = "Res Inf Humans") %>% 
+#  layout(yaxis = list(title = "Proportion Infected", exponentformat= "E", range = c(0,5E-5), showline = TRUE),
+#         xaxis = list(title = "Tau (Antibiotic Usage)"),
+#         legend = list(orientation = "v", x = 1.0, y=0.5), showlegend = T,
+#         barmode = "stack", 
+#         annotations = list(x = ~tau, y = ~ICombH, text = ~IResRat, yanchor = "bottom", showarrow = FALSE, textangle = 310,
+#                            xshift =3))
+#p10
+
+plot_ly(output1, x= ~tau, y = ~InfHumans, type = "bar", name = "Sens Inf Humans") %>%
+  add_trace(y= ~ResInfHumans, name = "Res Inf Humans") %>% 
+  layout(yaxis = list(title = "Proportion Infected", exponentformat= "E", range = c(0,5E-5), showline = TRUE),
+         xaxis = list(title = "Tau (Antibiotic Usage)", range = c(-0.01,0.5)),
+         legend = list(orientation = "v", x = 1.0, y=0.5), showlegend = T,
+         barmode = "stack",
+         annotations = list(
+           list(x = 0.45, y = 1.6e-05, text = "Baseline Level of FB Disease", yanchor = "bottom",
+                showarrow = FALSE, xshift= -55, yshift = 3, font = list(size = 15)),
+           list(x = 0.45, y = output1$ICombH[11], text = "New Level of FB Disease", yanchor = "bottom",
+                showarrow = FALSE, xshift= -55, yshift = 3, font = list(size = 15, color = "red")),
+           list(ax = 0.1, ay = 1.69e-05, x = 0.1, y = output1$ICombH[11],
+                axref = "x", ayref = "y", xref = "x", yref = "y", showarrow= TRUE, arrowhead=1, 
+                arrowsize = 1.2, arrowwidth=2.5, arrowcolor= "red"))) %>%
+  add_segments(x=-0.01, xend = 0.500001, y=1.6e-05, yend = 1.6e-05, line = list(color = "black", dash = "dot", width = 2),
+               showlegend = FALSE) %>%
+  add_segments(x=-0.01, xend = 0.500001, y=output1$ICombH[11], yend = output1$ICombH[11], 
+               line = list(color = "red", dash = "dot", width = 3), showlegend = FALSE)
+
+#Have put 6 since that is where Tau is equal to 0.05
+
+#### Comb IRH and IH Measure Testing - Effect of Treatment - More Elegant Combinatitory Plot ####
+
+#Testing for the Effect of Changing Treatment on the Combined Measure
+#parmtau <- seq(0,0.5,by=0.03)
+parmtau <- seq(0,0.5,by=0.01)
+
+init <- c(Sa=0.99, Ia=0.01, Ira=0, Sh=1, Ih=0, Irh=0)
+output1 <- data.frame()
+output2 <- data.frame()
+output3 <- data.frame()
+output4 <- data.frame()
+
+times <- seq(0, 200000, by = 100)
+
+parmvals <- c(0.9,0.8,0.7,0.6)
+
+for (j in 1:length(parmvals)) {
+  tempout <- data.frame()
+  for (i in 1:length(parmtau)) {
+    temp <- data.frame(matrix(NA, nrow = 1, ncol=7))
+    parms2 = c(ra = 52^-1, rh =  (6^-1), ua = 240^-1, uh = 28835^-1, betaAA = parmvals[j], betaAH = 0.000001, betaHH = 0.000001, 
+               betaHA = 0.00001, phi = 0.1, tau = parmtau[i], theta = 0.5)
+    out <- ode(y = init, func = amr, times = times, parms = parms2)
+    temp[1,1] <- parmtau[i]
+    temp[1,2] <- parmvals[j]
+    temp[1,3] <- rounding(out[nrow(out),5]) 
+    temp[1,4] <- rounding(out[nrow(out),6]) 
+    temp[1,5] <- rounding(out[nrow(out),7])
+    temp[1,6] <- temp[1,3] + temp[1,4]
+    temp[1,7] <- temp[1,4]/temp[1,5]
+    print(temp[1,3])  
+    tempout <- rbind.data.frame(tempout, temp)
+  }
+  output1 <- rbind.data.frame(output1, tempout[tempout[,1]==0.9])
+  output2 <- rbind.data.frame(output2, tempout[tempout[,1]==0.9])
+  output3 <- rbind.data.frame(output3, tempout[tempout[,1]==0.9])
+  output4 <- rbind.data.frame(output4, tempout[tempout[,1]==0.9])
+}
+
+colnames(output1)[1:6] <- c("tau", "SuscHumans","InfHumans","ResInfHumans","ICombH","IResRat")
+icombrat <- output1$ICombH[output1$tau == 0.5]/output1$ICombH[output1$tau == 0]
+output1$IResRat <- signif(output1$IResRat, digits = 3)
+
+plot(output1$tau, output1$ICombH, type = "l", lwd = 3)
+lines()
+
+plot(output1$tau, output1$IResRat, type = "l", lwd = 3)
+lines()
+
+
 
 #p10 <- plot_ly(output1, x= ~tau, y = ~InfHumans, type = "bar", name = "Sens Inf Humans") %>%
 #  add_trace(y= ~ResInfHumans, name = "Res Inf Humans") %>% 
@@ -595,7 +676,7 @@ surfaceoutput1 <- data.frame()
 #For Loop to Create Output for the Parameter Combinations
 for (i in 1:nrow(combparm1)) {
   temp <- data.frame(matrix(NA, nrow = 1, ncol=5))
-  parms1 = c(ra = 52^-1, rh =  6^-1, ua = 240^-1, uh = 28835^-1, betaAA = 0.05, betaAH = 0.000001, betaHH = 0.000001, 
+  parms1 = c(ra = 52^-1, rh =  (6^-1)*1.3, ua = 240^-1, uh = 28835^-1, betaAA = 0.07, betaAH = 0.000001, betaHH = 0.000001, 
              betaHA = combparm1[i,2], phi = 0.1, tau = combparm1[i,1], theta = 0.5)
   out <- ode(y = init, func = amr, times = times, parms = parms1)
   print(out[nrow(out),7])
@@ -738,8 +819,8 @@ start_time <- Sys.time()
 
 #TEST
 #Ranges for Parameter Testing
-taurange <- seq(0.001,0.5, by=0.005)
-phirange <- seq(0.001,0.5, by=0.005)
+taurange <- seq(0.001,0.5, by=0.001)
+phirange <- seq(0.001,0.5, by=0.001)
 
 #Creating Possible Combinations of Parameters
 combparm1 <- NULL
@@ -758,7 +839,7 @@ surfaceoutput1 <- data.frame()
 for (i in 1:nrow(combparm1)) {
   temp <- data.frame(matrix(NA, nrow = 1, ncol=7))
   parms1 = c(ra = 52^-1, rh =  6^-1, ua = 28835^-1, uh = 240^-1, betaAA = 0.1, betaAH = 0.000001, betaHH = 0.000001, 
-             betaHA = 0.00001, phi = combparm1[i,2], tau = combparm1[i,1], theta = 0.5)
+             betaHA = 0.00001, phi = combparm1[i,2], tau = combparm1[i,1], theta = 0.8)
   out <- ode(y = init, func = amr, times = times1, parms = parms1)
   print(out[nrow(out),7])
   temp[1,1] <- combparm1[i,1]
@@ -830,6 +911,10 @@ ggplot(surfaceoutput2, aes(logphitau, ResRatio)) + geom_line(size=1.5)
 ggplot(surfaceoutput2, aes(logphitau, IHCOMB)) + geom_point(size=1)
 plot(surfaceoutput2$logphitau, surfaceoutput2$ResRatio)
 
+end_time <- Sys.time()
+
+end_time - start_time
+
 plot_ly(surfaceoutput2, x= ~logphitau, y = ~InfSensHum, type = "bar", name = "Sens Inf Humans") %>%
   add_trace(y= ~InfResHum, name = "Res Inf Humans") %>% 
   layout(yaxis = list(title = "Proportion Infected", exponentformat= "E", range = c(0,1E-4), showline = TRUE),
@@ -837,9 +922,7 @@ plot_ly(surfaceoutput2, x= ~logphitau, y = ~InfSensHum, type = "bar", name = "Se
          legend = list(orientation = "v", x = 1.0, y=0.5), showlegend = T,
          barmode = "stack") 
 
-end_time <- Sys.time()
 
-end_time - start_time
 
 #         annotations = list(x = ~tau, y = ~ICombH, text = ~IResRat, yanchor = "bottom", showarrow = FALSE, textangle = 310,
 #                            xshift =3))
