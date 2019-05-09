@@ -10,6 +10,7 @@ library("plotly")
 library("tidyr")
 library("nlmeODE")
 library("phaseR")
+library("reshape2")
 
 #### Model Functions + Output ####
 amr <- function(time, state, parameters) {
@@ -33,7 +34,7 @@ rounding <- function(x) {
 #### Model Testbed - Basic Model Output ####
 
 init <- c(Sa=0.99, Ia=0.01, Ira=0.01, Sh=1, Ih=0, Irh=0)
-times1 <- seq(0,1000000,by=1000)
+times1 <- seq(0,2000,by=0.1)
 
 #Need to Specify Model Parameters
 parms = c(ra = 52^-1, rh =  6^-1, uh = 28835^-1, ua = 240^-1, betaAA = 0.10, betaAH = 0.000001, betaHH = 0.000001, 
@@ -41,18 +42,66 @@ parms = c(ra = 52^-1, rh =  6^-1, uh = 28835^-1, ua = 240^-1, betaAA = 0.10, bet
 
 out <- ode(y = init, func = amr, times = times1, parms = parms)
 
-head(out,100) #Provides the first 10 timesteps for the model output
+#GGPLOT FIGURE
+outdata <- data.frame(out)
+outdata$combIa <- as.numeric(outdata$Ia) + as.numeric(outdata$Ira)
+outdata$combIh <- as.numeric(outdata$Ih) + as.numeric(outdata$Irh)
 
+#Animal Population 
 par(mfrow=c(1,2))
-plot(out[,"time"],out[,"Sa"], xlab = "Time (Days)",ylab="Proportion (Animals)", type="l", lwd=2, col="green", ylim = c(-0.01, 1))
-lines(out[,"time"],out[,"Ia"], type="l", lwd=5, col="red")
-lines(out[,"time"],out[,"Ira"],type="l", lwd=2, col="blue")
-legend(x=450, y=0.97, legend= c("Susceptible", "Infected (S)", "Infected (R)"),col=c("green","red","blue"),lty=1,cex=0.9)
+ggplot(outdata, aes(time)) +
+  geom_line(aes(y = Sa, colour = "Sa"), size = 1.1) +
+  geom_line(aes(y = Ia, colour = "Ia"), size = 2.5, alpha =0.6) + 
+  geom_line(aes(y = Ira, colour = "Ira"), size = 1.1) +
+  geom_line(aes(y = combIa, colour = "combIa"), size = 1.1, linetype = "dashed") +
+  scale_color_manual(values = c("Sa" = "chartreuse3", "Ia" = "red", "Ira" = "blue", "combIa" = "black"), 
+                     labels = c(expression(paste("Overall Infection ","(I"["CombA"],")")),
+                                expression(paste("Resistant Infection ","(I"["RA"],")")),
+                                expression(paste("Sensitive Infection ","(I"["A"],")")),
+                                expression(paste("Susceptible ","(S"["A"],")"))), 
+                     guide = guide_legend(reverse = TRUE)) +
+  labs(x ="Time (Days)", y = "Proportion of Animal Population") +
+  scale_x_continuous(limits = c(0,2000), expand = c(0,0)) +
+  scale_y_continuous(limits = c(0,1), expand = c(0,0)) +
+  theme(axis.line.x = element_line(color="black", size = 1),
+      legend.position="bottom", legend.title = element_blank(),
+      legend.spacing.x = unit(0.2, 'cm'), legend.text=element_text(size=11), plot.margin=unit(c(0.7,0.7,0.8,0.8),"cm"))
 
-plot(out[,"time"],out[,"Sh"], xlab = "Time (Days)",ylab="Proportion(Humans)", type="l", lwd=2, col="green", ylim = c(0, 0.00002))
-lines(out[,"time"],out[,"Ih"], type="l", lwd=5, col="red")
-lines(out[,"time"],out[,"Irh"], type="l", lwd=2, col="blue")
-legend(x=450, y=1.95e-05, legend= c("Susceptible", "Infected (S)", "Infected (R)"),col=c("green","red","blue"),lty=1,cex=0.9)
+#Human Population 
+ggplot(outdata, aes(time)) +
+  geom_line(aes(y = Sh, colour = "Sh"), size = 1.1) +
+  geom_line(aes(y = Ih, colour = "Ih"), size = 2.5, alpha =0.6) + 
+  geom_line(aes(y = Irh, colour = "Irh"), size = 1.1) +
+  geom_line(aes(y = combIh, colour = "combIh"), size = 1.1, linetype = "dashed") +
+  scale_color_manual(values = c("Sh" = "chartreuse3", "Ih" = "red", "Irh" = "blue", "combIh" = "black"), 
+                     labels = c(expression(paste("Overall Infection ","(I"["CombH"],")")),
+                                expression(paste("Resistant Infection ","(I"["RH"],")")),
+                                expression(paste("Sensitive Infection ","(I"["H"],")")),
+                                expression(paste("Susceptible ","(S"["H"],")"))), 
+                     guide = guide_legend(reverse = TRUE)) +
+  labs(x ="Time (Days)", y = "Proportion of Human Population") +
+  scale_x_continuous(limits = c(0,2000), expand = c(0,0)) +
+  scale_y_continuous(limits = c(0,1), expand = c(0,0)) +
+  theme(axis.line.x = element_line(color="black", size = 1),
+        legend.position="bottom", legend.title = element_blank(),
+        legend.spacing.x = unit(0.2, 'cm'), legend.text=element_text(size=11), plot.margin=unit(c(0.7,0.7,0.8,0.8),"cm"))
+
+#High Resolution Human Population 
+ggplot(outdata, aes(time)) +
+  geom_line(aes(y = Ih, colour = "Ih"), size = 2.5, alpha =0.6) + 
+  geom_line(aes(y = Irh, colour = "Irh"), size = 1.1) +
+  geom_line(aes(y = combIh, colour = "combIh"), size = 1.1, linetype = "dashed") +
+  scale_color_manual(values = c("Ih" = "red", "Irh" = "blue", "combIh" = "black"), 
+                     labels = c(expression(paste("Overall Infection ","(I"["CombH"],")")),
+                                expression(paste("Resistant Infection ","(I"["RH"],")")),
+                                expression(paste("Sensitive Infection ","(I"["H"],")"))), 
+                     guide = guide_legend(reverse = TRUE)) +
+  labs(x ="Time (Days)", y = "Proportion of Human Population") +
+  scale_x_continuous(limits = c(0,2000), expand = c(0,0)) +
+  scale_y_continuous(limits = c(0,0.00002), expand = c(0,0)) +
+  theme(axis.line.x = element_line(color="black", size = 1),
+        legend.position="bottom", legend.title = element_blank(),
+        legend.spacing.x = unit(0.2, 'cm'), legend.text=element_text(size=11), plot.margin=unit(c(0.7,0.7,0.8,0.8),"cm"))
 
 Icomb <- as.numeric(out[nrow(out),6]) + as.numeric(out[nrow(out),7])  
 print(Icomb)
@@ -68,7 +117,7 @@ parms = fast_parameters(minimum = c(5.2^-1,0.6^-1,24^-1,2883.5^-1,0,0,0,0,0,0,0)
 #### Creating Model Output for Parameter Combinations from FAST Parameters #### 
 
 init <- c(Sa=0.99, Ia=0.01, Ira=0, Sh=1, Ih=0, Irh=0)
-times <- seq(0,100000, by = 100) 
+times <- seq(0,200000, by = 10) 
 
 output <- data.frame()
 
@@ -120,17 +169,27 @@ sens1 <-sensitivity(x=sensit1, numberf=11, make.plot=T, names = c("ra", "rh" ,"u
 df.equilibrium1 <- data.frame(parameter=rbind("ra", "rh" ,"ua", "uh", "betaAA", "betaAH", "betaHH", "betaHA",
                                              "phi","tau", "theta"), value=sens1)
 
-p <- ggplot(df.equilibrium1, aes(parameter, value))
-p + geom_bar(stat="identity", fill="grey23")
-
 #Combined Bar Plot
-plot_ly(df.equilibrium, x= ~parameter, y= ~value, type = "bar", name = "parameter") %>% 
-  add_trace(data = df.equilibrium1, y = ~value, name = "parameter") %>%
-  layout(yaxis = list(title = 'Partial Variance'),
-         xaxis = list(title = "Parameters", ticktext = c("beta", "beta", "beta", "beta", "beta", "beta", "beta", 
-                                "beta", "beta", "beta", "beta")),
-         legend = list(title = list("Outcome Measure")), showlegend = T,
-         barmode = 'group')
+df.equilibrium$state <- "Overall Foodborne Disease"
+df.equilibrium1$state <- "Resistance Ratio"
+
+newdf <- rbind(df.equilibrium, df.equilibrium1)
+
+ggplot(data = newdf, aes(x = parameter, y = value, fill = state)) +
+  geom_bar(stat="identity", position = "dodge") +
+  scale_x_discrete("Parameter", waiver(), c(expression(paste(beta[AA])), expression(paste(beta[AH])),
+                                            expression(paste(beta[HA])), expression(paste(beta[HH])),
+                                            expression(paste(phi)), expression(paste(italic("r")[A])),
+                                            expression(paste(italic("r")[H])), expression(paste(tau)),
+                                            expression(paste(theta)), expression(paste(mu[A])),
+                                            expression(paste(mu[H])))) +
+  scale_y_continuous(limits = c(0,0.25), expand = c(0,0.00009)) + 
+  scale_fill_manual(values=c("dodgerblue2", "orangered1")) +
+  theme(axis.text=element_text(size = 12, colour = "black"),
+        axis.line.x = element_line(color="black", size = 0.7),
+        axis.title=element_text(size=12), 
+        legend.position=c(0.15, 0.9), legend.title = element_blank()) +
+  ylab("Partial Variance") 
 
 #### Comb IRH and IH Measure Testing - Effect of Treatment ####
 
@@ -141,12 +200,12 @@ parmtau <- seq(0,0.5,by=0.01)
 
 init <- c(Sa=0.99, Ia=0.01, Ira=0, Sh=1, Ih=0, Irh=0)
 output1 <- data.frame()
-times <- seq(0, 200000, by = 100)
+times <- seq(0, 200000, by = 10)
 
 for (i in 1:length(parmtau)) {
   temp <- data.frame(matrix(NA, nrow = 1, ncol=5))
-  parms2 = c(ra = 52^-1, rh =  (6^-1), ua = 240^-1, uh = 28835^-1, betaAA = 0.1, betaAH = 0.000001, betaHH = 0.000001, 
-             betaHA = 0.00001, phi = 0.1, tau = parmtau[i], theta = 0.5)
+  parms2 = c(ra = 52^-1, rh =  (6^-1), ua = 240^-1, uh = 28835^-1, betaAA = 0.07, betaAH = 0.000001, betaHH = 0.000001, 
+             betaHA = 0.000007, phi = 0.1, tau = parmtau[i], theta = 0.5)
   out <- ode(y = init, func = amr, times = times, parms = parms2)
   temp[1,1] <- parmtau[i]
   temp[1,2] <- rounding(out[nrow(out),5]) 
@@ -194,6 +253,256 @@ plot_ly(output1, x= ~tau, y = ~InfHumans, type = "bar", name = "Sens Inf Humans"
                line = list(color = "red", dash = "dot", width = 3), showlegend = FALSE)
 
 #Have put 6 since that is where Tau is equal to 0.05
+#### Comb IRH and IH Measure Testing - Effect of Treatment - NEW PLOT ####
+
+#Testing for the Effect of Changing Treatment on the Combined Measure
+
+#parmtau <- seq(0,0.5,by=0.03)
+parmtau <- seq(0,0.5,by=0.001)
+
+init <- c(Sa=0.99, Ia=0.01, Ira=0, Sh=1, Ih=0, Irh=0)
+output1 <- data.frame()
+times <- seq(0, 200000, by = 100)
+
+#Have to alter a number of the outputnames to generate all the values for the figures
+outputrh13 <- data.frame()
+
+for (i in 1:length(parmtau)) {
+  temp <- data.frame(matrix(NA, nrow = 1, ncol=5))
+  parms2 = c(ra = 52^-1, rh =  (6^-1)*1.3, ua = 240^-1, uh = 28835^-1, betaAA = 0.1, betaAH = 0.000001, betaHH = 0.000001, 
+             betaHA = 0.00001, phi = 0.1, tau = parmtau[i], theta = 0.5)
+  out <- ode(y = init, func = amr, times = times, parms = parms2)
+  temp[1,1] <- parmtau[i]
+  temp[1,2] <- rounding(out[nrow(out),5]) 
+  temp[1,3] <- rounding(out[nrow(out),6]) 
+  temp[1,4] <- rounding(out[nrow(out),7])
+  temp[1,5] <- temp[1,3] + temp[1,4]
+  temp[1,6] <- temp[1,4]/temp[1,5]
+  print(temp[1,3])
+  outputrh13 <- rbind.data.frame(outputrh13, temp)
+}
+
+colnames(outputrh13)[1:6] <- c("tau", "SuscHumans","InfHumans","ResInfHumans","ICombH","IResRat")
+
+#### Plotting ####
+outputAA1$state <- "Baseline" #BetaHA = 0.00001; BetaAA = 0.1
+outputAA9$state <- "BetaHA = 100%; BetaAA = 90%" #BetaHA = 0.00001; BetaAA = 0.09 
+outputAA8$state <- "BetaHA = 100%; BetaAA = 80%" #BetaHA = 0.00001; BetaAA = 0.08
+outputAA7$state <- "BetaHA = 100%; BetaAA = 70%" #BetaHA = 0.00001; BetaAA = 0.07
+new.data <- do.call("rbind", list(outputAA1, outputAA9, outputAA8, outputAA7))
+
+ggplot(data = new.data, aes(x = tau, y = IResRat, colour = state)) +
+  geom_line(size = 1) +
+  labs(x =expression(paste("Antibiotic Usage (",tau,")")), y = expression(paste("Overall Infection ","(I"["CombH"],")"))) +
+  scale_x_continuous(limits = c(0,0.5), expand = c(0,0)) +
+  scale_y_continuous(limits = c(0,0.00005), expand = c(0,0)) +
+  scale_colour_manual(values = c("black","steelblue1","slateblue1","slategray"), 
+                      labels = c("Baseline   ", 
+                                 expression(paste(beta[AA]," = 70%")), 
+                                 expression(paste(beta[AA]," = 80%")), 
+                                 expression(paste(beta[AA]," = 90%"))))+
+  theme(axis.line.x = element_line(color="black", size = 1),
+        legend.position=c(0.8, 0.85), legend.title = element_blank(),
+        legend.spacing.x = unit(0.7, 'cm'), legend.text=element_text(size=11), plot.margin=unit(c(0.7,0.7,0.8,0.8),"cm")) +
+  geom_hline(yintercept = 1.595806e-05, linetype = 2, size = 1) + 
+  annotate("text", 0.42, 1.595806e-05, vjust = -0.6, label = "Current Antibiotic Usage")
+
+ggplot() + 
+  geom_line(data=outputAA1, aes(tau,ICombH), linetype= 3, size = 1, colour = "black") + 
+  geom_line(data=outputAA1, aes(tau, replace(ICombH, ICombH>1.595806e-05, NA)), size = 1, colour = "black") +
+  geom_line(data=outputAA9, aes(tau,ICombH), linetype= 3, size = 1, colour = "slategray") + 
+  geom_line(data=outputAA9, aes(tau, replace(ICombH, ICombH>1.595806e-05, NA)), size = 1, colour = "slategray") +
+  geom_line(data=outputAA8, aes(tau,ICombH), linetype= 3, size = 1, colour = "slateblue1") + 
+  geom_line(data=outputAA8, aes(tau, replace(ICombH, ICombH>1.595806e-05, NA)), size = 1, colour = "slateblue1") +
+  geom_line(data=outputAA7, aes(tau,ICombH), linetype= 3, size = 1, colour = "steelblue1") + 
+  geom_line(data=outputAA7, aes(tau, replace(ICombH, ICombH>1.595806e-05, NA)), size = 1, colour = "steelblue1")+
+  geom_hline(yintercept = 1.595806e-05, linetype = 2, size = 1) + 
+  annotate("text", 0.42, 1.595806e-05, vjust = -0.6, label = "Current Antibiotic Usage") +
+  scale_x_continuous(limits = c(0,0.5), expand = c(0,0)) +
+  scale_y_continuous(limits = c(0,0.00005), expand = c(0,0)) +
+  labs(x =expression(paste("Antibiotic Usage (",tau,")")), y = expression(paste("Overall Infection ","(I"["CombH"],")"))) +
+  theme(axis.line.x = element_line(color="black", size = 1),
+        legend.position=c(0.8, 0.85), legend.title = element_blank(),
+        legend.spacing.x = unit(0.7, 'cm'), legend.text=element_text(size=11), plot.margin=unit(c(0.7,0.7,0.8,0.8),"cm"))
+
+ggplot() + 
+  geom_line(data=outputAA1, aes(tau,IResRat), linetype= 1, size = 5, colour = "black") +
+  geom_line(data=outputAA9, aes(tau,IResRat), linetype= 1, size = 3, colour = "slategray") +
+  geom_line(data=outputAA8, aes(tau,IResRat), linetype= 1, size = 2, colour = "slateblue1") + 
+  geom_line(data=outputAA7, aes(tau,IResRat), linetype= 1, size = 1, colour = "steelblue1") + 
+  scale_x_continuous(limits = c(0,0.5), expand = c(0,0)) +
+  scale_y_continuous(limits = c(0,1), expand = c(0,0)) +
+  labs(x =expression(paste("Antibiotic Usage (",tau,")")), y = expression(paste("Resistance Ratio (ResRat)"))) +
+  theme(axis.line.x = element_line(color="black", size = 1),
+        legend.position=c(0.8, 0.85), legend.title = element_blank(),
+        legend.spacing.x = unit(0.7, 'cm'), legend.text=element_text(size=11), plot.margin=unit(c(0.7,0.7,0.8,0.8),"cm"))
+
+##
+
+outputHA1$state <- "Baseline Parameters" #BetaHA = 0.00001; BetaAA = 0.1
+outputHA9$state <- "Beta" #BetaHA = 0.000009; BetaAA = 0.1
+outputHA8$state <- "Eight" #BetaHA = 0.000008; BetaAA = 0.1
+outputHA7$state <- "Seven" #BetaHA = 0.000007; BetaAA = 0.1
+new.data1 <- do.call("rbind", list(outputHA1, outputHA9, outputHA8, outputHA7))
+
+ggplot(data = new.data1, aes(x = tau, y = IResRat, colour = state)) +
+  geom_line(size = 1) +
+  labs(x =expression(paste("Antibiotic Usage (",tau,")")), y = expression(paste("Overall Infection ","(I"["CombH"],")"))) +
+  scale_x_continuous(limits = c(0,0.5), expand = c(0,0)) +
+  scale_y_continuous(limits = c(0,0.00005), expand = c(0,0)) +
+  scale_colour_manual(values = c("black","steelblue1","slateblue1","slategray"), 
+                      labels = c("Baseline   ", 
+                                 expression(paste(beta[HA]," = 70%")), 
+                                 expression(paste(beta[HA]," = 80%")), 
+                                 expression(paste(beta[HA]," = 90%"))))+
+  theme(axis.line.x = element_line(color="black", size = 1),
+        legend.position=c(0.8, 0.85), legend.title = element_blank(),
+        legend.spacing.x = unit(0.7, 'cm'), legend.text=element_text(size=11), plot.margin=unit(c(0.7,0.7,0.8,0.8),"cm")) +
+  geom_hline(yintercept = 1.595806e-05, linetype = 2, size = 1) + 
+  annotate("text", 0.42, 1.595806e-05, vjust = -0.6, label = "Current Antibiotic Usage")
+
+ggplot() + 
+  geom_line(data=outputHA1, aes(tau,ICombH), linetype= 3, size = 1, colour = "black") + 
+  geom_line(data=outputHA1, aes(tau, replace(ICombH, ICombH>1.595806e-05, NA)), size = 1, colour = "black") +
+  geom_line(data=outputHA9, aes(tau,ICombH), linetype= 3, size = 1, colour = "slategray") + 
+  geom_line(data=outputHA9, aes(tau, replace(ICombH, ICombH>1.595806e-05, NA)), size = 1, colour = "slategray") +
+  geom_line(data=outputHA8, aes(tau,ICombH), linetype= 3, size = 1, colour = "slateblue1") + 
+  geom_line(data=outputHA8, aes(tau, replace(ICombH, ICombH>1.595806e-05, NA)), size = 1, colour = "slateblue1") +
+  geom_line(data=outputHA7, aes(tau,ICombH), linetype= 3, size = 1, colour = "steelblue1") + 
+  geom_line(data=outputHA7, aes(tau, replace(ICombH, ICombH>1.595806e-05, NA)), size = 1, colour = "steelblue1")+
+  geom_hline(yintercept = 1.595806e-05, linetype = 2, size = 1) + 
+  annotate("text", 0.42, 1.595806e-05, vjust = -0.6, label = "Current Antibiotic Usage") +
+  scale_x_continuous(limits = c(0,0.5), expand = c(0,0)) +
+  scale_y_continuous(limits = c(0,0.00005), expand = c(0,0)) +
+  labs(x =expression(paste("Antibiotic Usage (",tau,")")), y = expression(paste("Overall Infection ","(I"["CombH"],")"))) +
+  theme(axis.line.x = element_line(color="black", size = 1),
+        legend.position=c(0.8, 0.85), legend.title = element_blank(),
+        legend.spacing.x = unit(0.7, 'cm'), legend.text=element_text(size=11), plot.margin=unit(c(0.7,0.7,0.8,0.8),"cm"))
+
+ggplot() + 
+  geom_line(data=outputHA1, aes(tau,IResRat), linetype= 1, size = 5, colour = "black") +
+  geom_line(data=outputHA9, aes(tau,IResRat), linetype= 1, size = 3, colour = "slategray") +
+  geom_line(data=outputHA8, aes(tau,IResRat), linetype= 1, size = 2, colour = "slateblue1") + 
+  geom_line(data=outputHA7, aes(tau,IResRat), linetype= 1, size = 1, colour = "steelblue1") + 
+  scale_x_continuous(limits = c(0,0.5), expand = c(0,0)) +
+  scale_y_continuous(limits = c(0,1), expand = c(0,0)) +
+  labs(x =expression(paste("Antibiotic Usage (",tau,")")), y = expression(paste("Resistance Ratio (ResRat)"))) +
+  theme(axis.line.x = element_line(color="black", size = 1),
+        legend.position=c(0.8, 0.85), legend.title = element_blank(),
+        legend.spacing.x = unit(0.7, 'cm'), legend.text=element_text(size=11), plot.margin=unit(c(0.7,0.7,0.8,0.8),"cm"))
+##
+
+outputphi12$state <- "Twelve" #BetaHA = 0.000009; BetaAA = 0.1
+outputphi11$state <- "Eleven" #BetaHA = 0.000009; BetaAA = 0.0
+outputphi1$state <- "One" #BetaHA = 0.000009; BetaAA = 0.08
+outputphi09$state <- "Nine" #BetaHA = 0.000009; BetaAA = 0.07
+outputphi08$state <- "Eight" #BetaHA = 0.000009; BetaAA = 0.07
+new.data2 <- do.call("rbind", list(outputphi12, outputphi11, outputphi1, outputphi09, outputphi08))
+
+ggplot(data = new.data2, aes(x = tau, y = IResRat, colour = state)) +
+  geom_line(size = 1) +
+  labs(x =expression(paste("Antibiotic Usage (",tau,")")), y = expression(paste("Overall Infection ","(I"["CombH"],")"))) +
+  scale_x_continuous(limits = c(0,0.5), expand = c(0,0)) +
+  scale_y_continuous(limits = c(0,0.00005), expand = c(0,0)) +
+  scale_colour_manual(values = c("steelblue1","slateblue","black","firebrick","red"), 
+                      labels = c(expression(paste(phi," = 80%")), 
+                                 expression(paste(phi," = 90%")),
+                                 "Baseline", 
+                                 expression(paste(phi," = 110%")), 
+                                 expression(paste(phi," = 120%"))))+
+  theme(axis.line.x = element_line(color="black", size = 1),
+        legend.position=c(0.8, 0.85), legend.title = element_blank(),
+        legend.spacing.x = unit(0.7, 'cm'), legend.text=element_text(size=11), plot.margin=unit(c(0.7,0.7,0.8,0.8),"cm")) +
+  geom_hline(yintercept = 1.595806e-05, linetype = 2, size = 1) + 
+  annotate("text", 0.42, 1.595806e-05, vjust = -0.6, label = "Current Antibiotic Usage")
+
+ggplot() + 
+  geom_line(data=outputphi12, aes(tau,ICombH), linetype= 3, size = 1, colour = "red") + 
+  geom_line(data=outputphi12, aes(tau, replace(ICombH, ICombH>1.595806e-05, NA)), size = 1, colour = "red") +
+  geom_line(data=outputphi11, aes(tau,ICombH), linetype= 3, size = 1, colour = "firebrick") + 
+  geom_line(data=outputphi11, aes(tau, replace(ICombH, ICombH>1.595806e-05, NA)), size = 1, colour = "firebrick") +
+  geom_line(data=outputphi1, aes(tau,ICombH), linetype= 3, size = 1, colour = "black") + 
+  geom_line(data=outputphi1, aes(tau, replace(ICombH, ICombH>1.595806e-05, NA)), size = 1, colour = "black") +
+  geom_line(data=outputphi09, aes(tau,ICombH), linetype= 3, size = 1, colour = "slateblue1") + 
+  geom_line(data=outputphi09, aes(tau, replace(ICombH, ICombH>1.595806e-05, NA)), size = 1, colour = "slateblue1") +
+  geom_line(data=outputphi08, aes(tau,ICombH), linetype= 3, size = 1, colour = "steelblue1") + 
+  geom_line(data=outputphi08, aes(tau, replace(ICombH, ICombH>1.595806e-05, NA)), size = 1, colour = "steelblue1")+
+  geom_hline(yintercept = 1.595806e-05, linetype = 2, size = 1) + 
+  annotate("text", 0.42, 1.595806e-05, vjust = -0.6, label = "Current Antibiotic Usage") +
+  scale_x_continuous(limits = c(0,0.5), expand = c(0,0)) +
+  scale_y_continuous(limits = c(0,0.00005), expand = c(0,0)) +
+  labs(x =expression(paste("Antibiotic Usage (",tau,")")), y = expression(paste("Overall Infection ","(I"["CombH"],")"))) +
+  theme(axis.line.x = element_line(color="black", size = 1),
+        legend.position=c(0.8, 0.85), legend.title = element_blank(),
+        legend.spacing.x = unit(0.7, 'cm'), legend.text=element_text(size=11), plot.margin=unit(c(0.7,0.7,0.8,0.8),"cm"))
+
+ggplot() + 
+  geom_line(data=outputphi12, aes(tau,IResRat), linetype= 1, size = 1, colour = "red") +
+  geom_line(data=outputphi11, aes(tau,IResRat), linetype= 1, size = 1, colour = "firebrick") +
+  geom_line(data=outputphi1, aes(tau,IResRat), linetype= 1, size = 1, colour = "black") + 
+  geom_line(data=outputphi09, aes(tau,IResRat), linetype= 1, size = 1, colour = "slateblue1") +
+  geom_line(data=outputphi08, aes(tau,IResRat), linetype= 1, size = 1, colour = "steelblue1") +
+  scale_x_continuous(limits = c(0,0.5), expand = c(0,0)) +
+  scale_y_continuous(limits = c(0,1), expand = c(0,0)) +
+  labs(x =expression(paste("Antibiotic Usage (",tau,")")), y = expression(paste("Resistance Ratio (ResRat)"))) +
+  theme(axis.line.x = element_line(color="black", size = 1),
+        legend.position=c(0.8, 0.85), legend.title = element_blank(),
+        legend.spacing.x = unit(0.7, 'cm'), legend.text=element_text(size=11), plot.margin=unit(c(0.7,0.7,0.8,0.8),"cm"))
+
+##
+
+outputrh1$state <- "Baseline" #BetaHA = 0.000008; BetaAA = 0.1
+outputrh11$state <- "Eleven" #BetaHA = 0.000008; BetaAA = 0.09
+outputrh12$state <- "Twelve" #BetaHA = 0.000008; BetaAA = 0.08
+outputrh13$state <- "Thirteen" #BetaHA = 0.000008; BetaAA = 0.07
+new.data3 <- do.call("rbind", list(outputrh1, outputrh11, outputrh12, outputrh13))
+
+ggplot(data = new.data1, aes(x = tau, y = IResRat, colour = state)) +
+  geom_line(size = 1) +
+  labs(x =expression(paste("Antibiotic Usage (",tau,")")), y = expression(paste("Overall Infection ","(I"["CombH"],")"))) +
+  scale_x_continuous(limits = c(0,0.5), expand = c(0,0)) +
+  scale_y_continuous(limits = c(0,0.00005), expand = c(0,0)) +
+  scale_colour_manual(values = c("black","steelblue1","slateblue1","slategray"), 
+                      labels = c("Baseline   ", 
+                                 expression(paste(italic("r")[H]," = 110%")),
+                                 expression(paste(italic("r")[H]," = 120%")),
+                                 expression(paste(italic("r")[H]," = 130%")))) +
+  theme(axis.line.x = element_line(color="black", size = 1),
+        legend.position=c(0.8, 0.85), legend.title = element_blank(),
+        legend.spacing.x = unit(0.7, 'cm'), legend.text=element_text(size=11), plot.margin=unit(c(0.7,0.7,0.8,0.8),"cm")) +
+  geom_hline(yintercept = 1.595806e-05, linetype = 2, size = 1) + 
+  annotate("text", 0.42, 1.595806e-05, vjust = -0.6, label = "Current Antibiotic Usage")
+
+ggplot() + 
+  geom_line(data=outputrh1, aes(tau,ICombH), linetype= 3, size = 1, colour = "black") + 
+  geom_line(data=outputrh1, aes(tau, replace(ICombH, ICombH>1.595806e-05, NA)), size = 1, colour = "black") +
+  geom_line(data=outputrh11, aes(tau,ICombH), linetype= 3, size = 1, colour = "slategray") + 
+  geom_line(data=outputrh11, aes(tau, replace(ICombH, ICombH>1.595806e-05, NA)), size = 1, colour = "slategray") +
+  geom_line(data=outputrh12, aes(tau,ICombH), linetype= 3, size = 1, colour = "slateblue1") + 
+  geom_line(data=outputrh12, aes(tau, replace(ICombH, ICombH>1.595806e-05, NA)), size = 1, colour = "slateblue1") +
+  geom_line(data=outputrh13, aes(tau,ICombH), linetype= 3, size = 1, colour = "steelblue1") + 
+  geom_line(data=outputrh13, aes(tau, replace(ICombH, ICombH>1.595806e-05, NA)), size = 1, colour = "steelblue1")+
+  geom_hline(yintercept = 1.595806e-05, linetype = 2, size = 1) + 
+  annotate("text", 0.42, 1.595806e-05, vjust = -0.6, label = "Current Antibiotic Usage") +
+  scale_x_continuous(limits = c(0,0.5), expand = c(0,0)) +
+  scale_y_continuous(limits = c(0,0.00005), expand = c(0,0)) +
+  labs(x =expression(paste("Antibiotic Usage (",tau,")")), y = expression(paste("Overall Infection ","(I"["CombH"],")"))) +
+  theme(axis.line.x = element_line(color="black", size = 1),
+        legend.position=c(0.8, 0.85), legend.title = element_blank(),
+        legend.spacing.x = unit(0.7, 'cm'), legend.text=element_text(size=11), plot.margin=unit(c(0.7,0.7,0.8,0.8),"cm"))
+
+ggplot() + 
+  geom_line(data=outputrh1, aes(tau,IResRat), linetype= 1, size = 5, colour = "black") +
+  geom_line(data=outputrh11, aes(tau,IResRat), linetype= 1, size = 3, colour = "slategray") +
+  geom_line(data=outputrh12, aes(tau,IResRat), linetype= 1, size = 2, colour = "slateblue1") + 
+  geom_line(data=outputrh13, aes(tau,IResRat), linetype= 1, size = 1, colour = "steelblue1") + 
+  scale_x_continuous(limits = c(0,0.5), expand = c(0,0)) +
+  scale_y_continuous(limits = c(0,1), expand = c(0,0)) +
+  labs(x =expression(paste("Antibiotic Usage (",tau,")")), y = expression(paste("Resistance Ratio (ResRat)"))) +
+  theme(axis.line.x = element_line(color="black", size = 1),
+        legend.position=c(0.8, 0.85), legend.title = element_blank(),
+        legend.spacing.x = unit(0.7, 'cm'), legend.text=element_text(size=11), plot.margin=unit(c(0.7,0.7,0.8,0.8),"cm"))
+
 
 #### Comb IRH and IH Measure Testing - Effect of Treatment - More Elegant Combinatitory Plot ####
 
@@ -206,10 +515,11 @@ output1 <- data.frame()
 output2 <- data.frame()
 output3 <- data.frame()
 output4 <- data.frame()
+output5 <- data.frame()
 
 times <- seq(0, 200000, by = 100)
 
-parmvals <- c(0.9,0.8,0.7,0.6)
+parmvals <- c(1,0.9,0.8,0.7,0.6)
 
 for (j in 1:length(parmvals)) {
   tempout <- data.frame()
@@ -225,16 +535,17 @@ for (j in 1:length(parmvals)) {
     temp[1,5] <- rounding(out[nrow(out),7])
     temp[1,6] <- temp[1,3] + temp[1,4]
     temp[1,7] <- temp[1,4]/temp[1,5]
-    print(temp[1,3])  
+    print(temp[1,6])  
     tempout <- rbind.data.frame(tempout, temp)
   }
-  output1 <- rbind.data.frame(output1, tempout[tempout[,1]==0.9])
-  output2 <- rbind.data.frame(output2, tempout[tempout[,1]==0.9])
-  output3 <- rbind.data.frame(output3, tempout[tempout[,1]==0.9])
-  output4 <- rbind.data.frame(output4, tempout[tempout[,1]==0.9])
+  output1 <- rbind.data.frame(output1, tempout$X6[tempout[1,2]==1])
+  output2 <- rbind.data.frame(output2, tempout[tempout[,2]==0.9])
+  output3 <- rbind.data.frame(output3, tempout[tempout[,2]==0.8])
+  output4 <- rbind.data.frame(output4, tempout[tempout[,2]==0.7])
+  output4 <- rbind.data.frame(output4, tempout[tempout[,2]==0.6])
 }
 
-colnames(output1)[1:6] <- c("tau", "SuscHumans","InfHumans","ResInfHumans","ICombH","IResRat")
+colnames(output1)[1:6] <- c("tau", "betaAA", "SuscHumans","InfHumans","ResInfHumans","ICombH","IResRat")
 icombrat <- output1$ICombH[output1$tau == 0.5]/output1$ICombH[output1$tau == 0]
 output1$IResRat <- signif(output1$IResRat, digits = 3)
 
