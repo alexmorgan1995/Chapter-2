@@ -34,10 +34,12 @@ rounding <- function(x) {
 #### Model Testbed - Basic Model Output ####
 
 init <- c(Sa=0.99, Ia=0.01, Ira=0.01, Sh=1, Ih=0, Irh=0)
-times1 <- seq(0,2000,by=0.1)
+times1 <- seq(0,20000,by=0.1)
 
 #Need to Specify Model Parameters
 parms = c(ra = 52^-1, rh =  6^-1, uh = 28835^-1, ua = 240^-1, betaAA = 0.10, betaAH = 0.000001, betaHH = 0.000001, 
+          betaHA = 0.00001, phi = 0.1, tau = 0.1, theta = 0.5)
+parms = c(ra = 52^-1, rh =  6^-1, uh = 28835^-1, ua = 240^-1, betaAA = 0.07, betaAH = 0.000001, betaHH = 0.000001, 
           betaHA = 0.00001, phi = 0.1, tau = 0.1, theta = 0.5)
 
 out <- ode(y = init, func = amr, times = times1, parms = parms)
@@ -98,7 +100,7 @@ ggplot(outdata, aes(time)) +
                      guide = guide_legend(reverse = TRUE)) +
   labs(x ="Time (Days)", y = "Proportion of Human Population") +
   scale_x_continuous(limits = c(0,2000), expand = c(0,0)) +
-  scale_y_continuous(limits = c(0,0.00002), expand = c(0,0)) +
+  scale_y_continuous(limits = c(0,0.000025), expand = c(0,0)) +
   theme(axis.line.x = element_line(color="black", size = 1),
         legend.position="bottom", legend.title = element_blank(),
         legend.spacing.x = unit(0.2, 'cm'), legend.text=element_text(size=11), plot.margin=unit(c(0.7,0.7,0.8,0.8),"cm"))
@@ -232,17 +234,20 @@ plot_ly(output1, x= ~tau, y = ~IResRat, type = "scatter")
 #         annotations = list(x = ~tau, y = ~ICombH, text = ~IResRat, yanchor = "bottom", showarrow = FALSE, textangle = 310,
 #                            xshift =3))
 
-plot_ly(output1, x= ~tau, y = ~InfHumans, type = "bar", name = "Sensitive Infection (Human)") %>%
-  add_trace(y= ~ResInfHumans, name = "Resistant Infection (Human)") %>% 
-  layout(yaxis = list(title = "Proportion Infected", exponentformat= "E", range = c(0,5E-5), showline = TRUE),
-         xaxis = list(title = "Tau (Antibiotic Usage)", range = c(-0.01,0.5)),
-         legend = list(orientation = "v", x = 0.6, y=1), showlegend = T,
+plot_ly(output1, x= ~tau, y = ~InfHumans, type = "bar", name = "Sensitive Infection") %>%
+  add_trace(y= ~ResInfHumans, name = "Resistant Infection") %>% 
+  layout(yaxis = list(title = "Proportion of Humans Infected", exponentformat= "E", range = c(0,4.5E-5), 
+                       titlefont = list(size = 18) ,tickfont = list(size = 16)),
+         xaxis = list(title = "Tau (Antibiotic Usage)", range = c(-0.01,0.5),
+                      titlefont = list(size = 18), tickfont = list(size = 16)),
+         margin = list(l = 30, r = 30, b = 30, t = 30, pad = 5),
+         legend = list(orientation = "h", x = 0.70, y=1, font= list(size = 16)), showlegend = T,
          barmode = "stack",
          annotations = list(
            list(x = 0.45, y = 1.6e-05, text = "Baseline Parameters", yanchor = "bottom",
-                showarrow = FALSE, xshift= -55, yshift = 3, font = list(size = 15)),
+                showarrow = FALSE, xshift= -30, yshift = 3, font = list(size = 16)),
            list(x = 0.45, y = output1$ICombH[11], text = "Intervention w/ Antibiotic Usage", yanchor = "bottom",
-                showarrow = FALSE, xshift= -55, yshift = 3, font = list(size = 15, color = "red")),
+                showarrow = FALSE, xshift= -75, yshift = 3, font = list(size = 16, color = "red")),
            list(ax = 0.1, ay = 1.69e-05, x = 0.1, y = output1$ICombH[11],
                 axref = "x", ayref = "y", xref = "x", yref = "y", showarrow= TRUE, arrowhead=1, 
                 arrowsize = 1.2, arrowwidth=2.5, arrowcolor= "red"))) %>%
@@ -251,8 +256,69 @@ plot_ly(output1, x= ~tau, y = ~InfHumans, type = "bar", name = "Sensitive Infect
   add_segments(x=-0.01, xend = 0.500001, y=output1$ICombH[11], yend = output1$ICombH[11], 
                line = list(color = "red", dash = "dot", width = 3), showlegend = FALSE)
 
-
 #Have put 6 since that is where Tau is equal to 0.05
+
+#### Comb IRH and IH Measure Testing - Effect of Treatment - Just below 0.1####
+
+#Testing for the Effect of Changing Treatment on the Combined Measure
+
+parmtau <- seq(0,0.5,by=0.02)
+parmtau <- seq(0,0.1,by=0.005)
+
+init <- c(Sa=0.99, Ia=0.01, Ira=0, Sh=1, Ih=0, Irh=0)
+output1 <- data.frame()
+times <- seq(0, 200000, by = 10)
+
+for (i in 1:length(parmtau)) {
+  temp <- data.frame(matrix(NA, nrow = 1, ncol=5))
+  parms2 = c(ra = 52^-1, rh =  (6^-1), ua = 240^-1, uh = 28835^-1, betaAA = 0.1, betaAH = 0.000001, betaHH = 0.000001, 
+             betaHA = 0.000007, phi = 0.08, tau = parmtau[i], theta = 0.5)
+  out <- ode(y = init, func = amr, times = times, parms = parms2)
+  temp[1,1] <- parmtau[i]
+  temp[1,2] <- rounding(out[nrow(out),5]) 
+  temp[1,3] <- rounding(out[nrow(out),6]) 
+  temp[1,4] <- rounding(out[nrow(out),7])
+  temp[1,5] <- temp[1,3] + temp[1,4]
+  temp[1,6] <- temp[1,4]/temp[1,5]
+  print(temp[1,3])
+  output1 <- rbind.data.frame(output1, temp)
+}
+
+colnames(output1)[1:6] <- c("tau", "SuscHumans","InfHumans","ResInfHumans","ICombH","IResRat")
+icombrat <- output1$ICombH[output1$tau == 0.5]/output1$ICombH[output1$tau == 0]
+output1$IResRat <- signif(output1$IResRat, digits = 3)
+
+plot_ly(output1, x= ~tau, y = ~IResRat, type = "scatter")
+
+#plot_ly(output1, x= ~tau, y = ~InfHumans, type = "bar", name = "Sensitive Infection (Human)") %>%
+#  add_trace(y= ~ResInfHumans, name = "Resistant Infection (Human)") %>% 
+#  layout(yaxis = list(title = "Proportion Infected", exponentformat= "E", range = c(0,5E-5), showline = TRUE),
+#         xaxis = list(title = "Tau (Antibiotic Usage)"),
+#        legend = list(orientation = "v", x = 0.6, y=1), showlegend = T,
+#         barmode = "stack", 
+#         annotations = list(x = ~tau, y = ~ICombH, text = ~IResRat, yanchor = "bottom", showarrow = FALSE, textangle = 310,
+#                            xshift =3))
+
+plot_ly(output1, x= ~tau, y = ~InfHumans, type = "bar", name = "Sensitive Infection") %>%
+  add_trace(y= ~ResInfHumans, name = "Resistant Infection") %>% 
+  layout(yaxis = list(title = "Proportion of Humans Infected", exponentformat= "E", range = c(0,4.5E-5), 
+                      titlefont = list(size = 18) ,tickfont = list(size = 18)),
+         xaxis = list(title = "Tau (Antibiotic Usage)", range = c(-0.004,0.1),
+                      titlefont = list(size = 18), tickfont = list(size = 18)),
+         margin = list(l = 30, r = 60, b = 30, t = 30, pad = 5),
+         legend = list(orientation = "h", x = 0.70, y=1, font= list(size = 18)), showlegend = F,
+         barmode = "stack",
+         annotations = list(
+           list(x = 0.09, y = 1.6e-05, text = "Baseline Parameters", yanchor = "bottom",
+                showarrow = FALSE, xshift= -30, yshift = 3, font = list(size = 18)),
+           list(ax = 0.1, ay = 1.66e-05, x = 0.1, y = output1$ICombH[21],
+                axref = "x", ayref = "y", xref = "x", yref = "y", showarrow= TRUE, arrowhead=1, 
+                arrowsize = 1.2, arrowwidth=2.5, arrowcolor= "red"))) %>%
+  add_segments(x=-0.01, xend = 0.105, y=1.6e-05, yend = 1.6e-05, line = list(color = "black", dash = "dot", width = 2),
+               showlegend = FALSE) %>%
+  add_segments(x=-0.01, xend = 0.105, y=output1$ICombH[21], yend = output1$ICombH[21], 
+               line = list(color = "red", dash = "dot", width = 3), showlegend = FALSE)
+
 #### Comb IRH and IH Measure Testing - Effect of Treatment - NEW PLOT ####
 
 #Testing for the Effect of Changing Treatment on the Combined Measure
