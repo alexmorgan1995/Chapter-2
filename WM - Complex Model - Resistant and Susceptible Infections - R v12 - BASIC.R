@@ -33,14 +33,18 @@ rounding <- function(x) {
 
 #### Model Testbed - Basic Model Output ####
 
-init <- c(Sa=0.99, Ia=0.01, Ira=0.01, Sh=1, Ih=0, Irh=0)
-times1 <- seq(0,20000,by=0.1)
+init <- c(Sa=0.98, Ia=0.01, Ira=0.01, Sh=1, Ih=0, Irh=0)
+times1 <- seq(0,1000,by=0.1)
 
 #Need to Specify Model Parameters
 parms = c(ra = 52^-1, rh =  6^-1, uh = 28835^-1, ua = 240^-1, betaAA = 0.10, betaAH = 0.000001, betaHH = 0.000001, 
           betaHA = 0.00001, phi = 0.1, tau = 0.1, theta = 0.5)
 parms = c(ra = 52^-1, rh =  6^-1, uh = 28835^-1, ua = 240^-1, betaAA = 0.07, betaAH = 0.000001, betaHH = 0.000001, 
           betaHA = 0.00001, phi = 0.1, tau = 0.1, theta = 0.5)
+parms = c(ra = 22^-1, rh =  6^-1, uh = 28835^-1, ua = 240^-1, betaAA = 0.15, betaAH = 0.000001, betaHH = 0.000001, 
+          betaHA = 0.00001, phi = 0.1, tau = 0.1, theta = 0.5)
+parms = c(ra = 80^-1, rh =  6^-1, uh = 28835^-1, ua = 240^-1, betaAA = 0.03, betaAH = 0.00001, betaHH = 0.00001, 
+          betaHA = 0.00001, phi = 0.01, tau = 0.01, theta = 0.5)
 
 out <- ode(y = init, func = amr, times = times1, parms = parms)
 
@@ -63,8 +67,8 @@ ggplot(outdata, aes(time)) +
                                 expression(paste("Susceptible ","(S"["A"],")"))), 
                      guide = guide_legend(reverse = TRUE)) +
   labs(x ="Time (Days)", y = "Proportion of Animal Population") +
-  scale_x_continuous(limits = c(0,2000), expand = c(0,0)) +
-  scale_y_continuous(limits = c(0,1), expand = c(0,0)) +
+  scale_x_continuous(limits = c(0,1000), expand = c(0,0)) +
+  scale_y_continuous(limits = c(0,1.01), expand = c(0,0)) +
   theme(axis.line.x = element_line(color="black", size = 1),
       legend.position="bottom", legend.title = element_blank(),
       legend.spacing.x = unit(0.2, 'cm'), legend.text=element_text(size=11), plot.margin=unit(c(0.7,0.7,0.8,0.8),"cm"))
@@ -198,7 +202,7 @@ ggplot(data = newdf, aes(x = parameter, y = value, fill = state)) +
 #Testing for the Effect of Changing Treatment on the Combined Measure
 
 parmtau <- seq(0,0.5,by=0.02)
-parmtau <- seq(0,0.5,by=0.01)
+parmtau <- seq(0,0.05,by=0.002)
 
 init <- c(Sa=0.99, Ia=0.01, Ira=0, Sh=1, Ih=0, Irh=0)
 output1 <- data.frame()
@@ -206,8 +210,8 @@ times <- seq(0, 200000, by = 10)
 
 for (i in 1:length(parmtau)) {
   temp <- data.frame(matrix(NA, nrow = 1, ncol=5))
-  parms2 = c(ra = 52^-1, rh =  (6^-1), ua = 240^-1, uh = 28835^-1, betaAA = 0.07, betaAH = 0.000001, betaHH = 0.000001, 
-             betaHA = 0.000007, phi = 0.1, tau = parmtau[i], theta = 0.5)
+  parms2 = c(ra = 25^-1, rh =  (6^-1), ua = 240^-1, uh = 28835^-1, betaAA = 0.065, betaAH = 0.00001, betaHH = 0.00001, 
+             betaHA = 0.00001, phi = 0.01, tau = parmtau[i], theta = 0.5)
   out <- ode(y = init, func = amr, times = times, parms = parms2)
   temp[1,1] <- parmtau[i]
   temp[1,2] <- rounding(out[nrow(out),5]) 
@@ -225,14 +229,14 @@ output1$IResRat <- signif(output1$IResRat, digits = 3)
 
 plot_ly(output1, x= ~tau, y = ~IResRat, type = "scatter")
 
-#plot_ly(output1, x= ~tau, y = ~InfHumans, type = "bar", name = "Sensitive Infection (Human)") %>%
-#  add_trace(y= ~ResInfHumans, name = "Resistant Infection (Human)") %>% 
-#  layout(yaxis = list(title = "Proportion Infected", exponentformat= "E", range = c(0,5E-5), showline = TRUE),
-#         xaxis = list(title = "Tau (Antibiotic Usage)"),
-#        legend = list(orientation = "v", x = 0.6, y=1), showlegend = T,
-#         barmode = "stack", 
-#         annotations = list(x = ~tau, y = ~ICombH, text = ~IResRat, yanchor = "bottom", showarrow = FALSE, textangle = 310,
-#                            xshift =3))
+plot_ly(output1, x= ~tau, y = ~InfHumans, type = "bar", name = "Sensitive Infection (Human)") %>%
+  add_trace(y= ~ResInfHumans, name = "Resistant Infection (Human)") %>% 
+  layout(yaxis = list(title = "Proportion Infected", exponentformat= "E", range = c(0,2.5E-5), showline = TRUE),
+         xaxis = list(title = "Tau (Antibiotic Usage)"),
+        legend = list(orientation = "v", x = 0.6, y=1), showlegend = T,
+         barmode = "stack", 
+         annotations = list(x = ~tau, y = ~ICombH, text = ~IResRat, yanchor = "bottom", showarrow = FALSE, textangle = 310,
+                            xshift =3))
 
 plot_ly(output1, x= ~tau, y = ~InfHumans, type = "bar", name = "Sensitive Infection") %>%
   add_trace(y= ~ResInfHumans, name = "Resistant Infection") %>% 
@@ -1091,16 +1095,19 @@ p2 + geom_bar(stat="identity", fill="grey23")
 
 #TEST
 #Ranges for Parameter Testing
-taurange <- seq(0,0.5, by=0.01)
+taurange <- seq(0,0.05, by=0.001)
+rarange <- seq(0,0.1, by=0.001)
+
 thetarange <- seq(0,1, by=0.01)
-betaHArange <- seq(0,0.00002, by=0.000001)
+betaHArange <- seq(0,0.0001, by=0.00001)
+betaAArange <- seq(0,0.1, by=0.001)
 
 #betaHArange <- seq(0,0.0001, by=0.00001)
 
 #Creating Possible Combinations of Parameters
 combparm1 <- NULL
-combparm1 <- expand.grid(taurange, betaHArange)
-colnames(combparm1)[1:2] <- c("tau","betaHA")
+combparm1 <- expand.grid(rarange, betaAArange)
+colnames(combparm1)[1:2] <- c("ra","betaAA")
 
 #Setting up the initial Conditions for the Model
 init <- c(Sa=0.99, Ia=0.01, Ira=0, Sh=1, Ih=0, Irh=0)
@@ -1112,8 +1119,8 @@ surfaceoutput1 <- data.frame()
 #For Loop to Create Output for the Parameter Combinations
 for (i in 1:nrow(combparm1)) {
   temp <- data.frame(matrix(NA, nrow = 1, ncol=5))
-  parms1 = c(ra = 52^-1, rh =  (6^-1)*1.3, ua = 240^-1, uh = 28835^-1, betaAA = 0.07, betaAH = 0.000001, betaHH = 0.000001, 
-             betaHA = combparm1[i,2], phi = 0.1, tau = combparm1[i,1], theta = 0.5)
+  parms1 = c(ra = combparm1[i,1], rh =  (6^-1), ua = 240^-1, uh = 28835^-1, betaAA = combparm1[i,2], betaAH = 0.00001, betaHH = 0.00001, 
+             betaHA = 0.00001, phi = 0.01, tau = 0.01, theta = 0.5)
   out <- ode(y = init, func = amr, times = times, parms = parms1)
   print(out[nrow(out),7])
   temp[1,1] <- combparm1[i,1]
@@ -1127,7 +1134,7 @@ for (i in 1:nrow(combparm1)) {
 }
 
 #temp[1,6] <- out[nrow(out),6] + out[nrow(out),7]
-colnames(surfaceoutput1)[1:6] <- c("tau","betaHA","SuscHum","InfSensHum", "InfResHum", "Comb Inf Res/Sens Humans")
+colnames(surfaceoutput1)[1:6] <- c("ra","betaAA","SuscHum","InfSensHum", "InfResHum", "Comb Inf Res/Sens Humans")
 plot(surfaceoutput1$InfSensHum, surfaceoutput1$InfResHum, xlim = c(-0.001,1), ylim = c(-0.001,1))
 
 surfaceoutputplot <- surfaceoutput1[,c(1,2,6)]
@@ -1137,34 +1144,34 @@ surfaceoutputplot <- surfaceoutput1[,c(1,2,6)]
 #Spread the Parameter Combinations out so it can be plotted
 surfaceoutputplot$new <- NULL
 
-mat <- spread(surfaceoutputplot, key = "betaHA", value = "Comb Inf Res/Sens Humans")
-row.names(mat) <- mat$tau
-mat$tau <- NULL
+mat <- spread(surfaceoutputplot, key = "betaAA", value = "Comb Inf Res/Sens Humans")
+row.names(mat) <- mat$ra
+mat$ra <- NULL
 mat1 <- data.matrix(mat)
 
 #Plotting a vector plot and a surface plot
 #cmin = 0, cmax = 0.00045,
 #contours = list(start = -0.0000001, end = 0.00045, size = 0.00005)
 
-p5 <- plot_ly(z = mat1, x = betaHArange, y = taurange) %>% add_surface(
+p5 <- plot_ly(z = mat1, x = betaHArange, y = rarange) %>% add_surface(
   cmin = 0, cmax = 0.8e-04,
   colorbar = list(title = "I<sub>RH</sub>* + I<sub>H</sub>*", exponentformat= "E")
 ) %>% layout(
   title = "Equilibrium Prevalence of I<sub>H</sub>*",
   scene = list(
     camera = list(eye = list(x = -1.25, y = 1.25, z = 0.5)),
-    xaxis = list(title = "betaHA", nticks = 8, range = c(0,0.00002), exponentformat= "E"),
+    xaxis = list(title = "betaAA", nticks = 8, range = c(0,0.00002), exponentformat= "E"),
     yaxis = list(title = "tau", nticks = 8, range = c(0,0.5)),
     zaxis = list(title = 'IComb*', nticks = 8, exponentformat= "E"),
     aspectratio=list(x=0.8,y=0.8,z=0.8)))
 p5 
 
-p6 <- plot_ly(x = taurange, y = betaHArange, z = mat1, type = "contour", transpose = TRUE,
-              contours = list(start = -0.0000001, end = 0.8e-04, size = 0.00001),
+p6 <- plot_ly(x = rarange, y = betaAArange, z = mat1, type = "contour", transpose = TRUE,
+              contours = list(start = -0.0000001, end = 5e-05, size = 0.000005),
               colorbar = list(title = "I<sub>RH</sub>* + I<sub>H</sub>*", exponentformat= "E")) %>% 
   layout(title = "Comb Equilibrium Prevalence of I<sub>H</sub>*",
-         xaxis = list(title = "Tau", autorange = "reversed"),
-         yaxis = list(title = "BetaHA", exponentformat= "E"))
+         xaxis = list(title = "rA", autorange = "reversed"),
+         yaxis = list(title = "BetaAA", exponentformat= "E"))
 p6
 
 # put next line after transpose: contours = list(start = -0.0001, end = 1, size = 0.05),
