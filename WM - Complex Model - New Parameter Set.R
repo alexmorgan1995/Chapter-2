@@ -611,54 +611,6 @@ ggplot() +
   theme(legend.position=c(0.8, 0.85), legend.title = element_blank(), text = element_text(size=13.5),
         legend.spacing.x = unit(0.7, 'cm'), legend.text=element_text(size=11), plot.margin=unit(c(0.7,0.7,0.8,0.8),"cm"))
 
-#### Evaluating the Ratio of Foodborne Infection - Before and After the Intervention ####
-
-betaHArange <- seq(0, 0.00005, by = 0.000001)
-betaAArange <- seq(0, 1, by = 0.1)
-
-#Setting up the initial Conditions for the Model
-init <- c(Sa=0.99, Ia=0.01, Ira=0, Sh=1, Ih=0, Irh=0)
-times1 <- seq(0, 10000, by = 100)
-
-#Creating Dummy Data Frame for For Loop
-surfaceoutput1 <- data.frame()
-
-#For Loop to Create Output for the Parameter Combinations
-for (i in 1:length(betaAArange)) {
-  temp <- data.frame(matrix(NA, nrow = 1, ncol=12))
-  parms1 = c(ra = 52^-1, rh =  6^-1, ua = 28835^-1, uh = 240^-1, betaAA = betaAArange[i], betaAH = 0.000001, betaHH = 0.000001, 
-             betaHA = 0.00001, phi = 0.1, tau = 0, theta = 0.5)
-  parms2 = c(ra = 52^-1, rh =  6^-1, ua = 28835^-1, uh = 240^-1, betaAA = betaAArange[i], betaAH = 0.000001, betaHH = 0.000001, 
-             betaHA = 0.00001, phi = 0.1, tau = 0.05, theta = 0.5)
-  out <- ode(y = init, func = amr, times = times1, parms = parms1)
-  out1 <- ode(y = init, func = amr, times = times1, parms = parms2)
-  temp[1,1] <- betaAArange[i]
-  temp[1,2] <- 0
-  temp[1,3] <- out[nrow(out),6]
-  if(temp[1,3] < 1e-10) {temp[1,3] <- 0}
-  temp[1,4] <- out[nrow(out),7]
-  if(temp[1,4] < 1e-10) {temp[1,4] <- 0}
-  temp[1,5] <- temp[1,3] + temp[1,4]
-  temp[1,6] <- temp[1,4]/temp[1,5]
-  
-  temp[1,7] <- 0.05
-  temp[1,8] <- out1[nrow(out1),6]
-  if(temp[1,8] < 1e-10) {temp[1,8] <- 0}
-  temp[1,9] <- out1[nrow(out1),7]
-  if(temp[1,9] < 1e-10) {temp[1,9] <- 0}
-  temp[1,10] <- temp[1,8] + temp[1,9]
-  temp[1,11] <- temp[1,9]/temp[1,10]
-  
-  temp[1,12] <- temp[1,10]/temp[1,5]
-  surfaceoutput1 <- rbind.data.frame(surfaceoutput1, temp)
-}
-
-colnames(surfaceoutput1)[1:12] <- c("betaAA","tau","InfSensHum0", "InfResHum0", "IHCOMB0", "ResRatio0",
-                                    "tau","InfSensHum005", "InfResHum005", "IHCOMB005", "ResRatio005",
-                                    "ICOMBRat0005")
-
-plot_ly(surfaceoutput1, x= ~betaAA, y = ~ICOMBRat0005, type = "scatter")
-
 #### Scenario Modelling ####
 
 #Baseline - 125% Increase in Recovery
@@ -780,47 +732,6 @@ p100 <- plot_ly(x = betaaaperc, y = betahaperc, z = mat3, type = "contour",
   layout(xaxis = list(title = "Animal-to-Animal Transmission (% of Baseline Value)"),
          yaxis = list(title = "Animal-to-Human Transmission (% of Baseline Value)"))
 p100
-
-plot_ly(x = betaaaperc, y = betahaperc, z = mat3, type = "contour",  autocolorscale = T, reversescale = T,
-                contours = list(start = 1.245, end = 3, size = 0.2, showlabels = TRUE,
-                                labelfont = list(size = 12, color = 'white')))
-
-p15 <- plot_ly(x = betaaaperc, y = betahaperc, z = mat3, type = "contour",
-               contours = list(start = 0.356, end = 3.05501, size = 0.2, showlabels = TRUE,
-                               labelfont = list(size = 12, color = 'white')),
-               colorbar = list(title = "I<sub>CombH</sub>", 
-                               thickness = 35, len = 1)) %>% 
-  layout(xaxis = list(title = "Animal-to-Animal Transmission (%)"),
-         yaxis = list(title = "Animal-to-Human Transmission (%)"))
-p15
-
-p16 <- plot_ly(x = betaaaperc, y = betahaperc, z = mat3, type = "contour",
-               contours = list(start = 2.0788, end = 3.05501, size = 0.2, showlabels = TRUE,
-                               labelfont = list(size = 12, color = 'white')),
-               colorbar = list(title = "I<sub>CombH</sub>", 
-                               thickness = 35, len = 1)) %>% 
-  layout(xaxis = list(title = "BetaAA (%)"),
-         yaxis = list(title = "BetaHA (%)"))
-p16
-
-
-p17 <- plot_ly(x = betaaaperc, y = betahaperc, z = mat3, type = "contour",
-               contours = list(start = 2.53, end = 3.05501, size = 0.2, showlabels = TRUE,
-                               labelfont = list(size = 12, color = 'white')),
-               colorbar = list(title = "I<sub>CombH</sub>", 
-                               thickness = 35, len = 1)) %>% 
-  layout(xaxis = list(title = "BetaAA (%)"),
-         yaxis = list(title = "BetaHA (%)"))
-p17
-
-p18 <- plot_ly(x = betaaaperc, y = betahaperc, z = mat3, type = "contour",
-               contours = list(start = 3.1, end = 3.1, size = 0.2, showlabels = TRUE,
-                               labelfont = list(size = 12, color = 'white')),
-               colorbar = list(title = "I<sub>CombH</sub>", 
-                               thickness = 35, len = 1)) %>% 
-  layout(xaxis = list(title = "BetaAA (%)"),
-         yaxis = list(title = "BetaHA (%)"))
-p18
 
 #### Better Plots for Zeta and Lambda Testing ####
 
@@ -1110,3 +1021,46 @@ plot_ly(x = taurange, y = betaAAsupprange , z = mat6, type = "contour",
                         thickness = 35, len = 1)) %>% 
   layout(xaxis = list(title = "Livestock Antibiotic Usage (Tau)"),
          yaxis = list(title = "Animal-to-Human Transmission (BetaAA)"))
+
+#### Relationship between Livestock Tau and Livestock Resistance ####
+
+parmtau <- seq(0,0.1,by=0.001)
+#parmtau <- seq(0,0.05,by=0.005)
+
+init <- c(Sa=0.99, Ia=0.01, Ira=0, Sh=1, Ih=0, Irh=0)
+outputanres <- data.frame()
+times <- seq(0, 200000, by = 10)
+
+for (i in 1:length(parmtau)) {
+  temp <- data.frame(matrix(NA, nrow = 1, ncol=7))
+  parms2 = c(ra = 0, rh =  (7^-1), ua = 42^-1, uh = 28835^-1, betaAA = (0.0415), betaAH = 0.00001, betaHH = 0.00001, 
+             betaHA = (0.00001), phi = 0.02, tau = parmtau[i], theta = 0.5, zeta = 1, lambda = 1)
+  out <- ode(y = init, func = amr, times = times, parms = parms2)
+  temp[1,1] <- parmtau[i]
+  temp[1,2] <- rounding(out[nrow(out),5]) 
+  temp[1,3] <- rounding(out[nrow(out),6]) 
+  temp[1,4] <- rounding(out[nrow(out),7])
+  temp[1,5] <- temp[1,3] + temp[1,4]
+  temp[1,6] <- temp[1,4]/temp[1,5]
+  temp[1,7] <- rounding(out[nrow(out),4])/(rounding(out[nrow(out),3]) + rounding(out[nrow(out),4])) 
+  print(temp[1,7])
+  outputanres <- rbind.data.frame(outputanres, temp)
+}
+
+colnames(outputanres)[1:7] <- c("tau", "SuscHumans","InfHumans","ResInfHumans","ICombH","IResRat", "AniResRat")
+
+#icombrat <- outputAA1$ICombH[outputAA1$tau == 0.5]/output1$ICombH[outputAA1$tau == 0]
+#outputAA1$IResRat <- signif(outputAA1$IResRat, digits = 3)
+
+outputanres$InfHumans <- outputanres$InfHumans*100000
+outputanres$ResInfHumans <- outputanres$ResInfHumans*100000
+outputanres$ICombH <- outputanres$ICombH*100000
+
+ggplot() + 
+  geom_line(data=outputanres, aes(tau,AniResRat), linetype= 1, size = 2, colour = "black") +
+  scale_x_continuous(limits = c(0,0.1), expand = c(0,0)) +
+  scale_y_continuous(limits = c(0,1), expand = c(0,0)) +
+  labs(x =expression(paste("Livestock Antibiotic Usage (",tau,")")), 
+       y = expression(paste("Proportion of Resistant Animal Infection (ResProp)"))) +
+  theme(legend.title = element_blank(), text = element_text(size=13),plot.margin=unit(c(0.7,0.7,0.8,0.8),"cm"))
+
