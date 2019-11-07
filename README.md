@@ -12,7 +12,7 @@ This script is currently being altered to make the model analysis I carried out 
 
 All code was written and run in R-Studio. The packages required to run the code are as follows:
 
-```library("deSolve"); library("fast"); library("sensitivity"); library("ggplot2"); library("plotly"); library("tidyr")```
+```library("deSolve"); library("fast"); library("sensitivity"); library("ggplot2"); library("plotly"); library("reshape2")```
 
 deSolve is the primary package used to solve the ODEs used in the modelling approach. A function was used in this model to help tidy up the prevalence values obtained from numerically solving the set of ODEs - ```rounding```. This is defined as:
 
