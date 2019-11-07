@@ -1,6 +1,6 @@
 setwd("//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Mathematical Models")
 
-rm(list=ls()); library("deSolve"); library("fast"); library("sensitivity"); library("ggplot2"); library("plotly"); library("tidyr")
+rm(list=ls()); library("deSolve"); library("fast"); library("sensitivity"); library("ggplot2"); library("plotly"); library("reshape2")
 
 #### Model Functions ####
 #Foodborne Disease Model with Integrated Lambda and Zeta Parameters
