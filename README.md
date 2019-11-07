@@ -29,7 +29,7 @@ There are currently two types of model structure used in these scripts.
 - With scaling parameters (λ - scaling parameter for antibiotic-mediated recovery) and (ζ - scaling parameter for fitness effects of antibiotic-resistance on transmission)
 - Without scaling parameters 
 
-# Code for Model w/ Scaling Parameters 
+### Code for Model w/ Scaling Parameters 
 
 ```
 amr <- function(time, state, parameters) {
@@ -46,7 +46,7 @@ amr <- function(time, state, parameters) {
 }
 ```
 
-# Code For Model w/o Scaling Parameters 
+### Code For Model w/o Scaling Parameters 
 
 ```
 amrold <- function(time, state, parameters) {
