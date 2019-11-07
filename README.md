@@ -4,7 +4,7 @@
 
 Listed in this GitHub repository are the models (some are deprecated...) for my 2nd PhD chapter. This chapter looks at creating a simple modelling framework to explore the impact of livestock antibiotic usage (τ) on human health, specifically overall levels of foodborne disease and the proportion of antibiotic-resistant foodborne disease in humans.
 
-As of [07/11/19] the final script for the analysis is named: ```Chapter 2 - Finalised Model - Campylobacter in Poultry```
+**As of [07/11/19] the final script for the analysis is named: ```Chapter 2 - Finalised Model - Campylobacter in Poultry```**
 
 This script is currently being altered to make the model analysis I carried out more streamlined. Especially with regards to testing different parameter combinations and plotting these parameter sets. 
 
