@@ -54,7 +54,7 @@ ggplot(data = meltedout, aes(x = time, y = Value, col = Compartment)) +
 
 #For the un-altered human population
 ggplot(data = meltedout, aes(x = time, y = Value, col = Compartment)) + 
-  geom_line(data=(y = meltedout[(as.numeric(which((meltedout$Compartment == "Ih" & meltedout$time == 0))):
+  geom_line(data=(y = meltedout[(as.numeric(which((meltedout$Compartment == "Sh" & meltedout$time == 0))):
                                    length(meltedout$time)),]), size = 1.1) +
   labs(x ="Time (Days)", y = "Proportion of Human Population") +
   scale_y_continuous(limits = c(0,1), expand = c(0,0)) +
@@ -63,7 +63,7 @@ ggplot(data = meltedout, aes(x = time, y = Value, col = Compartment)) +
 
 #For the scaled human population - Just for Ih and Irh
 ggplot(data = meltedout1, aes(x = time, y = Value, col = Compartment)) + 
-  geom_line(data=(y = meltedout[(as.numeric(which((meltedout1$Compartment == "Ih" & meltedout1$time == 0))):
+  geom_line(data=(y = meltedout1[(as.numeric(which((meltedout1$Compartment == "Ih" & meltedout1$time == 0))):
                                    length(meltedout1$time)),]), size = 1.1) +
   labs(x ="Time (Days)", y = "Proportion of Human Population (per 100,000)") +
   scale_y_continuous(limits = c(0,5), expand = c(0,0)) +
@@ -95,12 +95,14 @@ for (i in 1:nrow(parms)) {
   temp[1,4] <- temp[1,2] + temp[1,3]
   temp[1,5] <- temp[1,3]/temp[1,4]
   temp[1,6] <- signif(((rounding(out[nrow(out),6]) + rounding(out[nrow(out)-1,6]) + rounding(out[nrow(out)-2,6]))/3), digits = 6)
-  if(temp[1,6] == temp[1,2]) {temp[1,7] <- "YES"}
+  if(temp[1,6] == temp[1,2]) {temp[1,7] <- "Bueno"
+  } else{temp[1,7] <- "No Bueno"}
   print(temp[1,7])
   output <- rbind.data.frame(output, temp)
 }
 
 colnames(output)[1:7] <- c("SuscHumans","InfHumans","ResInfHumans","ICombH","IResRat", "ValueatEqui","Equi?")
+
 end_time <- Sys.time(); end_time - start_time
 
 #### Sensitivity Analysis ####
@@ -125,9 +127,7 @@ df.equilibrium1 <- NULL; df.equilibrium1 <- data.frame(parameter=rbind("ra", "rh
 p1 <- ggplot(df.equilibrium11, aes(parameter, value)) + geom_bar(stat="identity", fill="grey23"); p1
 
 #Combined Bar Plot with Both Sensitivity Analysis
-df.equilibrium$state <- "Overall Foodborne Disease"
-df.equilibrium1$state <- "Resistance Ratio"
-
+df.equilibrium$state <- "Overall Foodborne Disease"; df.equilibrium1$state <- "Resistance Ratio"
 newdf <- rbind(df.equilibrium, df.equilibrium1)
 
 ggplot(data = newdf, aes(x = parameter, y = value, fill = state)) +
@@ -143,7 +143,7 @@ ggplot(data = newdf, aes(x = parameter, y = value, fill = state)) +
   theme(axis.text=element_text(size = 12, colour = "black"),
         axis.line.x = element_line(color="black", size = 0.7),
         axis.title=element_text(size=12), 
-        legend.position=c(0.8, 0.9), legend.title = element_blank()) +
+        legend.position=c(0.8, 0.9), legend.title = element_blank()) + 
   ylab("Partial Variance") 
 
 #### Basic ICombH/Tau Plot ####
@@ -156,30 +156,22 @@ times <- seq(0, 200000, by = 10)
 for (i in 1:length(parmtau)) {
   temp <- data.frame(matrix(NA, nrow = 1, ncol=5))
   parms2 = c(ra = 0 , rh =  (7^-1), ua = 42^-1, uh = 28835^-1, betaAA = (0.0415), betaAH = 0.00001, betaHH = 0.00001, 
-             betaHA = (0.00001), phi = 0.02, tau = parmtau[i], theta = 0.5, zeta = 1, lambda = 0.7)
+             betaHA = (0.00001), phi = 0.02, tau = parmtau[i], theta = 0.5, zeta = 1, lambda = 1)
   out <- ode(y = init, func = amr, times = times, parms = parms2)
   temp[1,1] <- parmtau[i]
   temp[1,2] <- rounding(out[nrow(out),5]) 
   temp[1,3] <- rounding(out[nrow(out),6]) 
   temp[1,4] <- rounding(out[nrow(out),7])
   temp[1,5] <- temp[1,3] + temp[1,4]
-  temp[1,6] <- temp[1,4]/temp[1,5]
+  temp[1,6] <- signif(as.numeric(temp[1,4]/temp[1,5]), digits = 3)
   print(temp[1,3])
   output1 <- rbind.data.frame(output1, temp)
 }
 
 colnames(output1)[1:6] <- c("tau", "SuscHumans","InfHumans","ResInfHumans","ICombH","IResRat")
-icombrat <- output1$ICombH[output1$tau == 0.5]/output1$ICombH[output1$tau == 0]
-output1$IResRat <- signif(output1$IResRat, digits = 3)
 
 output2 <- output1
-output2$InfHumans <- output2$InfHumans*100000; 
-output2$ResInfHumans <- output2$ResInfHumans*100000
-output2$ICombH <- output2$ICombH*100000
-
-table <- data.frame(x = c("Baseline Curtailment", "70% BetaAA", "70% BetaHA", "70% BetaAA/BetaHA"),
-                    y = c(3.055010, 1.7933500, 2.138530, 1.2553500))
-table$x <- factor(table$x, levels = c("Baseline Curtailment", "70% BetaAA", "70% BetaHA", "70% BetaAA/BetaHA"))
+output2[,2:5] <- output2[,2:5]*100000 #Scaling the prevalence (per 100,000)
 
 plot_ly(output2, x= ~tau, y = ~InfHumans, type = "bar", name = "Antibiotic-Sensitive Infection (Human)") %>%
   add_trace(y= ~ResInfHumans, name = "Antibiotic-Resistant Infection (Human)") %>% 
@@ -200,28 +192,33 @@ init <- c(Sa=0.99, Ia=0.01, Ira=0, Sh=1, Ih=0, Irh=0)
 times <- seq(0, 200000, by = 100)
 
 #Have to alter a number of the outputnames to generate all the values for the figures
-outputua13 <- data.frame()
+outputAA <- data.frame("tau" = character(0), "SuscHumans" = character(0),"InfHumans" = character(0),
+                       "ResInfHumans" = character(0),"ICombH" = character(0),"IResRat" = character(0),
+                       "betaAAmod" = character(0))
+AAdetails <- data.frame("Info" = c("Baseline", "90%", "80%", "70%"), "Percentage" = c(1, 0.9, 0.8, 0.7))
 
-for (i in 1:length(parmtau)) {
-  temp <- data.frame(matrix(NA, nrow = 1, ncol=5))
-  parms2 = c(ra = 0, rh =  (7^-1), ua = (42^-1)*1.3, uh = 28835^-1, betaAA = (0.0415), betaAH = 0.00001, betaHH = 0.00001, 
-             betaHA = (0.00001), phi = (0.02), tau = parmtau[i], theta = (0.5))
-  out <- ode(y = init, func = amrold, times = times, parms = parms2)
-  temp[1,1] <- parmtau[i]
-  temp[1,2] <- rounding(out[nrow(out),5]) 
-  temp[1,3] <- rounding(out[nrow(out),6]) 
-  temp[1,4] <- rounding(out[nrow(out),7])
-  temp[1,5] <- temp[1,3] + temp[1,4]
-  temp[1,6] <- temp[1,4]/temp[1,5]
-  print(temp[1,3])
-  outputua13 <- rbind.data.frame(outputua13, temp)
+for (j in 1:nrow(AAdetails)) {
+  for (i in 1:length(parmtau)) {
+    temp <- data.frame(matrix(NA, nrow = 1, ncol=7))
+    parms2 = c(ra = 0, rh =  (7^-1), ua = (42^-1)*1.3, uh = 28835^-1, betaAA = (0.0415)*AAdetails$Percentage[j], 
+               betaAH = 0.00001, betaHH = 0.00001, betaHA = (0.00001), phi = (0.02), tau = parmtau[i], theta = (0.5), lambda = 1, zeta = 1)
+    out <- ode(y = init, func = amr, times = times, parms = parms2)
+    temp[1,1] <- parmtau[i]
+    temp[1,2] <- rounding(out[nrow(out),5]) 
+    temp[1,3] <- rounding(out[nrow(out),6]) 
+    temp[1,4] <- rounding(out[nrow(out),7])
+    temp[1,5] <- temp[1,3] + temp[1,4]
+    temp[1,6] <- signif(as.numeric(temp[1,4]/temp[1,5]), digits = 3)
+    temp[1,7] <- AAdetails$Info[j]
+    print(temp[1,3])
+    outputAA <- rbind.data.frame(outputAA, temp)
+  }
+  
 }
 
 colnames(outputua13)[1:6] <- c("tau", "SuscHumans","InfHumans","ResInfHumans","ICombH","IResRat")
 
-outputua13$InfHumans <- outputua13$InfHumans*100000
-outputua13$ResInfHumans <- outputua13$ResInfHumans*100000
-outputua13$ICombH <- outputua13$ICombH*100000
+outputua13[,2:5] <- outputua13[,2:5]*100000 #Scaling the prevalence (per 100,000)
 
 #### Plotting ####
 outputAA1$state <- "Baseline" #BetaHA = 0.00001; BetaAA = 0.1
@@ -277,7 +274,7 @@ ggplot() +
 ##
 
 outputHA1$state <- "Baseline Parameters" #BetaHA = 0.00001; BetaAA = 0.1
-outputHA9$state <- "Beta" #BetaHA = 0.000009; BetaAA = 0.1
+outputHA9$state <- "Nine" #BetaHA = 0.000009; BetaAA = 0.1
 outputHA8$state <- "Eight" #BetaHA = 0.000008; BetaAA = 0.1
 outputHA7$state <- "Seven" #BetaHA = 0.000007; BetaAA = 0.1
 new.data4 <- do.call("rbind", list(outputHA1, outputHA9, outputHA8, outputHA7))
