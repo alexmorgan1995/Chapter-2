@@ -186,7 +186,6 @@ plot_ly(output2, x= ~tau, y = ~InfHumans, type = "bar", name = "Antibiotic-Sensi
 
 #Testing for the Effect of Changing Treatment on the Combined Measure
 
-#parmtau <- seq(0,0.5,by=0.03)
 parmtau <- seq(0,0.1,by=0.0005)
 init <- c(Sa=0.99, Ia=0.01, Ira=0, Sh=1, Ih=0, Irh=0)
 times <- seq(0, 200000, by = 100)
