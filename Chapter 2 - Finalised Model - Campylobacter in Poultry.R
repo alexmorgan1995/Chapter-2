@@ -309,6 +309,30 @@ for (j in 1:nrow(AAdetails)) {
 
 colnames(outputAA)[1:7] <- c("tau", "SuscHumans","InfHumans","ResInfHumans","ICombH","IResRat", "State")
 
+#Theta
+outputAA <- data.frame()
+AAdetails <- data.frame("Info" = c("Baseline","90%","80%","70%"), "Percentage" = c(1, 0.9, 0.8, 0.7))
+
+for (j in 1:nrow(AAdetails)) {
+  for (i in 1:length(parmtau)) {
+    temp <- data.frame(matrix(NA, nrow = 1, ncol=7))
+    parms2 = c(ra = 0, rh = (7^-1), ua = (42^-1), uh = 28835^-1, betaAA = (0.0415)*AAdetails$Percentage[j], 
+               betaAH = 0.00001, betaHH = 0.00001, betaHA = (0.00001), phi = (0.02), tau = parmtau[i], theta = (0.5), lambda = 1, zeta = 1)
+    out <- ode(y = init, func = amr, times = times, parms = parms2)
+    temp[1,1] <- parmtau[i]
+    temp[1,2] <- (rounding(out[nrow(out),5]))*100000
+    temp[1,3] <- (rounding(out[nrow(out),6]))*100000 
+    temp[1,4] <- (rounding(out[nrow(out),7]))*100000
+    temp[1,5] <- temp[1,3] + temp[1,4]
+    temp[1,6] <- signif(as.numeric(temp[1,4]/temp[1,5]), digits = 3)
+    temp[1,7] <- as.character(AAdetails$Info[j])
+    print(temp[1,7])
+    outputAA <- rbind.data.frame(outputAA, temp)
+  }
+}
+
+colnames(outputAA)[1:7] <- c("tau", "SuscHumans","InfHumans","ResInfHumans","ICombH","IResRat", "State")
+
 #rH
 outputAA <- data.frame()
 AAdetails <- data.frame("Info" = c("Baseline","90%","80%","70%"), "Percentage" = c(1, 0.9, 0.8, 0.7))
@@ -405,31 +429,6 @@ for (j in 1:nrow(AAdetails)) {
 
 colnames(outputAA)[1:7] <- c("tau", "SuscHumans","InfHumans","ResInfHumans","ICombH","IResRat", "State")
 
-#Theta
-outputAA <- data.frame()
-AAdetails <- data.frame("Info" = c("Baseline","90%","80%","70%"), "Percentage" = c(1, 0.9, 0.8, 0.7))
-
-for (j in 1:nrow(AAdetails)) {
-  for (i in 1:length(parmtau)) {
-    temp <- data.frame(matrix(NA, nrow = 1, ncol=7))
-    parms2 = c(ra = 0, rh = (7^-1), ua = (42^-1), uh = 28835^-1, betaAA = (0.0415)*AAdetails$Percentage[j], 
-               betaAH = 0.00001, betaHH = 0.00001, betaHA = (0.00001), phi = (0.02), tau = parmtau[i], theta = (0.5), lambda = 1, zeta = 1)
-    out <- ode(y = init, func = amr, times = times, parms = parms2)
-    temp[1,1] <- parmtau[i]
-    temp[1,2] <- (rounding(out[nrow(out),5]))*100000
-    temp[1,3] <- (rounding(out[nrow(out),6]))*100000 
-    temp[1,4] <- (rounding(out[nrow(out),7]))*100000
-    temp[1,5] <- temp[1,3] + temp[1,4]
-    temp[1,6] <- signif(as.numeric(temp[1,4]/temp[1,5]), digits = 3)
-    temp[1,7] <- as.character(AAdetails$Info[j])
-    print(temp[1,7])
-    outputAA <- rbind.data.frame(outputAA, temp)
-  }
-}
-
-colnames(outputAA)[1:7] <- c("tau", "SuscHumans","InfHumans","ResInfHumans","ICombH","IResRat", "State")
-
-
 #### Plotting ####
 
 ggplot() + 
@@ -442,18 +441,13 @@ ggplot() +
   theme(legend.position=c(0.8, 0.85), legend.title = element_blank(), text = element_text(size=13.5),
         legend.spacing.x = unit(0.7, 'cm'), legend.text=element_text(size=11), plot.margin=unit(c(0.7,0.7,0.8,0.8),"cm"))
 
-ggplot(data = outputAA, aes(x = tau, y = IResRat, colour = State, size = State)) + geom_line() +
-  labs(x = expression(paste("Antibiotic Usage (",tau,")")), y = expression(paste("Proportion of Resistant Human Infection (ResProp)"))) +
-  scale_x_continuous(limits = c(0,0.1), expand = c(0,0)) +
-  scale_y_continuous(limits = c(0,1), expand = c(0,0)) +
-  scale_size_manual(values = c(1, 2, 3, 5)) +
+ggplot(data = outputAA, aes(x = tau, y = IResRat, colour = State)) + geom_line() +
   scale_colour_manual(values = c("black","steelblue1","slateblue1","slategray"), 
                       labels = c("Baseline   ", 
                                  expression(paste(beta[HA]," = 70%")), 
                                  expression(paste(beta[HA]," = 80%")), 
-                                 expression(paste(beta[HA]," = 90%"))))+
-  theme(legend.position=c(0.8, 0.85), legend.title = element_blank(), text = element_text(size=13.5),
-        legend.spacing.x = unit(0.7, 'cm'), legend.text=element_text(size=11), plot.margin=unit(c(0.7,0.7,0.8,0.8),"cm"))
+                                 expression(paste(beta[HA]," = 90%")))) +
+  theme(legend.position=c(0.8, 0.85), legend.title = element_blank(), text = element_text(size=13.5), legend.spacing.x = unit(0.7, 'cm'))
 
 ggplot() + 
   geom_line(data=outputAA[outputAA$State == "Baseline",], aes(tau,ICombH), linetype= 3, size = 1, colour = "black") + 
@@ -470,8 +464,7 @@ ggplot() +
   scale_y_continuous(limits = c(0,3), expand = c(0,0)) +
   labs(x =expression(paste(" Livestock Antibiotic Usage (",tau,")")), y = expression(paste("Proportion of Infected Humans "," (I"["CombH"],")", 
                                                                                 " per 100,000"))) +
-  theme(text = element_text(size=13.5),
-        legend.position=c(0.8, 0.85), legend.title = element_blank(),
+  theme(text = element_text(size=13.5), legend.position=c(0.8, 0.85), legend.title = element_blank(), 
         legend.spacing.x = unit(0.7, 'cm'), plot.margin=unit(c(0.7,0.7,0.8,0.8),"cm"))
 
 ##
