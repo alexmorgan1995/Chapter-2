@@ -37,8 +37,7 @@ out <- ode(y = init, func = amr, times = times, parms = parms) # Solve the ODE
 
 #Transforming the deSolve output for GGplot and plotting
 
-outdata <- data.frame(out)
-outdata$IComb <- outdata$Ih + outdata$Irh #Outdata is still the original unscaled function 
+outdata <- data.frame(out); outdata$IComb <- outdata$Ih + outdata$Irh #Outdata is still the original unscaled function 
 outdata1 <- outdata; outdata1[5:8] <- outdata[5:8]*100000 # Scale the Human Compartments for (per 100,000 pop)
 
 meltedout <- melt(outdata, id = "time", variable.name = "Compartment", value.name = "Value")
@@ -177,265 +176,69 @@ plot_ly(output2, x= ~tau, y = ~InfHumans, type = "bar", name = "Antibiotic-Sensi
   layout(yaxis = list(title = "Proportion of Infected Humans (ICombH) per 100,000", range = c(0,3.5), showline = TRUE),
          xaxis = list(title = "Livestock Antibiotic Usage (Tau)"),
          legend = list(orientation = "v", x = 0.6, y=1), showlegend = T,
-         barmode = "stack", 
-         annotations = list(x = ~tau, y = ~ICombH, text = ~IResRat, yanchor = "bottom", showarrow = FALSE, textangle = 310,
+         barmode = "stack", annotations = list(x = ~tau, y = ~ICombH, text = ~IResRat, yanchor = "bottom", showarrow = FALSE, textangle = 310,
                             xshift =3))
 
 #### Comb IRH and IH Measure Testing - Effect of Treatment - NEW PLOT ####
-
-#Global Re-used variables 
 parmtau <- seq(0,0.1,by=0.0005)
 init <- c(Sa=0.99, Ia=0.01, Ira=0, Sh=1, Ih=0, Irh=0)
 times <- seq(0, 200000, by = 100)
 
-#BetaAA
-outputAA <- data.frame()
-AAdetails <- data.frame("Info" = c("Baseline","90%","80%","70%"), "Percentage" = c(1, 0.9, 0.8, 0.7))
+parmdetails <- rbind(data.frame("Parameter" = "betaAA", "Info" = c("Baseline", "90%", "80%", "70%"), "Percentage" = c(1, 0.9, 0.8, 0.7)),
+                     data.frame("Parameter" = "betaHA", "Info" = c("Baseline", "90%", "80%", "70%"), "Percentage" = c(1, 0.9, 0.8, 0.7)),
+                     data.frame("Parameter" = "betaHH", "Info" = c("Baseline", "90%", "80%", "70%"), "Percentage" = c(1, 0.9, 0.8, 0.7)),
+                     data.frame("Parameter" = "betaAH", "Info" = c("Baseline", "90%", "80%", "70%"), "Percentage" = c(1, 0.9, 0.8, 0.7)),
+                     data.frame("Parameter" = "phi", "Info" = c("120%", "110%", "Baseline", "90%", "80%"), 
+                                "Percentage" = c(1.2, 1.1, 1, 0.9, 0.8)),
+                     data.frame("Parameter" = "theta", "Info" = c("120%", "110%", "Baseline", "90%", "80%"), 
+                                "Percentage" = c(1.2, 1.1, 1, 0.9, 0.8)),
+                     data.frame("Parameter" = "alpha", "Info" = c("Baseline", "90%", "80%", "70%"), "Percentage" = c(1, 0.9, 0.8, 0.7)),
+                     data.frame("Parameter" = "rH", "Info" = c("120%", "110%", "Baseline", "90%", "80%"), 
+                                "Percentage" = c(1.2, 1.1, 1, 0.9, 0.8)),
+                     data.frame("Parameter" = "rA", "Info" = c("120%", "110%", "Baseline", "90%", "80%"), 
+                                "Percentage" = c(1.2, 1.1, 1, 0.9, 0.8)),
+                     data.frame("Parameter" = "muA", "Info" = c("120%", "110%", "Baseline", "90%", "80%"), 
+                                "Percentage" = c(1.2, 1.1, 1, 0.9, 0.8)),
+                     data.frame("Parameter" = "muH", "Info" = c("120%", "110%", "Baseline", "90%", "80%"), 
+                                "Percentage" = c(1.2, 1.1, 1, 0.9, 0.8)))
 
-for (j in 1:nrow(AAdetails)) {
-  for (i in 1:length(parmtau)) {
-    temp <- data.frame(matrix(NA, nrow = 1, ncol=7))
-    parms2 = c(ra = 0, rh = (7^-1), ua = (42^-1), uh = 28835^-1, betaAA = (0.0415)*AAdetails$Percentage[j], 
-               betaAH = 0.00001, betaHH = 0.00001, betaHA = (0.00001), phi = (0.02), tau = parmtau[i], theta = (0.5), lambda = 1, zeta = 1)
-    out <- ode(y = init, func = amr, times = times, parms = parms2)
-    temp[1,1] <- parmtau[i]
-    temp[1,2] <- (rounding(out[nrow(out),5]))*100000
-    temp[1,3] <- (rounding(out[nrow(out),6]))*100000 
-    temp[1,4] <- (rounding(out[nrow(out),7]))*100000
-    temp[1,5] <- temp[1,3] + temp[1,4]
-    temp[1,6] <- signif(as.numeric(temp[1,4]/temp[1,5]), digits = 3)
-    temp[1,7] <- as.character(AAdetails$Info[j])
-    print(temp[1,7])
-    outputAA <- rbind.data.frame(outputAA, temp)
+parms = c(ra = 0, rh = (7^-1), ua = (42^-1), uh = 28835^-1, betaAA = (0.0415), 
+           betaAH = 0.00001, betaHH = 0.00001, betaHA = (0.00001), phi = (0.02), theta = (1), alpha = 1)
+
+for (j in 1:length(unique(parmdetails[,1]))) { 
+  output <- data.frame()
+  for (x in 1:length(parmdetails[parmdetails == as.character(unique(parmdetails[,1])[j]),3])) {
+    temp1 <- data.frame()
+    for (i in 1:length(parmtau)) {
+      temp <- data.frame(matrix(NA, nrow = 1, ncol=8))
+      parmstemp <- c(parms, tau = parmtau[i])
+      parmstemp[as.character(unique(parmdetails[,1])[j])] <- parmstemp[as.character(unique(parmdetails[,1])[j])]*
+        parmdetails[parmdetails == as.character(unique(parmdetails[,1])[j]), 3][x]
+      out <- ode(y = init, func = amr, times = times, parms = parmstemp)
+      temp[1,1] <- parmtau[i]
+      temp[1,2] <- rounding(out[nrow(out),5]) 
+      temp[1,3] <- rounding(out[nrow(out),6]) 
+      temp[1,4] <- rounding(out[nrow(out),7])
+      temp[1,5] <- temp[1,3] + temp[1,4]
+      temp[1,6] <- signif(as.numeric(temp[1,4]/temp[1,5]), digits = 3)
+      temp[1,7] <- as.character(parmdetails[parmdetails == as.character(unique(parmdetails[,1])[j]), 2][x])
+      temp[1,8] <- as.character(unique(parmdetails[,1])[j])
+      print(paste(temp[1,1], temp[1,7], temp[1,8], sep=" "))
+      temp1 <- rbind.data.frame(temp1, temp)
+    }
+    output <- rbind.data.frame(output, temp1)
   }
+  colnames(output)[1:8] <- c("tau", "SuscHumans","InfHumans","ResInfHumans","ICombH","IResRat", "State", "Parameter")
+  assign(paste("output", as.character(unique(parmdetails[,1])[j]), sep=""), output) 
 }
-
-colnames(outputAA)[1:7] <- c("tau", "SuscHumans","InfHumans","ResInfHumans","ICombH","IResRat", "State")
-
-#BetaHA
-outputHA <- data.frame()
-HAdetails <- data.frame("Info" = c("Baseline","90%","80%","70%"), "Percentage" = c(1, 0.9, 0.8, 0.7))
-
-for (j in 1:nrow(AAdetails)) {
-  for (i in 1:length(parmtau)) {
-    temp <- data.frame(matrix(NA, nrow = 1, ncol=7))
-    parms2 = c(ra = 0, rh = (7^-1), ua = (42^-1), uh = 28835^-1, betaAA = (0.0415), 
-               betaAH = 0.00001, betaHH = 0.00001, betaHA = (0.00001)*HAdetails$Percentage[j], 
-               phi = (0.02), tau = parmtau[i], theta = (0.5), lambda = 1, zeta = 1)
-    out <- ode(y = init, func = amr, times = times, parms = parms2)
-    temp[1,1] <- parmtau[i]
-    temp[1,2] <- (rounding(out[nrow(out),5]))*100000
-    temp[1,3] <- (rounding(out[nrow(out),6]))*100000 
-    temp[1,4] <- (rounding(out[nrow(out),7]))*100000
-    temp[1,5] <- temp[1,3] + temp[1,4]
-    temp[1,6] <- signif(as.numeric(temp[1,4]/temp[1,5]), digits = 3)
-    temp[1,7] <- as.character(HAdetails$Info[j])
-    print(temp[1,7])
-    outputHA <- rbind.data.frame(outputHA, temp)
-  }
-}
-
-colnames(outputHA)[1:7] <- c("tau", "SuscHumans","InfHumans","ResInfHumans","ICombH","IResRat", "State")
-
-#BetaHH
-outputHH <- data.frame()
-HHdetails <- data.frame("Info" = c("Baseline","90%","80%","70%"), "Percentage" = c(1, 0.9, 0.8, 0.7))
-
-for (j in 1:nrow(AAdetails)) {
-  for (i in 1:length(parmtau)) {
-    temp <- data.frame(matrix(NA, nrow = 1, ncol=7))
-    parms2 = c(ra = 0, rh = (7^-1), ua = (42^-1), uh = 28835^-1, betaAA = (0.0415)*AAdetails$Percentage[j], 
-               betaAH = 0.00001, betaHH = 0.00001, betaHA = (0.00001), phi = (0.02), tau = parmtau[i], theta = (0.5), lambda = 1, zeta = 1)
-    out <- ode(y = init, func = amr, times = times, parms = parms2)
-    temp[1,1] <- parmtau[i]
-    temp[1,2] <- (rounding(out[nrow(out),5]))*100000
-    temp[1,3] <- (rounding(out[nrow(out),6]))*100000 
-    temp[1,4] <- (rounding(out[nrow(out),7]))*100000
-    temp[1,5] <- temp[1,3] + temp[1,4]
-    temp[1,6] <- signif(as.numeric(temp[1,4]/temp[1,5]), digits = 3)
-    temp[1,7] <- as.character(HHdetails$Info[j])
-    print(temp[1,7])
-    outputHH <- rbind.data.frame(outputHH, temp)
-  }
-}
-
-colnames(outputHH)[1:7] <- c("tau", "SuscHumans","InfHumans","ResInfHumans","ICombH","IResRat", "State")
-
-#BetaAH
-outputAA <- data.frame()
-AAdetails <- data.frame("Info" = c("Baseline","90%","80%","70%"), "Percentage" = c(1, 0.9, 0.8, 0.7))
-
-for (j in 1:nrow(AAdetails)) {
-  for (i in 1:length(parmtau)) {
-    temp <- data.frame(matrix(NA, nrow = 1, ncol=7))
-    parms2 = c(ra = 0, rh = (7^-1), ua = (42^-1), uh = 28835^-1, betaAA = (0.0415)*AAdetails$Percentage[j], 
-               betaAH = 0.00001, betaHH = 0.00001, betaHA = (0.00001), phi = (0.02), tau = parmtau[i], theta = (0.5), lambda = 1, zeta = 1)
-    out <- ode(y = init, func = amr, times = times, parms = parms2)
-    temp[1,1] <- parmtau[i]
-    temp[1,2] <- (rounding(out[nrow(out),5]))*100000
-    temp[1,3] <- (rounding(out[nrow(out),6]))*100000 
-    temp[1,4] <- (rounding(out[nrow(out),7]))*100000
-    temp[1,5] <- temp[1,3] + temp[1,4]
-    temp[1,6] <- signif(as.numeric(temp[1,4]/temp[1,5]), digits = 3)
-    temp[1,7] <- as.character(AAdetails$Info[j])
-    print(temp[1,7])
-    outputAA <- rbind.data.frame(outputAA, temp)
-  }
-}
-
-colnames(outputAA)[1:7] <- c("tau", "SuscHumans","InfHumans","ResInfHumans","ICombH","IResRat", "State")
-
-#Phi
-outputAA <- data.frame()
-AAdetails <- data.frame("Info" = c("Baseline","90%","80%","70%"), "Percentage" = c(1, 0.9, 0.8, 0.7))
-
-for (j in 1:nrow(AAdetails)) {
-  for (i in 1:length(parmtau)) {
-    temp <- data.frame(matrix(NA, nrow = 1, ncol=7))
-    parms2 = c(ra = 0, rh = (7^-1), ua = (42^-1), uh = 28835^-1, betaAA = (0.0415)*AAdetails$Percentage[j], 
-               betaAH = 0.00001, betaHH = 0.00001, betaHA = (0.00001), phi = (0.02), tau = parmtau[i], theta = (0.5), lambda = 1, zeta = 1)
-    out <- ode(y = init, func = amr, times = times, parms = parms2)
-    temp[1,1] <- parmtau[i]
-    temp[1,2] <- (rounding(out[nrow(out),5]))*100000
-    temp[1,3] <- (rounding(out[nrow(out),6]))*100000 
-    temp[1,4] <- (rounding(out[nrow(out),7]))*100000
-    temp[1,5] <- temp[1,3] + temp[1,4]
-    temp[1,6] <- signif(as.numeric(temp[1,4]/temp[1,5]), digits = 3)
-    temp[1,7] <- as.character(AAdetails$Info[j])
-    print(temp[1,7])
-    outputAA <- rbind.data.frame(outputAA, temp)
-  }
-}
-
-colnames(outputAA)[1:7] <- c("tau", "SuscHumans","InfHumans","ResInfHumans","ICombH","IResRat", "State")
-
-#Theta
-outputAA <- data.frame()
-AAdetails <- data.frame("Info" = c("Baseline","90%","80%","70%"), "Percentage" = c(1, 0.9, 0.8, 0.7))
-
-for (j in 1:nrow(AAdetails)) {
-  for (i in 1:length(parmtau)) {
-    temp <- data.frame(matrix(NA, nrow = 1, ncol=7))
-    parms2 = c(ra = 0, rh = (7^-1), ua = (42^-1), uh = 28835^-1, betaAA = (0.0415)*AAdetails$Percentage[j], 
-               betaAH = 0.00001, betaHH = 0.00001, betaHA = (0.00001), phi = (0.02), tau = parmtau[i], theta = (0.5), lambda = 1, zeta = 1)
-    out <- ode(y = init, func = amr, times = times, parms = parms2)
-    temp[1,1] <- parmtau[i]
-    temp[1,2] <- (rounding(out[nrow(out),5]))*100000
-    temp[1,3] <- (rounding(out[nrow(out),6]))*100000 
-    temp[1,4] <- (rounding(out[nrow(out),7]))*100000
-    temp[1,5] <- temp[1,3] + temp[1,4]
-    temp[1,6] <- signif(as.numeric(temp[1,4]/temp[1,5]), digits = 3)
-    temp[1,7] <- as.character(AAdetails$Info[j])
-    print(temp[1,7])
-    outputAA <- rbind.data.frame(outputAA, temp)
-  }
-}
-
-colnames(outputAA)[1:7] <- c("tau", "SuscHumans","InfHumans","ResInfHumans","ICombH","IResRat", "State")
-
-#rH
-outputAA <- data.frame()
-AAdetails <- data.frame("Info" = c("Baseline","90%","80%","70%"), "Percentage" = c(1, 0.9, 0.8, 0.7))
-
-for (j in 1:nrow(AAdetails)) {
-  for (i in 1:length(parmtau)) {
-    temp <- data.frame(matrix(NA, nrow = 1, ncol=7))
-    parms2 = c(ra = 0, rh = (7^-1), ua = (42^-1), uh = 28835^-1, betaAA = (0.0415)*AAdetails$Percentage[j], 
-               betaAH = 0.00001, betaHH = 0.00001, betaHA = (0.00001), phi = (0.02), tau = parmtau[i], theta = (0.5), lambda = 1, zeta = 1)
-    out <- ode(y = init, func = amr, times = times, parms = parms2)
-    temp[1,1] <- parmtau[i]
-    temp[1,2] <- (rounding(out[nrow(out),5]))*100000
-    temp[1,3] <- (rounding(out[nrow(out),6]))*100000 
-    temp[1,4] <- (rounding(out[nrow(out),7]))*100000
-    temp[1,5] <- temp[1,3] + temp[1,4]
-    temp[1,6] <- signif(as.numeric(temp[1,4]/temp[1,5]), digits = 3)
-    temp[1,7] <- as.character(AAdetails$Info[j])
-    print(temp[1,7])
-    outputAA <- rbind.data.frame(outputAA, temp)
-  }
-}
-
-colnames(outputAA)[1:7] <- c("tau", "SuscHumans","InfHumans","ResInfHumans","ICombH","IResRat", "State")
-
-#rA
-outputAA <- data.frame()
-AAdetails <- data.frame("Info" = c("Baseline","90%","80%","70%"), "Percentage" = c(1, 0.9, 0.8, 0.7))
-
-for (j in 1:nrow(AAdetails)) {
-  for (i in 1:length(parmtau)) {
-    temp <- data.frame(matrix(NA, nrow = 1, ncol=7))
-    parms2 = c(ra = 0, rh = (7^-1), ua = (42^-1), uh = 28835^-1, betaAA = (0.0415)*AAdetails$Percentage[j], 
-               betaAH = 0.00001, betaHH = 0.00001, betaHA = (0.00001), phi = (0.02), tau = parmtau[i], theta = (0.5), lambda = 1, zeta = 1)
-    out <- ode(y = init, func = amr, times = times, parms = parms2)
-    temp[1,1] <- parmtau[i]
-    temp[1,2] <- (rounding(out[nrow(out),5]))*100000
-    temp[1,3] <- (rounding(out[nrow(out),6]))*100000 
-    temp[1,4] <- (rounding(out[nrow(out),7]))*100000
-    temp[1,5] <- temp[1,3] + temp[1,4]
-    temp[1,6] <- signif(as.numeric(temp[1,4]/temp[1,5]), digits = 3)
-    temp[1,7] <- as.character(AAdetails$Info[j])
-    print(temp[1,7])
-    outputAA <- rbind.data.frame(outputAA, temp)
-  }
-}
-
-colnames(outputAA)[1:7] <- c("tau", "SuscHumans","InfHumans","ResInfHumans","ICombH","IResRat", "State")
-
-#muA
-outputAA <- data.frame()
-AAdetails <- data.frame("Info" = c("Baseline","90%","80%","70%"), "Percentage" = c(1, 0.9, 0.8, 0.7))
-
-for (j in 1:nrow(AAdetails)) {
-  for (i in 1:length(parmtau)) {
-    temp <- data.frame(matrix(NA, nrow = 1, ncol=7))
-    parms2 = c(ra = 0, rh = (7^-1), ua = (42^-1), uh = 28835^-1, betaAA = (0.0415)*AAdetails$Percentage[j], 
-               betaAH = 0.00001, betaHH = 0.00001, betaHA = (0.00001), phi = (0.02), tau = parmtau[i], theta = (0.5), lambda = 1, zeta = 1)
-    out <- ode(y = init, func = amr, times = times, parms = parms2)
-    temp[1,1] <- parmtau[i]
-    temp[1,2] <- (rounding(out[nrow(out),5]))*100000
-    temp[1,3] <- (rounding(out[nrow(out),6]))*100000 
-    temp[1,4] <- (rounding(out[nrow(out),7]))*100000
-    temp[1,5] <- temp[1,3] + temp[1,4]
-    temp[1,6] <- signif(as.numeric(temp[1,4]/temp[1,5]), digits = 3)
-    temp[1,7] <- as.character(AAdetails$Info[j])
-    print(temp[1,7])
-    outputAA <- rbind.data.frame(outputAA, temp)
-  }
-}
-
-colnames(outputAA)[1:7] <- c("tau", "SuscHumans","InfHumans","ResInfHumans","ICombH","IResRat", "State")
-
-#muH
-outputAA <- data.frame()
-AAdetails <- data.frame("Info" = c("Baseline","90%","80%","70%"), "Percentage" = c(1, 0.9, 0.8, 0.7))
-
-for (j in 1:nrow(AAdetails)) {
-  for (i in 1:length(parmtau)) {
-    temp <- data.frame(matrix(NA, nrow = 1, ncol=7))
-    parms2 = c(ra = 0, rh = (7^-1), ua = (42^-1), uh = 28835^-1, betaAA = (0.0415)*AAdetails$Percentage[j], 
-               betaAH = 0.00001, betaHH = 0.00001, betaHA = (0.00001), phi = (0.02), tau = parmtau[i], theta = (0.5), lambda = 1, zeta = 1)
-    out <- ode(y = init, func = amr, times = times, parms = parms2)
-    temp[1,1] <- parmtau[i]
-    temp[1,2] <- (rounding(out[nrow(out),5]))*100000
-    temp[1,3] <- (rounding(out[nrow(out),6]))*100000 
-    temp[1,4] <- (rounding(out[nrow(out),7]))*100000
-    temp[1,5] <- temp[1,3] + temp[1,4]
-    temp[1,6] <- signif(as.numeric(temp[1,4]/temp[1,5]), digits = 3)
-    temp[1,7] <- as.character(AAdetails$Info[j])
-    print(temp[1,7])
-    outputAA <- rbind.data.frame(outputAA, temp)
-  }
-}
-
-colnames(outputAA)[1:7] <- c("tau", "SuscHumans","InfHumans","ResInfHumans","ICombH","IResRat", "State")
 
 #### Plotting ####
 
 ggplot() + 
-  geom_line(data=outputAA[outputAA$State == "Baseline",], aes(tau,IResRat), linetype= 1, size = 5, colour = "black") +
-  geom_line(data=outputAA[outputAA$State == "90%",], aes(tau,IResRat), linetype= 1, size = 3, colour = "slategray") +
-  geom_line(data=outputAA[outputAA$State == "80%",], aes(tau,IResRat), linetype= 1, size = 2, colour = "slateblue1") + 
-  geom_line(data=outputAA[outputAA$State == "70%",], aes(tau,IResRat), linetype= 1, size = 1, colour = "steelblue1") + 
+  geom_line(data=outputbetaAA[outputbetaAA$State == "Baseline",], aes(tau,IResRat), linetype= 1, size = 5, colour = "black") +
+  geom_line(data=outputbetaAA[outputbetaAA$State == "90%",], aes(tau,IResRat), linetype= 1, size = 3, colour = "slategray") +
+  geom_line(data=outputbetaAA[outputbetaAA$State == "80%",], aes(tau,IResRat), linetype= 1, size = 2, colour = "slateblue1") + 
+  geom_line(data=outputbetaAA[outputbetaAA$State == "70%",], aes(tau,IResRat), linetype= 1, size = 1, colour = "steelblue1") + 
   scale_x_continuous(limits = c(0,0.1), expand = c(0,0)) + scale_y_continuous(limits = c(0,1), expand = c(0,0)) +
   labs(x =expression(paste("Livestock Antibiotic Usage (",tau,")")), y = expression(paste("Proportion of Resistant Human Infection (ResProp)"))) +
   theme(legend.position=c(0.8, 0.85), legend.title = element_blank(), text = element_text(size=13.5),
