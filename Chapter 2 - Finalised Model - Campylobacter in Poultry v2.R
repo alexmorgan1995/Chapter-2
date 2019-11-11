@@ -180,6 +180,8 @@ plot_ly(output2, x= ~tau, y = ~InfHumans, type = "bar", name = "Antibiotic-Sensi
                             xshift =3))
 
 #### Comb IRH and IH Measure Testing - Effect of Treatment - NEW PLOT ####
+start_time <- Sys.time()
+
 parmtau <- seq(0,0.1,by=0.0005)
 init <- c(Sa=0.99, Ia=0.01, Ira=0, Sh=1, Ih=0, Irh=0)
 times <- seq(0, 200000, by = 100)
@@ -231,6 +233,8 @@ for (j in 1:length(unique(parmdetails[,1]))) {
   colnames(output)[1:8] <- c("tau", "SuscHumans","InfHumans","ResInfHumans","ICombH","IResRat", "State", "Parameter")
   assign(paste("output", as.character(unique(parmdetails[,1])[j]), sep=""), output) 
 }
+
+end_time <- Sys.time(); end_time - start_time
 
 #### Plotting ####
 
