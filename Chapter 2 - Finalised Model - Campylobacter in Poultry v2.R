@@ -6,16 +6,17 @@ rm(list=ls()); library("deSolve"); library("fast"); library("sensitivity"); libr
 #Foodborne Disease Model with Integrated Lambda and Zeta Parameters
 amr <- function(time, state, parameters) {
   with(as.list(c(state, parameters)), {
-    dSa = ua + ra*(Ia + Ira) + zeta*tau*Ia - (betaAA*Ia*Sa) - (betaAH*Ih*Sa) - lambda*(betaAH*Irh*Sa) - lambda*(betaAA*Ira*Sa) - ua*Sa  
-    dIa = betaAA*Ia*Sa + betaAH*Ih*Sa + phi*Ira - zeta*tau*Ia - tau*theta*Ia - ra*Ia - ua*Ia
-    dIra = lambda*betaAH*Irh*Sa + lambda*betaAA*Ira*Sa + tau*theta*Ia - phi*Ira - ra*Ira - ua*Ira
+    dSa = ua + ra*(Ia + Ira) + theta*tau*Ia - (betaAA*Ia*Sa) - (betaAH*Ih*Sa) - alpha*(betaAH*Irh*Sa) - alpha*(betaAA*Ira*Sa) - ua*Sa  
+    dIa = betaAA*Ia*Sa + betaAH*Ih*Sa + phi*Ira - theta*tau*Ia - tau*Ia - ra*Ia - ua*Ia
+    dIra = alpha*betaAH*Irh*Sa + alpha*betaAA*Ira*Sa + tau*Ia - phi*Ira - ra*Ira - ua*Ira
     
-    dSh = uh + rh*(Ih+Irh) - (betaHH*Ih*Sh) - lambda*(betaHH*Irh*Sh) - (betaHA*Ia*Sh) - lambda*(betaHA*Ira*Sh) - uh*Sh 
+    dSh = uh + rh*(Ih+Irh) - (betaHH*Ih*Sh) - alpha*(betaHH*Irh*Sh) - (betaHA*Ia*Sh) - alpha*(betaHA*Ira*Sh) - uh*Sh 
     dIh = betaHH*Ih*Sh + betaHA*Ia*Sh - rh*Ih - uh*Ih 
-    dIrh = lambda*(betaHH*Irh*Sh) + lambda*(betaHA*Ira*Sh) - rh*Irh - uh*Irh 
+    dIrh = alpha*(betaHH*Irh*Sh) + alpha*(betaHA*Ira*Sh) - rh*Irh - uh*Irh 
     return(list(c(dSa,dIa,dIra,dSh,dIh,dIrh)))
   })
 }
+
 
 #Function to remove negative prevalence values and round large DP numbers
 rounding <- function(x) {
@@ -29,8 +30,8 @@ init <- c(Sa=0.98, Ia=0.01, Ira=0.01, Sh=1, Ih=0, Irh=0)
 
 times <- seq(0,10000,by=1)
 
-parms = c(ra = 0, rh =  7^-1, uh = 28835^-1, ua = 42^-1, betaAA = 0.0415, betaAH = 0.00001, betaHH = 0.00001, 
-          betaHA = 0.00001, phi = 0.02, tau = 0.02, theta = 0.5, zeta = 1, lambda = 1)
+parms = c(ra = 0, rh =  7^-1, uh = 28835^-1, ua = 42^-1, betaAA = 0.07, betaAH = 0.00001, betaHH = 0.00001, 
+          betaHA = 0.00001, phi = 0.05, tau = 0.02, theta = 1, alpha = 1)
 
 out <- ode(y = init, func = amr, times = times, parms = parms) # Solve the ODE
 
@@ -74,10 +75,10 @@ ggplot(data = meltedout1, aes(x = time, y = Value, col = Compartment)) +
 
 start_time <- Sys.time()
 
-parms = fast_parameters(minimum = c(0, 70^-1, 420^-1, 288350^-1, 0.00415, 0.000001, 0.000001, 0.000001, 0, 0, 0), 
-                        maximum = c(420^-1, 0.7^-1, 4.2^-1, 2883.5^-1, 0.415, 0.0001, 0.0001, 0.0001, 0.2, 0.2, 2), 
-                             factor=11, names = c("ra", "rh" ,"ua", "uh", "betaAA", "betaAH", "betaHH", "betaHA",
-                                                  "phi", "tau", "theta"))
+parms = fast_parameters(minimum = c(0, 70^-1, 420^-1, 288350^-1, 0.00415, 0.000001, 0.000001, 0.000001, 0, 0, 0, 0), 
+                        maximum = c(420^-1, 0.7^-1, 4.2^-1, 2883.5^-1, 0.415, 0.0001, 0.0001, 0.0001, 0.2, 0.2, 2, 1), 
+                             factor=12, names = c("ra", "rh" ,"ua", "uh", "betaAA", "betaAH", "betaHH", "betaHA",
+                                                  "phi", "tau", "theta", "alpha"))
 
 init <- c(Sa=0.99, Ia=0.01, Ira=0, Sh=1, Ih=0, Irh=0)
 times <- seq(0,200000, by = 10) 
@@ -87,7 +88,7 @@ for (i in 1:nrow(parms)) {
   temp <- data.frame(matrix(NA, nrow = 1, ncol=7))
   parms1 = c(ra = parms$ra[i], rh = parms$rh[i], ua = parms$ua[i], uh = parms$uh[i], betaAA = parms$betaAA[i],
              betaAH = parms$betaAH[i], betaHH = parms$betaHH[i], betaHA = parms$betaHA[i], phi=parms$phi[i],
-             tau=parms$tau[i], theta=parms$theta[i], zeta = 1, lambda = 1)
+             tau=parms$tau[i], theta=parms$theta[i], alpha = parms$alpha[i])
   out <- ode(y = init, func = amr, times = times, parms = parms1)
   temp[1,1] <- rounding(out[nrow(out),5]) 
   temp[1,2] <- rounding(out[nrow(out),6]) 
@@ -107,10 +108,10 @@ end_time <- Sys.time(); end_time - start_time
 
 #For ICombH
 sensit <- output$ICombH #Creating Variable for the output variable of interest
-sens <- sensitivity(x=sensit, numberf=11, make.plot=T, names = c("ra", "rh" ,"ua", "uh", "betaAA", "betaAH", "betaHH", "betaHA",
-                                                               "phi", "tau", "theta"))
+sens <- sensitivity(x=sensit, numberf=12, make.plot=T, names = c("ra", "rh" ,"ua", "uh", "betaAA", "betaAH", "betaHH", "betaHA",
+                                                                 "phi", "tau", "theta", "alpha"))
 df.equilibrium <- NULL; df.equilibrium <- data.frame(parameter=rbind("ra", "rh" ,"ua", "uh", "betaAA", "betaAH", "betaHH", "betaHA",
-                                             "phi","tau", "theta"), value=sens)
+                                                                     "phi", "tau", "theta", "alpha"), value=sens)
 
 p <- ggplot(df.equilibrium, aes(parameter, value)) + geom_bar(stat="identity", fill="grey23"); p
 
@@ -118,12 +119,12 @@ p <- ggplot(df.equilibrium, aes(parameter, value)) + geom_bar(stat="identity", f
 
 sensit1 <- output$IResRat #Creating Variable for the output variable of interest
 sensit1[is.nan(sensit1)] <- 0
-sens1 <-sensitivity(x=sensit1, numberf=11, make.plot=T, names = c("ra", "rh" ,"ua", "uh", "betaAA", "betaAH", "betaHH", "betaHA",
-                                                                  "phi", "tau", "theta"))
+sens1 <-sensitivity(x=sensit1, numberf=12, make.plot=T, names = c("ra", "rh" ,"ua", "uh", "betaAA", "betaAH", "betaHH", "betaHA",
+                                                                  "phi", "tau", "theta", "alpha"))
 df.equilibrium1 <- NULL; df.equilibrium1 <- data.frame(parameter=rbind("ra", "rh" ,"ua", "uh", "betaAA", "betaAH", "betaHH", "betaHA",
-                                              "phi","tau", "theta"), value=sens1)
+                                                                       "phi", "tau", "theta", "alpha"), value=sens1)
 
-p1 <- ggplot(df.equilibrium11, aes(parameter, value)) + geom_bar(stat="identity", fill="grey23"); p1
+p1 <- ggplot(df.equilibrium1, aes(parameter, value)) + geom_bar(stat="identity", fill="grey23"); p1
 
 #Combined Bar Plot with Both Sensitivity Analysis
 df.equilibrium$state <- "Overall Foodborne Disease"; df.equilibrium1$state <- "Resistance Ratio"
@@ -131,7 +132,8 @@ newdf <- rbind(df.equilibrium, df.equilibrium1)
 
 ggplot(data = newdf, aes(x = parameter, y = value, fill = state)) +
   geom_bar(stat="identity", position = "dodge") +
-  scale_x_discrete("Parameter", waiver(), c(expression(paste(beta[AA])), expression(paste(beta[AH])),
+  scale_x_discrete("Parameter", waiver(), c(expression(paste(alpha)),
+                                            expression(paste(beta[AA])), expression(paste(beta[AH])),
                                             expression(paste(beta[HA])), expression(paste(beta[HH])),
                                             expression(paste(phi)), expression(paste(italic("r")[A])),
                                             expression(paste(italic("r")[H])), expression(paste(tau)),
@@ -139,10 +141,8 @@ ggplot(data = newdf, aes(x = parameter, y = value, fill = state)) +
                                             expression(paste(mu[H])))) +
   scale_y_continuous(limits = c(0,0.4), expand = c(0,0.00009)) + 
   scale_fill_manual(values=c("dodgerblue2", "orangered1")) +
-  theme(axis.text=element_text(size = 12, colour = "black"),
-        axis.line.x = element_line(color="black", size = 0.7),
-        axis.title=element_text(size=12), 
-        legend.position=c(0.8, 0.9), legend.title = element_blank()) + 
+  theme(axis.text=element_text(size = 12, colour = "black"), axis.line.x = element_line(color="black", size = 0.7),
+        axis.title=element_text(size=12), legend.position=c(0.8, 0.9), legend.title = element_blank()) + 
   ylab("Partial Variance") 
 
 #### Basic ICombH/Tau Plot ####
