@@ -184,7 +184,7 @@ start_time <- Sys.time()
 
 parmtau <- seq(0,0.1,by=0.0005)
 init <- c(Sa=0.99, Ia=0.01, Ira=0, Sh=1, Ih=0, Irh=0)
-times <- seq(0, 200000, by = 100)
+times <- seq(0, 200000, by = 10)
 
 parmdetails <- rbind(data.frame("Parameter" = "betaAA", "Info" = c("Baseline", "90%", "80%", "70%"), "Percentage" = c(1, 0.9, 0.8, 0.7)),
                      data.frame("Parameter" = "betaHA", "Info" = c("Baseline", "90%", "80%", "70%"), "Percentage" = c(1, 0.9, 0.8, 0.7)),
