@@ -127,6 +127,7 @@ ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, ini
           w.new[i] <- w1/w2
           # Update counter
           print(paste0('Generation: ', g, ", particle: ", i,", weights: ", w.new[i]))
+          print(res.new[i,])
           i <- i+1
         }
       }
@@ -176,25 +177,24 @@ data <- read.csv("results_ABC_SMC_gen_4.csv", header = TRUE)
 
 colnames(data) <- c("phi", "theta", "d_betaAA", "d_alpha")
 
-plot(density(data[,1]), lwd = 1.2, xlab = "Beta_AA", main = NULL, xlim = c(0,0.3)); map_estimate(data[,1], precision = 20) 
+plot(density(data[,1]), lwd = 1.2, xlab = "Phi", main = NULL, xlim = c(0,0.1)); map_estimate(data[,1], precision = 20) 
 abline(v = map_estimate(data[,1]), col = "red")
 
-plot(density(data[,2]), lwd = 1.2, xlab = "Phi", main = NULL, xlim = c(0,0.1)); map_estimate(data[,2], precision = 20) 
+plot(density(data[,2]), lwd = 1.2, xlab = "Theta", main = NULL, xlim = c(0,2)); map_estimate(data[,2], precision = 20)
 abline(v = map_estimate(data[,2]), col = "red")
 
-plot(density(data[,3]), lwd = 1.2, xlab = "Theta", main = NULL, xlim = c(0,2)); map_estimate(data[,3], precision = 20)
+plot(density(data[,3]), lwd = 1.2, xlab = "Beta_AA", main = NULL, xlim = c(0,0.3)); map_estimate(data[,3], precision = 20) 
 abline(v = map_estimate(data[,3]), col = "red")
 
 plot(density(data[,4]), lwd = 1.2, xlab = "Alpha", main = NULL, xlim = c(0,1.5)); map_estimate(data[,4], precision = 20) 
 abline(v = map_estimate(data[,4]), col = "red")
 
-test_betaAA <- map_estimate(data[,1], precision = 20) 
-test_phi <- map_estimate(data[,2], precision = 20) 
-test_theta <- map_estimate(data[,3], precision = 20) 
+test_phi <- map_estimate(data[,1], precision = 20) 
+test_theta <- map_estimate(data[,2], precision = 20) 
+test_betaAA <- map_estimate(data[,3], precision = 20) 
 test_alpha <- map_estimate(data[,4], precision = 20) 
 
 #### Testing the Model #### 
-
 parmtau <- c(seq(0,0.035,by=0.001), 0.0106)
 
 init <- c(Sa=0.98, Isa=0.01, Ira=0.01, Sh=1, Ish=0, Irh=0)
@@ -203,7 +203,7 @@ times <- seq(0, 200000, by = 100)
 
 for (i in 1:length(parmtau)) {
   temp <- data.frame(matrix(NA, nrow = 1, ncol=7))
-  parms2 = c(ra = 60^-1, rh =  (7^-1), ua = 240^-1, uh = 28835^-1, betaAA = test_betaAA, betaAH = 0.00001, betaHH = 0.00001, 
+  parms2 = c(ra = 60^-1, rh =  (5.5^-1), ua = 240^-1, uh = 28835^-1, betaAA = test_betaAA, betaAH = 0.00001, betaHH = 0.00001, 
              betaHA = (0.00001), phi = test_phi, theta = test_theta, alpha = test_alpha, tau = parmtau[i])
   out <- ode(y = init, func = amr, times = times, parms = parms2)
   temp[1,1] <- parmtau[i]
