@@ -10,7 +10,7 @@ rounding <- function(x) {
   } else{signif(as.numeric(x), digits = 6)}
 }
 
-#### Basic Model  ####
+#Model
 amr <- function(t, y, parms) {
   with(as.list(c(y, parms)), {
     dSa = ua + ra*(Isa + Ira) + theta*tau*Isa - (betaAA*Isa*Sa) - (betaAH*Ish*Sa) - (1-alpha)*(betaAH*Irh*Sa) - (1-alpha)*(betaAA*Ira*Sa) - ua*Sa  
@@ -23,24 +23,6 @@ amr <- function(t, y, parms) {
     return(list(c(dSa,dIsa,dIra,dSh,dIsh,dIrh)))
   })
 }
-
-#Function to round large D.P numbers
-init <- c(Sa=0.98, Isa=0.01, Ira=0.01, Sh=1, Ish=0, Irh=0)
-output1 <- data.frame()
-times <- seq(0, 1000, by = 1)
-
-parms2 = c(ra = 60^-1, rh =  (5.5^-1), ua = 240^-1, uh = 28835^-1, betaAA = (0.0709), betaAH = 0.00001, betaHH = 0.00001, 
-           betaHA = (0.00001), phi = 0.0141, theta = 0.0303, alpha = 0.232, tau = 0.032)
-out <- data.frame(ode(y = init, func = amr, times = times, parms = parms2))
-meltedout <- melt(out, id.vars = c("time"), measure.vars = c("Isa", "Ira"))
-
-#For the Animal Population
-ggplot(data = meltedout, aes(x = time, y = value, col = variable)) + 
-  geom_line(size = 1.02) +
-  labs(x ="Time (Days)", y = "Proportion of Animal Population") +
-  scale_y_continuous(limits = c(0,1), expand = c(0,0)) +
-  theme(legend.position="bottom", legend.title = element_blank(),
-        legend.spacing.x = unit(0.2, 'cm'), legend.text=element_text(size=11), plot.margin=unit(c(0.7,0.7,0.8,0.8),"cm"))
 
 #### Data Import ####
 datatetra <- read.csv("resistanceprofAnim_v1.csv")
@@ -107,15 +89,15 @@ prior.non.zero<-function(par){
 
 ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, init.state, times, data) {
   for(g in 1:G) {
-    i <- 0
-    while(i < N) {
+    i <- 1
+    while(i <= N) {
       if(g==1) {
         d_betaAA <- runif(1, min = 0, max = 0.2)
         d_phi <- runif(1, min = 0, max = 0.03)
         d_theta <- runif(1, min = 0, max = 0.4)
         d_alpha <- rbeta(1, 1.5, 8.5)
       } else{ 
-        p<-sample(seq(1,N),1,prob= w.old) # check w.old here
+        p <- sample(seq(1,N),1,prob= w.old) # check w.old here
         par <- rtmvnorm(1,mean=res.old[p,], sigma=sigma, lower=lm.low, upper=lm.upp)
         d_phi<-par[1]
         d_theta<-par[2]
@@ -128,7 +110,7 @@ ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, ini
                        betaHA = 0.00001, phi = d_phi, theta = d_theta, alpha = d_alpha)
         
         dist <- computeDistanceABC_ALEX(sum.stats, distanceABC, fitmodel, tau_range, thetaparm, init.state, times, data)
-        
+        #print(dist)
         if((dist[1] <= epsilon_dist[g]) && (dist[2] <= epsilon_food[g]) && (dist[3] <= epsilon_AMR[g]) && (!is.na(dist))) {
           # Store results
           res.new[i,]<-c(d_phi, d_theta, d_betaAA, d_alpha)  
@@ -144,21 +126,22 @@ ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, ini
           }
           w.new[i] <- w1/w2
           # Update counter
-          i <- i+1
           print(paste0('Generation: ', g, ", particle: ", i))
+          i <- i+1
         }
       }
     }#
     sigma <- cov(res.new) 
-    res.old<-res.new
-    w.old<-w.new/sum(w.new)
+    res.old <- res.new
+    print(res.old)
+    w.old <- w.new/sum(w.new)
     write.csv(res.new, file = paste("results_ABC_SMC_gen_",g,".csv",sep=""), row.names=FALSE)
     
     ####
   }
 }
 
-N <- 1000 #(ACCEPTED PARTICLES PER GENERATION)
+N <- 100 #(ACCEPTED PARTICLES PER GENERATION)
 
 lm.low <- c(0, 0, 0, 0)
 lm.upp <- c(0.2, 0.03, 0.4, 1)
@@ -171,11 +154,11 @@ res.new<-matrix(ncol=4,nrow=N)
 w.old<-matrix(ncol=1,nrow=N)
 w.new<-matrix(ncol=1,nrow=N)
 
-epsilon_dist <- c(1.4, 1.2, 1, 0.8)
-epsilon_food <- c(3.26*0.15, 3.26*0.125, 3.26*0.1, 3.26*0.075)
-epsilon_AMR <- c(0.32*0.15, 0.32*0.125, 0.32*0.1, 0.32*0.075)
+epsilon_dist <- c(1.5, 1.25, 1, 0.8)
+epsilon_food <- c(3.26*0.16, 3.26*0.14, 3.26*0.12, 3.26*0.1)
+epsilon_AMR <- c(0.32*0.16, 0.32*0.14, 0.32*0.12, 0.32*0.1)
 
-data_ABC <- ABC_algorithm(N = 3, 
+data_ABC <- ABC_algorithm(N = 100, 
                           G = 4,
                           sum.stats = summarystatprev, 
                           distanceABC = sum_square_diff_dist, 
