@@ -1,5 +1,4 @@
-library("deSolve"); library("fast"); library("sensitivity"); library("ggplot2"); library("plotly"); library("reshape2"); library("ggrepel")
-library("tidyr"); library("bayestestR"); library("profvis"); library("tmvtnorm")
+library("deSolve"); library("ggplot2"); library("plotly"); library("reshape2"); library("bayestestR"); library("tmvtnorm")
 
 rm(list=ls())
 setwd("C:/Users/amorg/Documents/PhD/Chapter_2/Chapter2_Fit_Data")
@@ -127,7 +126,6 @@ ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, ini
           w.new[i] <- w1/w2
           # Update counter
           print(paste0('Generation: ', g, ", particle: ", i,", weights: ", w.new[i]))
-          print(res.new[i,])
           i <- i+1
         }
       }
@@ -155,12 +153,12 @@ res.new<-matrix(ncol=4,nrow=N)
 w.old<-matrix(ncol=1,nrow=N)
 w.new<-matrix(ncol=1,nrow=N)
 
-epsilon_dist <- c(1.5, 1.25, 1, 0.85)
-epsilon_food <- c(3.26*0.16, 3.26*0.14, 3.26*0.12, 3.26*0.1)
-epsilon_AMR <- c(0.32*0.16, 0.32*0.14, 0.32*0.12, 0.32*0.1)
+epsilon_dist <- c(2, 1.5, 1, 0.9, 0.85)
+epsilon_food <- c(3.26*0.2, 3.26*0.15, 3.26*0.125, 3.26*0.10, 3.26*0.09)
+epsilon_AMR <- c(0.32*02, 0.32*0.15, 0.32*0.125, 3.26*0.10,  0.32*0.09)
 
 ABC_algorithm(N = 1000, 
-              G = 4,
+              G = 5,
               sum.stats = summarystatprev, 
               distanceABC = sum_square_diff_dist, 
               fitmodel = amr, 
@@ -172,29 +170,46 @@ ABC_algorithm(N = 1000,
 end_time <- Sys.time(); end_time - start_time
 
 #### Test Data ####
+data1 <- cbind(read.csv("results_ABC_SMC_gen_1.csv", header = TRUE), "group" = "data1")
+data2 <- cbind(read.csv("results_ABC_SMC_gen_2.csv", header = TRUE), "group" = "data2")
+data3 <- cbind(read.csv("results_ABC_SMC_gen_3.csv", header = TRUE), "group" = "data3")
+data4 <- cbind(read.csv("results_ABC_SMC_gen_4.csv", header = TRUE), "group" = "data4") 
+data5 <- cbind(read.csv("results_ABC_SMC_gen_5.csv", header = TRUE), "group" = "data5") 
 
-data <- read.csv("results_ABC_SMC_gen_4.csv", header = TRUE)
+map_phi <- map_estimate(data4[,"phi"], precision = 20) 
+map_theta <- map_estimate(data4[,"theta"], precision = 20) 
+map_betaAA <- map_estimate(data4[,"d_betaAA"], precision = 20) 
+map_alpha <- map_estimate(data4[,"d_alpha"], precision = 20) 
 
-colnames(data) <- c("phi", "theta", "d_betaAA", "d_alpha")
+#Plotting the Distributions
 
-plot(density(data[,1]), lwd = 1.2, xlab = "Phi", main = NULL, xlim = c(0,0.1)); map_estimate(data[,1], precision = 20) 
-abline(v = map_estimate(data[,1]), col = "red")
+testphi <- melt(rbind(data1, data2, data3, data4), id.vars = "group",measure.vars = "phi")
+testtheta <- melt(rbind(data1, data2, data3, data4), id.vars = "group",measure.vars = "theta")
+testbetaAA <- melt(rbind(data1, data2, data3, data4), id.vars = "group",measure.vars = "d_betaAA")
+testalpha <- melt(rbind(data1, data2, data3, data4), id.vars = "group",measure.vars = "d_alpha")
 
-plot(density(data[,2]), lwd = 1.2, xlab = "Theta", main = NULL, xlim = c(0,2)); map_estimate(data[,2], precision = 20)
-abline(v = map_estimate(data[,2]), col = "red")
+ggplot(testphi, aes(x=value, fill=group)) + geom_density(alpha=.5) + 
+  scale_x_continuous(expand = c(0, 0), name = expression(paste("Rate of Antibiotic-Resistant to Antibiotic-Sensitive Reversion (", phi, ")"))) + 
+  scale_y_continuous(expand = c(0, 0), name = NULL) +
+  labs(fill = NULL) + scale_fill_discrete(labels = c("Generation 1", "Generation 2", "Generation 3", "Generation 4"))
 
-plot(density(data[,3]), lwd = 1.2, xlab = "Beta_AA", main = NULL, xlim = c(0,0.3)); map_estimate(data[,3], precision = 20) 
-abline(v = map_estimate(data[,3]), col = "red")
+ggplot(testtheta, aes(x=value, fill=group)) + geom_density(alpha=.5)+
+  scale_x_continuous(expand = c(0, 0), name = expression(paste("Efficacy of Antibiotic-Mediated Animal Recovery (", theta, ")"))) + 
+  scale_y_continuous(expand = c(0, 0), name = NULL) +
+  labs(fill = NULL) + scale_fill_discrete(labels = c("Generation 1", "Generation 2", "Generation 3", "Generation 4"))
 
-plot(density(data[,4]), lwd = 1.2, xlab = "Alpha", main = NULL, xlim = c(0,1.5)); map_estimate(data[,4], precision = 20) 
-abline(v = map_estimate(data[,4]), col = "red")
+ggplot(testbetaAA, aes(x=value, fill=group)) + geom_density(alpha=.5)+
+  scale_x_continuous(expand = c(0, 0), name = expression(paste("Rate of Animal-to-Animal Transmission (", beta[AA], ")"))) + 
+  scale_y_continuous(expand = c(0, 0), name = NULL) +
+  labs(fill = NULL) + scale_fill_discrete(labels = c("Generation 1", "Generation 2", "Generation 3", "Generation 4"))
 
-test_phi <- map_estimate(data[,1], precision = 20) 
-test_theta <- map_estimate(data[,2], precision = 20) 
-test_betaAA <- map_estimate(data[,3], precision = 20) 
-test_alpha <- map_estimate(data[,4], precision = 20) 
+ggplot(testalpha, aes(x=value, fill=group)) + geom_density(alpha=.5)+
+  scale_x_continuous(expand = c(0, 0), name = expression(paste("Transmission-related Antibiotic Resistant Fitness Cost (", alpha, ")"))) + 
+  scale_y_continuous(expand = c(0, 0), name = NULL) +
+  labs(fill = NULL) + scale_fill_discrete(labels = c("Generation 1", "Generation 2", "Generation 3", "Generation 4"))
 
 #### Testing the Model #### 
+
 parmtau <- c(seq(0,0.035,by=0.001), 0.0106)
 
 init <- c(Sa=0.98, Isa=0.01, Ira=0.01, Sh=1, Ish=0, Irh=0)
@@ -203,8 +218,8 @@ times <- seq(0, 200000, by = 100)
 
 for (i in 1:length(parmtau)) {
   temp <- data.frame(matrix(NA, nrow = 1, ncol=7))
-  parms2 = c(ra = 60^-1, rh =  (5.5^-1), ua = 240^-1, uh = 28835^-1, betaAA = test_betaAA, betaAH = 0.00001, betaHH = 0.00001, 
-             betaHA = (0.00001), phi = test_phi, theta = test_theta, alpha = test_alpha, tau = parmtau[i])
+  parms2 = c(ra = 60^-1, rh =  (5.5^-1), ua = 240^-1, uh = 28835^-1, betaAA = map_betaAA, betaAH = 0.00001, betaHH = 0.00001, 
+             betaHA = (0.00001), phi = map_phi, theta = map_theta, alpha = map_alpha, tau = parmtau[i])
   out <- ode(y = init, func = amr, times = times, parms = parms2)
   temp[1,1] <- parmtau[i]
   temp[1,2] <- rounding(out[nrow(out),5]) 
