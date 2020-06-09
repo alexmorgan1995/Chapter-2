@@ -91,8 +91,8 @@ ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, ini
     i <- 1
     while(i <= N) {
       if(g==1) {
-        d_betaAA <- runif(1, min = 0, max = 0.2)
-        d_phi <- runif(1, min = 0, max = 0.03)
+        d_betaAA <- runif(1, min = 0, max = 0.3)
+        d_phi <- runif(1, min = 0, max = 0.05)
         d_theta <- runif(1, min = 0, max = 0.4)
         d_alpha <- rbeta(1, 1.5, 8.5)
       } else{ 
@@ -176,37 +176,37 @@ data3 <- cbind(read.csv("results_ABC_SMC_gen_3.csv", header = TRUE), "group" = "
 data4 <- cbind(read.csv("results_ABC_SMC_gen_4.csv", header = TRUE), "group" = "data4") 
 data5 <- cbind(read.csv("results_ABC_SMC_gen_5.csv", header = TRUE), "group" = "data5") 
 
-map_phi <- map_estimate(data4[,"phi"], precision = 20) 
-map_theta <- map_estimate(data4[,"theta"], precision = 20) 
-map_betaAA <- map_estimate(data4[,"d_betaAA"], precision = 20) 
-map_alpha <- map_estimate(data4[,"d_alpha"], precision = 20) 
+map_phi <- map_estimate(data5[,"phi"], precision = 20) 
+map_theta <- map_estimate(data5[,"theta"], precision = 20) 
+map_betaAA <- map_estimate(data5[,"d_betaAA"], precision = 20) 
+map_alpha <- map_estimate(data5[,"d_alpha"], precision = 20) 
 
 #Plotting the Distributions
 
-testphi <- melt(rbind(data1, data2, data3, data4), id.vars = "group",measure.vars = "phi")
-testtheta <- melt(rbind(data1, data2, data3, data4), id.vars = "group",measure.vars = "theta")
-testbetaAA <- melt(rbind(data1, data2, data3, data4), id.vars = "group",measure.vars = "d_betaAA")
-testalpha <- melt(rbind(data1, data2, data3, data4), id.vars = "group",measure.vars = "d_alpha")
+testphi <- melt(rbind(data1, data2, data3, data4, data5), id.vars = "group",measure.vars = "phi")
+testtheta <- melt(rbind(data1, data2, data3, data4,data5), id.vars = "group",measure.vars = "theta")
+testbetaAA <- melt(rbind(data1, data2, data3, data4, data5), id.vars = "group",measure.vars = "d_betaAA")
+testalpha <- melt(rbind(data1, data2, data3, data4, data5), id.vars = "group",measure.vars = "d_alpha")
 
 ggplot(testphi, aes(x=value, fill=group)) + geom_density(alpha=.5) + 
   scale_x_continuous(expand = c(0, 0), name = expression(paste("Rate of Antibiotic-Resistant to Antibiotic-Sensitive Reversion (", phi, ")"))) + 
   scale_y_continuous(expand = c(0, 0), name = NULL) +
-  labs(fill = NULL) + scale_fill_discrete(labels = c("Generation 1", "Generation 2", "Generation 3", "Generation 4"))
+  labs(fill = NULL) + scale_fill_discrete(labels = c("Generation 1", "Generation 2", "Generation 3", "Generation 4", "Generation 5"))
 
 ggplot(testtheta, aes(x=value, fill=group)) + geom_density(alpha=.5)+
   scale_x_continuous(expand = c(0, 0), name = expression(paste("Efficacy of Antibiotic-Mediated Animal Recovery (", theta, ")"))) + 
   scale_y_continuous(expand = c(0, 0), name = NULL) +
-  labs(fill = NULL) + scale_fill_discrete(labels = c("Generation 1", "Generation 2", "Generation 3", "Generation 4"))
+  labs(fill = NULL) + scale_fill_discrete(labels = c("Generation 1", "Generation 2", "Generation 3", "Generation 4", "Generation 5"))
 
 ggplot(testbetaAA, aes(x=value, fill=group)) + geom_density(alpha=.5)+
   scale_x_continuous(expand = c(0, 0), name = expression(paste("Rate of Animal-to-Animal Transmission (", beta[AA], ")"))) + 
   scale_y_continuous(expand = c(0, 0), name = NULL) +
-  labs(fill = NULL) + scale_fill_discrete(labels = c("Generation 1", "Generation 2", "Generation 3", "Generation 4"))
+  labs(fill = NULL) + scale_fill_discrete(labels = c("Generation 1", "Generation 2", "Generation 3", "Generation 4", "Generation 5"))
 
 ggplot(testalpha, aes(x=value, fill=group)) + geom_density(alpha=.5)+
   scale_x_continuous(expand = c(0, 0), name = expression(paste("Transmission-related Antibiotic Resistant Fitness Cost (", alpha, ")"))) + 
   scale_y_continuous(expand = c(0, 0), name = NULL) +
-  labs(fill = NULL) + scale_fill_discrete(labels = c("Generation 1", "Generation 2", "Generation 3", "Generation 4"))
+  labs(fill = NULL) + scale_fill_discrete(labels = c("Generation 1", "Generation 2", "Generation 3", "Generation 4", "Generation 5"))
 
 #### Testing the Model #### 
 
