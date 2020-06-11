@@ -1,4 +1,5 @@
-library("deSolve"); library("ggplot2"); library("plotly"); library("reshape2"); library("bayestestR"); library("tmvtnorm")
+library("deSolve"); library("ggplot2"); library("plotly"); library("reshape2")
+library("bayestestR"); library("tmvtnorm"); library("ggpubr")
 
 rm(list=ls())
 setwd("C:/Users/amorg/Documents/PhD/Chapter_2/Chapter2_Fit_Data")
@@ -155,7 +156,7 @@ w.new<-matrix(ncol=1,nrow=N)
 
 epsilon_dist <- c(2, 1.5, 1, 0.9, 0.85)
 epsilon_food <- c(3.26*0.2, 3.26*0.15, 3.26*0.125, 3.26*0.10, 3.26*0.09)
-epsilon_AMR <- c(0.32*02, 0.32*0.15, 0.32*0.125, 3.26*0.10,  0.32*0.09)
+epsilon_AMR <- c(0.32*02, 0.32*0.15, 0.32*0.125, 0.32*0.10,  0.32*0.09)
 
 ABC_algorithm(N = 1000, 
               G = 5,
@@ -188,25 +189,40 @@ testtheta <- melt(rbind(data1, data2, data3, data4,data5), id.vars = "group",mea
 testbetaAA <- melt(rbind(data1, data2, data3, data4, data5), id.vars = "group",measure.vars = "d_betaAA")
 testalpha <- melt(rbind(data1, data2, data3, data4, data5), id.vars = "group",measure.vars = "d_alpha")
 
-ggplot(testphi, aes(x=value, fill=group)) + geom_density(alpha=.5) + 
+p1 <- ggplot(testphi, aes(x=value, fill=group)) + geom_density(alpha=.5) + 
   scale_x_continuous(expand = c(0, 0), name = expression(paste("Rate of Antibiotic-Resistant to Antibiotic-Sensitive Reversion (", phi, ")"))) + 
-  scale_y_continuous(expand = c(0, 0), name = NULL) +
-  labs(fill = NULL) + scale_fill_discrete(labels = c("Generation 1", "Generation 2", "Generation 3", "Generation 4", "Generation 5"))
+  scale_y_continuous(limits = c(0,350), expand = c(0, 0), name = "") +
+  labs(fill = NULL) + scale_fill_discrete(labels = c("Generation 1", "Generation 2", "Generation 3", "Generation 4", "Generation 5"))+
+  theme(legend.text=element_text(size=14),  axis.text=element_text(size=14),
+        axis.title.y=element_text(size=14),axis.title.x= element_text(size=14), plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"))
 
-ggplot(testtheta, aes(x=value, fill=group)) + geom_density(alpha=.5)+
+p2 <- ggplot(testtheta, aes(x=value, fill=group)) + geom_density(alpha=.5)+
   scale_x_continuous(expand = c(0, 0), name = expression(paste("Efficacy of Antibiotic-Mediated Animal Recovery (", theta, ")"))) + 
-  scale_y_continuous(expand = c(0, 0), name = NULL) +
-  labs(fill = NULL) + scale_fill_discrete(labels = c("Generation 1", "Generation 2", "Generation 3", "Generation 4", "Generation 5"))
+  scale_y_continuous(limits = c(0,45), expand = c(0, 0), name = "") +
+  labs(fill = NULL) + scale_fill_discrete(labels = c("Generation 1", "Generation 2", "Generation 3", "Generation 4", "Generation 5")) +
+  theme(legend.text=element_text(size=14),  axis.text=element_text(size=14),
+        axis.title.y=element_text(size=14),axis.title.x= element_text(size=14), plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"))
 
-ggplot(testbetaAA, aes(x=value, fill=group)) + geom_density(alpha=.5)+
+p3<- ggplot(testbetaAA, aes(x=value, fill=group)) + geom_density(alpha=.5)+
   scale_x_continuous(expand = c(0, 0), name = expression(paste("Rate of Animal-to-Animal Transmission (", beta[AA], ")"))) + 
-  scale_y_continuous(expand = c(0, 0), name = NULL) +
-  labs(fill = NULL) + scale_fill_discrete(labels = c("Generation 1", "Generation 2", "Generation 3", "Generation 4", "Generation 5"))
+  scale_y_continuous(limits = c(0,40),expand = c(0, 0), name = "") +
+  labs(fill = NULL) + scale_fill_discrete(labels = c("Generation 1", "Generation 2", "Generation 3", "Generation 4", "Generation 5")) +
+  theme(legend.text=element_text(size=14),  axis.text=element_text(size=14),
+        axis.title.y=element_text(size=14),axis.title.x= element_text(size=14), plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"))
 
-ggplot(testalpha, aes(x=value, fill=group)) + geom_density(alpha=.5)+
+p4 <- ggplot(testalpha, aes(x=value, fill=group)) + geom_density(alpha=.5)+
   scale_x_continuous(expand = c(0, 0), name = expression(paste("Transmission-related Antibiotic Resistant Fitness Cost (", alpha, ")"))) + 
-  scale_y_continuous(expand = c(0, 0), name = NULL) +
-  labs(fill = NULL) + scale_fill_discrete(labels = c("Generation 1", "Generation 2", "Generation 3", "Generation 4", "Generation 5"))
+  scale_y_continuous(limits = c(0,12),expand = c(0, 0), name = "") +
+  labs(fill = NULL) + scale_fill_discrete(labels = c("Generation 1", "Generation 2", "Generation 3", "Generation 4", "Generation 5")) +
+  theme(legend.text=element_text(size=14),  axis.text=element_text(size=14),
+        axis.title.y=element_text(size=14),axis.title.x= element_text(size=14), plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"))
+
+#### Plotting ####
+
+plot <- ggarrange(p1, p2, p3, p4, nrow = 2, ncol =2, 
+                  labels = c("A","B","C","D"), font.label = c(size = 20), common.legend = TRUE, legend = "bottom")
+
+ggsave(plot, filename = "ABCSMC_salm_pigs.png", dpi = 300, type = "cairo", width = 13, height = 11, units = "in")
 
 #### Testing the Model #### 
 
@@ -245,3 +261,37 @@ plot_ly(output2, x= ~tau, y = ~InfHumans, type = "bar", name = "Antibiotic-Sensi
          barmode = "stack", annotations = list(x = ~tau, y = ~ICombH, text = ~IResRat, yanchor = "bottom", showarrow = FALSE, textangle = 310,
                                                xshift =3))
 
+#### Showing the Fit with Data #### 
+
+parmtau <- seq(0,0.035, by = 0.001)
+
+init <- c(Sa=0.98, Isa=0.01, Ira=0.01, Sh=1, Ish=0, Irh=0)
+output1 <- data.frame()
+times <- seq(0, 200000, by = 100)
+
+for (i in 1:length(parmtau)) {
+  temp <- data.frame(matrix(NA, nrow = 1, ncol=7))
+  parms2 = c(ra = 60^-1, rh =  (5.5^-1), ua = 240^-1, uh = 28835^-1, betaAA = map_betaAA, betaAH = 0.00001, betaHH = 0.00001, 
+             betaHA = (0.00001), phi = map_phi, theta = map_theta, alpha = map_alpha, tau = parmtau[i])
+  out <- ode(y = init, func = amr, times = times, parms = parms2)
+  temp[1,1] <- parmtau[i]
+  temp[1,2] <- rounding(out[nrow(out),5]) 
+  temp[1,3] <- rounding(out[nrow(out),6]) 
+  temp[1,4] <- rounding(out[nrow(out),7])
+  temp[1,5] <- temp[1,3] + temp[1,4]
+  temp[1,6] <- signif(as.numeric(temp[1,4]/temp[1,5]), digits = 3)
+  temp[1,7] <- rounding(out[nrow(out),4]) / (rounding(out[nrow(out),3]) + rounding(out[nrow(out),4]))
+  print(temp[1,3])
+  output1 <- rbind.data.frame(output1, temp)
+}
+
+colnames(output1)[1:7] <- c("tau", "SuscHumans","InfHumans","ResInfHumans","ICombH","IResRat","IResRatA")
+
+output2 <- output1
+output2[,2:5] <- output2[,2:5]*100000 #Scaling the prevalence (per 100,000)
+
+ggplot()  + geom_point(data = datatetra, aes(x = pig_tetra_sales, y= ResPropAnim)) +
+  geom_text(data = datatetra, aes(x = pig_tetra_sales, y= ResPropAnim, label = Country), vjust = -0.5, hjust = - 0.05) +
+  scale_x_continuous(expand = c(0, 0), limits = c(0,0.035)) + scale_y_continuous(expand = c(0, 0), limits = c(0,1)) +
+  labs(x ="Livestock Antibiotic Usage (g/PCU)", y = "Antibiotic-Resistant Livestock Carriage") + 
+  geom_line(data = output2, aes(x = tau, y= IResRatA), col = "darkred", size = 1.02)
