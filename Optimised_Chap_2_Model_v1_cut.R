@@ -30,7 +30,7 @@ datatetrahum <- read.csv("resistanceprofHum_v1.csv")
 datatetra$mgpcuuseage <- datatetra$mgpcuuseage / 1000; datatetrahum$mgpcuuseage <- datatetrahum$mgpcuuseage / 1000
 datatetra$pig_tetra_sales <- datatetra$pig_tetra_sales / 1000; datatetrahum$pig_tetra_sales <- datatetrahum$pig_tetra_sales / 1000
 datatetrahum$ResPropHum <- datatetrahum$ResPropHum/ 100 
-datatetra <- datatetra[!datatetra$N < 5,]
+datatetra <- datatetra[!datatetra$N < 10,]
 
 ggplot()  + geom_point(data = datatetra, aes(x = pig_tetra_sales, y= ResPropAnim)) +
   geom_text(data = datatetra, aes(x = pig_tetra_sales, y= ResPropAnim, label = Country), vjust = -0.5, hjust = - 0.05) +
@@ -156,7 +156,7 @@ w.new<-matrix(ncol=1,nrow=N)
 
 epsilon_dist <- c(2, 1.5, 1, 0.9, 0.85)
 epsilon_food <- c(3.26*0.2, 3.26*0.15, 3.26*0.125, 3.26*0.10, 3.26*0.09)
-epsilon_AMR <- c(0.32*02, 0.32*0.15, 0.32*0.125, 0.32*0.10,  0.32*0.09)
+epsilon_AMR <- c(0.32*0.2, 0.32*0.15, 0.32*0.125, 0.32*0.10,  0.32*0.09)
 
 ABC_algorithm(N = 1000, 
               G = 5,
