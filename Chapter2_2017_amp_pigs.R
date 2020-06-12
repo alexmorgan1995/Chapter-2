@@ -123,7 +123,7 @@ ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, ini
           }
           w.new[i] <- w1/w2
           # Update counter
-          print(paste0('Generation: ', g, ", particle: ", i,", weights: ", w.new[i]))
+          print(paste0('Generation: ', g, ", particle: ", i,", weights: ", w.new[i], ", ",dist[1]))
           i <- i+1
         }
       }
