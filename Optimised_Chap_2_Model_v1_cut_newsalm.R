@@ -133,7 +133,7 @@ ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, ini
   }
 }
 
-N <- 250 #(ACCEPTED PARTICLES PER GENERATION)
+N <- 1000 #(ACCEPTED PARTICLES PER GENERATION)
 
 lm.low <- c(0, 0, 0, 0)
 lm.upp <- c(0.5, 0.1, 0.1, 1)
@@ -146,11 +146,11 @@ res.new<-matrix(ncol=4,nrow=N)
 w.old<-matrix(ncol=1,nrow=N)
 w.new<-matrix(ncol=1,nrow=N)
 
-epsilon_dist <- c(4, 3, 2.5, 2, 1.725)
+epsilon_dist <- c(4, 3, 2.5, 2, 1.71)
 epsilon_food <- c(3.26*0.3, 3.26*0.25, 3.26*0.2, 3.26*0.15, 3.26*0.1)
 epsilon_AMR <- c(0.31*0.3, 0.31*0.25, 0.31*0.2, 0.31*0.15,  0.31*0.1)
 
-ABC_algorithm(N = 250, 
+ABC_algorithm(N = 1000, 
               G = 5,
               sum.stats = summarystatprev, 
               distanceABC = sum_square_diff_dist, 

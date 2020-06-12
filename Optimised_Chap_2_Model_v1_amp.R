@@ -25,17 +25,17 @@ amr <- function(t, y, parms) {
 }
 
 #### Data Import ####
-datatetra <- read.csv("salm_pig_amptet_2018.csv")
-colnames(datatetra)[4] <- "ResPropAnim"
+dataamp <- read.csv("resistanceprofAnim_amp.csv")
 
-datatetra$tet_mgpcuuseage <- datatetra$tet_mgpcuuseage / 1000
-datatetra$amp_mgpcuuseage <- datatetra$amp_mgpcuuseage / 1000
-datatetra$tetra_sales <- datatetra$tetra_sales / 1000
-datatetra$amp_sale <- datatetra$amp_sale / 1000
-datatetra <- datatetra[!datatetra$N < 5,]
+dataamp$mgpcuuseage <- dataamp$mgpcuuseage / 1000
+dataamp$pig_amp_sales <- dataamp$pig_amp_sales / 1000
+dataamp <- dataamp[!dataamp$N < 5,]
 
-ggplot()  + geom_point(data = datatetra, aes(x = tetra_sales, y= tet_ResPropAnim)) +
-  geom_text(data = datatetra, aes(x = tetra_sales, y= tet_ResPropAnim, label = Country), vjust = -0.5, hjust = - 0.05) +
+mean(dataamp$hum_res_amp ,na.rm = TRUE)
+mean(dataamp$pig_amp_sales ,na.rm = TRUE)
+
+ggplot()  + geom_point(data = dataamp, aes(x = pig_amp_sales, y= ResPropAnim)) +
+  geom_text(data = dataamp, aes(x = pig_amp_sales, y= ResPropAnim, label = Country), vjust = -0.5, hjust = - 0.05) +
   scale_x_continuous(expand = c(0, 0), limits = c(0,0.035)) + scale_y_continuous(expand = c(0, 0), limits = c(0,1)) +
   labs(x ="Livestock Antibiotic Usage (g/PCU)", y = "Antibiotic-Resistant Livestock Carriage")
 
@@ -54,7 +54,7 @@ sum_square_diff_dist <- function(sum.stats, data.obs, model.obs) {
 
 computeDistanceABC_ALEX <- function(sum.stats, distanceABC, fitmodel, tau_range, thetaparm, init.state, times, data) {
   tauoutput <- matrix(nrow = 0, ncol=4)
-  tau_range <- append(tau_range, 0.0106)
+  tau_range <- append(tau_range, 0.009877583)
   for (i in 1:length(tau_range)) {
     temp <- matrix(NA, nrow = 1, ncol=4)
     parms2 = c(ra = thetaparm[["ra"]], rh =  thetaparm[["rh"]], ua = thetaparm[["ua"]], uh = thetaparm[["uh"]], 
@@ -70,9 +70,9 @@ computeDistanceABC_ALEX <- function(sum.stats, distanceABC, fitmodel, tau_range,
   }
   tauoutput <- data.frame(tauoutput)
   colnames(tauoutput) <- c("tau", "ICombH", "ResPropAnim", "ResPropHum")  
-  return(c(distanceABC(list(sum.stats), data, tauoutput[!tauoutput$tau == 0.0106,]),
-           abs(tauoutput$ICombH[tauoutput$tau == 0.0106] - 3.26),
-           abs(tauoutput$ResPropHum[tauoutput$tau == 0.0106] - 0.31)))
+  return(c(distanceABC(list(sum.stats), data, tauoutput[!tauoutput$tau == 0.009877583,]),
+           abs(tauoutput$ICombH[tauoutput$tau == 0.009877583] - 3.26),
+           abs(tauoutput$ResPropHum[tauoutput$tau == 0.009877583] - 0.2795067)))
 }
 
 #Run the fit - This is where I will build the ABC-SMC Approach
@@ -133,7 +133,7 @@ ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, ini
     print(res.old)
     w.old <- w.new/sum(w.new)
     colnames(res.new) <- c("phi", "theta", "d_betaAA", "d_alpha")
-    write.csv(res.new, file = paste("results_ABC_SMC_gen_2018tet_",g,".csv",sep=""), row.names=FALSE)
+    write.csv(res.new, file = paste("results_ABC_SMC_gen_amp_",g,".csv",sep=""), row.names=FALSE)
     ####
   }
 }
@@ -151,28 +151,28 @@ res.new<-matrix(ncol=4,nrow=N)
 w.old<-matrix(ncol=1,nrow=N)
 w.new<-matrix(ncol=1,nrow=N)
 
-epsilon_dist <- c(2, 1.5, 1.25, 1, 0.9)
+epsilon_dist <- c(2, 1.5, 1, 0.9, 0.85)
 epsilon_food <- c(3.26*0.2, 3.26*0.15, 3.26*0.125, 3.26*0.10, 3.26*0.09)
-epsilon_AMR <- c(0.31*0.2, 0.31*0.15, 0.31*0.125, 0.31*0.10,  0.31*0.09)
+epsilon_AMR <- c(0.2795067*0.2, 0.2795067*0.15, 0.2795067*0.125, 0.2795067*0.10,  0.2795067*0.09)
 
-ABC_algorithm(N = 1000, 
+ABC_algorithm(N = 100, 
               G = 5,
               sum.stats = summarystatprev, 
               distanceABC = sum_square_diff_dist, 
               fitmodel = amr, 
-              tau_range = datatetra$tetra_sales, 
+              tau_range = dataamp$pig_amp_sales, 
               init.state = c(Sa=0.98, Isa=0.01, Ira=0.01, Sh=1, Ish=0, Irh=0), 
               times = seq(0, 2000, by = 100), 
-              data = datatetra)
+              data = dataamp)
 
 end_time <- Sys.time(); end_time - start_time
 
 #### Test Data ####
-data1 <- cbind(read.csv("results_ABC_SMC_gen_2018tet_1.csv", header = TRUE), "group" = "data1")
-data2 <- cbind(read.csv("results_ABC_SMC_gen_2018tet_2.csv", header = TRUE), "group" = "data2")
-data3 <- cbind(read.csv("results_ABC_SMC_gen_2018tet_3.csv", header = TRUE), "group" = "data3")
-data4 <- cbind(read.csv("results_ABC_SMC_gen_2018tet_4.csv", header = TRUE), "group" = "data4") 
-data5 <- cbind(read.csv("results_ABC_SMC_gen_2018tet_5.csv", header = TRUE), "group" = "data5") 
+data1 <- cbind(read.csv("results_ABC_SMC_gen_amp_1.csv", header = TRUE), "group" = "data1")
+data2 <- cbind(read.csv("results_ABC_SMC_gen_amp_2.csv", header = TRUE), "group" = "data2")
+data3 <- cbind(read.csv("results_ABC_SMC_gen_amp_3.csv", header = TRUE), "group" = "data3")
+data4 <- cbind(read.csv("results_ABC_SMC_gen_amp_4.csv", header = TRUE), "group" = "data4") 
+data5 <- cbind(read.csv("results_ABC_SMC_gen_amp_5.csv", header = TRUE), "group" = "data5") 
 
 map_phi <- map_estimate(data5[,"phi"], precision = 20) 
 map_theta <- map_estimate(data5[,"theta"], precision = 20) 
@@ -223,7 +223,7 @@ ggsave(plot, filename = "ABCSMC_salm_pigs.png", dpi = 300, type = "cairo", width
 
 #### Testing the Model #### 
 
-parmtau <- c(seq(0,0.035,by=0.001), 0.0106)
+parmtau <- c(seq(0,0.035,by=0.001), 0.009877583)
 
 init <- c(Sa=0.98, Isa=0.01, Ira=0.01, Sh=1, Ish=0, Irh=0)
 output1 <- data.frame()
@@ -287,8 +287,8 @@ colnames(output1)[1:7] <- c("tau", "SuscHumans","InfHumans","ResInfHumans","ICom
 output2 <- output1
 output2[,2:5] <- output2[,2:5]*100000 #Scaling the prevalence (per 100,000)
 
-ggplot()  + geom_point(data = datatetra, aes(x = pig_tetra_sales, y= ResPropAnim)) +
-  geom_text(data = datatetra, aes(x = pig_tetra_sales, y= ResPropAnim, label = Country), vjust = -0.5, hjust = - 0.05) +
+ggplot()  + geom_point(data = dataamp, aes(x = pig_amp_sales, y= ResPropAnim)) +
+  geom_text(data = dataamp, aes(x = pig_amp_sales, y= ResPropAnim, label = Country), vjust = -0.5, hjust = - 0.05) +
   scale_x_continuous(expand = c(0, 0), limits = c(0,0.035)) + scale_y_continuous(expand = c(0, 0), limits = c(0,1)) +
   labs(x ="Livestock Antibiotic Usage (g/PCU)", y = "Antibiotic-Resistant Livestock Carriage") + 
   geom_line(data = output2, aes(x = tau, y= IResRatA), col = "darkred", size = 1.02)
