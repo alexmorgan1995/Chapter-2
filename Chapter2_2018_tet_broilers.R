@@ -2,7 +2,7 @@ library("deSolve"); library("ggplot2"); library("plotly"); library("reshape2")
 library("bayestestR"); library("tmvtnorm"); library("ggpubr")
 
 rm(list=ls())
-setwd("C:/Users/amorg/Documents/PhD/Chapter_2/Chapter2_Fit_Data")
+setwd("C:/Users/amorg/Documents/PhD/Chapter_2/Chapter2_Fit_Data/FinalData")
 
 #Function to remove negative prevalence values and round large DP numbers
 rounding <- function(x) {

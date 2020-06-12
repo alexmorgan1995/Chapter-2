@@ -2,7 +2,7 @@ library("deSolve"); library("ggplot2"); library("plotly"); library("reshape2")
 library("bayestestR"); library("tmvtnorm"); library("ggpubr")
 
 rm(list=ls())
-setwd("C:/Users/amorg/Documents/PhD/Chapter_2/Chapter2_Fit_Data")
+setwd("C:/Users/amorg/Documents/PhD/Chapter_2/Chapter2_Fit_Data/FinalData")
 
 #Function to remove negative prevalence values and round large DP numbers
 rounding <- function(x) {
@@ -30,7 +30,7 @@ datatetrahum <- read.csv("resistanceprofHum_v1.csv")
 datatetra$mgpcuuseage <- datatetra$mgpcuuseage / 1000; datatetrahum$mgpcuuseage <- datatetrahum$mgpcuuseage / 1000
 datatetra$pig_tetra_sales <- datatetra$pig_tetra_sales / 1000; datatetrahum$pig_tetra_sales <- datatetrahum$pig_tetra_sales / 1000
 datatetrahum$ResPropHum <- datatetrahum$ResPropHum/ 100 
-datatetra <- datatetra[!datatetra$N < 10,]
+datatetra <- datatetra[!datatetra$N < 5,]
 
 ggplot()  + geom_point(data = datatetra, aes(x = pig_tetra_sales, y= ResPropAnim)) +
   geom_text(data = datatetra, aes(x = pig_tetra_sales, y= ResPropAnim, label = Country), vjust = -0.5, hjust = - 0.05) +

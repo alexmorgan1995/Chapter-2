@@ -2,7 +2,7 @@ library("deSolve"); library("ggplot2"); library("plotly"); library("reshape2")
 library("bayestestR"); library("tmvtnorm"); library("ggpubr")
 
 rm(list=ls())
-setwd("C:/Users/amorg/Documents/PhD/Chapter_2/Chapter2_Fit_Data")
+setwd("C:/Users/amorg/Documents/PhD/Chapter_2/Chapter2_Fit_Data/FinalData")
 
 #Function to remove negative prevalence values and round large DP numbers
 rounding <- function(x) {
@@ -31,13 +31,17 @@ dataamp$mgpcuuseage <- dataamp$mgpcuuseage / 1000
 dataamp$pig_amp_sales <- dataamp$pig_amp_sales / 1000
 dataamp <- dataamp[!dataamp$N < 5,]
 
+dataamp$lower <- unlist(lapply(1:nrow(dataamp), function(i) prop.test(dataamp$Positive.Sample[i],dataamp$N[i])[[6]][[1]]))
+dataamp$upper <- unlist(lapply(1:nrow(dataamp), function(i) prop.test(dataamp$Positive.Sample[i],dataamp$N[i])[[6]][[2]]))
+
 mean(dataamp$hum_res_amp ,na.rm = TRUE)
 mean(dataamp$pig_amp_sales ,na.rm = TRUE)
 
-ggplot()  + geom_point(data = dataamp, aes(x = pig_amp_sales, y= ResPropAnim)) +
-  geom_text(data = dataamp, aes(x = pig_amp_sales, y= ResPropAnim, label = Country), vjust = -0.5, hjust = - 0.05) +
+ggplot(dataamp, aes(x = pig_amp_sales, y= ResPropAnim))  + geom_point() +
+  geom_text(aes(x = pig_amp_sales, y= ResPropAnim, label = Country), vjust = -0.5, hjust = - 0.05) +
   scale_x_continuous(expand = c(0, 0), limits = c(0,0.035)) + scale_y_continuous(expand = c(0, 0), limits = c(0,1)) +
-  labs(x ="Livestock Antibiotic Usage (g/PCU)", y = "Antibiotic-Resistant Livestock Carriage")
+  labs(x ="Livestock Antibiotic Usage (g/PCU)", y = "Antibiotic-Resistant Livestock Carriage") +
+  geom_errorbar(aes(ymin=lower, ymax=upper), colour="black", width=.1, inherit.aes =  TRUE)
 
 #### Approximate Bayesian Computation - Rejection Algorithm ####
 
@@ -138,7 +142,7 @@ ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, ini
   }
 }
 
-N <- 100 #(ACCEPTED PARTICLES PER GENERATION)
+N <- 1000 #(ACCEPTED PARTICLES PER GENERATION)
 
 lm.low <- c(0, 0, 0, 0)
 lm.upp <- c(0.2, 0.03, 0.4, 1)
@@ -151,11 +155,11 @@ res.new<-matrix(ncol=4,nrow=N)
 w.old<-matrix(ncol=1,nrow=N)
 w.new<-matrix(ncol=1,nrow=N)
 
-epsilon_dist <- c(2, 1.75, 1.5, 1.25, 1.2)
+epsilon_dist <- c(2, 1.5, 1.25, 1.1, 1.05)
 epsilon_food <- c(3.26*0.2, 3.26*0.15, 3.26*0.125, 3.26*0.10, 3.26*0.09)
 epsilon_AMR <- c(0.2795067*0.2, 0.2795067*0.15, 0.2795067*0.125, 0.2795067*0.10,  0.2795067*0.09)
 
-ABC_algorithm(N = 100, 
+ABC_algorithm(N = 1000, 
               G = 5,
               sum.stats = summarystatprev, 
               distanceABC = sum_square_diff_dist, 
@@ -287,8 +291,17 @@ colnames(output1)[1:7] <- c("tau", "SuscHumans","InfHumans","ResInfHumans","ICom
 output2 <- output1
 output2[,2:5] <- output2[,2:5]*100000 #Scaling the prevalence (per 100,000)
 
-ggplot()  + geom_point(data = dataamp, aes(x = pig_amp_sales, y= ResPropAnim)) +
-  geom_text(data = dataamp, aes(x = pig_amp_sales, y= ResPropAnim, label = Country), vjust = -0.5, hjust = - 0.05) +
+dataamp <- read.csv("resistanceprofAnim_amp.csv")
+
+dataamp$mgpcuuseage <- dataamp$mgpcuuseage / 1000
+dataamp$pig_amp_sales <- dataamp$pig_amp_sales / 1000
+dataamp <- dataamp[!dataamp$N < 5,]
+
+dataamp$lower <- unlist(lapply(1:nrow(dataamp), function(i) prop.test(dataamp$Positive.Sample[i],dataamp$N[i])[[6]][[1]]))
+dataamp$upper <- unlist(lapply(1:nrow(dataamp), function(i) prop.test(dataamp$Positive.Sample[i],dataamp$N[i])[[6]][[2]]))
+
+ggplot(dataamp, aes(x = pig_amp_sales, y= ResPropAnim))  + geom_point() +
   scale_x_continuous(expand = c(0, 0), limits = c(0,0.035)) + scale_y_continuous(expand = c(0, 0), limits = c(0,1)) +
-  labs(x ="Livestock Antibiotic Usage (g/PCU)", y = "Antibiotic-Resistant Livestock Carriage") + 
-  geom_line(data = output2, aes(x = tau, y= IResRatA), col = "darkred", size = 1.02)
+  labs(x ="Livestock Antibiotic Usage (g/PCU)", y = "Antibiotic-Resistant Livestock Carriage") +
+  geom_errorbar(aes(ymin=lower, ymax=upper), colour="black", size=1.01, inherit.aes =  TRUE) + 
+  geom_line(data = output2, aes(x = tau, y= IResRatA), col = "red", size = 1.02)
