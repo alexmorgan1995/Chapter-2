@@ -133,7 +133,7 @@ ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, ini
     print(res.old)
     w.old <- w.new/sum(w.new)
     colnames(res.new) <- c("phi", "theta", "d_betaAA", "d_alpha")
-    write.csv(res.new, file = paste("results_ABC_SMC_gen_",g,".csv",sep=""), row.names=FALSE)
+    write.csv(res.new, file = paste("results_ABC_SMC_gen_2018tet_",g,".csv",sep=""), row.names=FALSE)
     ####
   }
 }
@@ -151,7 +151,7 @@ res.new<-matrix(ncol=4,nrow=N)
 w.old<-matrix(ncol=1,nrow=N)
 w.new<-matrix(ncol=1,nrow=N)
 
-epsilon_dist <- c(2, 1.5, 1, 0.9, 0.85)
+epsilon_dist <- c(2, 1.5, 1.25, 1, 0.9)
 epsilon_food <- c(3.26*0.2, 3.26*0.15, 3.26*0.125, 3.26*0.10, 3.26*0.09)
 epsilon_AMR <- c(0.31*0.2, 0.31*0.15, 0.31*0.125, 0.31*0.10,  0.31*0.09)
 
@@ -168,11 +168,11 @@ ABC_algorithm(N = 1000,
 end_time <- Sys.time(); end_time - start_time
 
 #### Test Data ####
-data1 <- cbind(read.csv("results_ABC_SMC_gen_1.csv", header = TRUE), "group" = "data1")
-data2 <- cbind(read.csv("results_ABC_SMC_gen_2.csv", header = TRUE), "group" = "data2")
-data3 <- cbind(read.csv("results_ABC_SMC_gen_3.csv", header = TRUE), "group" = "data3")
-data4 <- cbind(read.csv("results_ABC_SMC_gen_4.csv", header = TRUE), "group" = "data4") 
-data5 <- cbind(read.csv("results_ABC_SMC_gen_5.csv", header = TRUE), "group" = "data5") 
+data1 <- cbind(read.csv("results_ABC_SMC_gen_2018tet_1.csv", header = TRUE), "group" = "data1")
+data2 <- cbind(read.csv("results_ABC_SMC_gen_2018tet_2.csv", header = TRUE), "group" = "data2")
+data3 <- cbind(read.csv("results_ABC_SMC_gen_2018tet_3.csv", header = TRUE), "group" = "data3")
+data4 <- cbind(read.csv("results_ABC_SMC_gen_2018tet_4.csv", header = TRUE), "group" = "data4") 
+data5 <- cbind(read.csv("results_ABC_SMC_gen_2018tet_5.csv", header = TRUE), "group" = "data5") 
 
 map_phi <- map_estimate(data5[,"phi"], precision = 20) 
 map_theta <- map_estimate(data5[,"theta"], precision = 20) 
