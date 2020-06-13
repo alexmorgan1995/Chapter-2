@@ -223,7 +223,7 @@ p4 <- ggplot(testalpha, aes(x=value, fill=group)) + geom_density(alpha=.5)+
 plot <- ggarrange(p1, p2, p3, p4, nrow = 2, ncol =2, 
                   labels = c("A","B","C","D"), font.label = c(size = 20), common.legend = TRUE, legend = "bottom")
 
-ggsave(plot, filename = "ABCSMC_salm_pigs.png", dpi = 300, type = "cairo", width = 13, height = 11, units = "in")
+ggsave(plot, filename = "ABCSMC_salm_amp_pigs.png", dpi = 300, type = "cairo", width = 13, height = 11, units = "in")
 
 #### Testing the Model #### 
 

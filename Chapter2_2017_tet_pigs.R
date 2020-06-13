@@ -171,11 +171,11 @@ ABC_algorithm(N = 1000,
 end_time <- Sys.time(); end_time - start_time
 
 #### Test Data ####
-data1 <- cbind(read.csv("results_ABC_SMC_gen_1.csv", header = TRUE), "group" = "data1")
-data2 <- cbind(read.csv("results_ABC_SMC_gen_2.csv", header = TRUE), "group" = "data2")
-data3 <- cbind(read.csv("results_ABC_SMC_gen_3.csv", header = TRUE), "group" = "data3")
-data4 <- cbind(read.csv("results_ABC_SMC_gen_4.csv", header = TRUE), "group" = "data4") 
-data5 <- cbind(read.csv("results_ABC_SMC_gen_5.csv", header = TRUE), "group" = "data5") 
+data1 <- cbind(read.csv("results_ABC_SMC_gen_tet_1.csv", header = TRUE), "group" = "data1")
+data2 <- cbind(read.csv("results_ABC_SMC_gen_tet_2.csv", header = TRUE), "group" = "data2")
+data3 <- cbind(read.csv("results_ABC_SMC_gen_tet_3.csv", header = TRUE), "group" = "data3")
+data4 <- cbind(read.csv("results_ABC_SMC_gen_tet_4.csv", header = TRUE), "group" = "data4") 
+data5 <- cbind(read.csv("results_ABC_SMC_gen_tet_5.csv", header = TRUE), "group" = "data5") 
 
 map_phi <- map_estimate(data5[,"phi"], precision = 20) 
 map_theta <- map_estimate(data5[,"theta"], precision = 20) 
