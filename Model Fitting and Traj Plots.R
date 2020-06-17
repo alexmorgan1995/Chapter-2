@@ -1,5 +1,5 @@
 library("deSolve"); library("ggplot2"); library("plotly"); library("reshape2")
-library("bayestestR"); library("tmvtnorm"); library("ggpubr")
+library("bayestestR"); library("tmvtnorm"); library("ggpubr"); library("sensitivity"); library("fast")
 
 rm(list=ls())
 setwd("C:/Users/amorg/Documents/PhD/Chapter_2/Chapter2_Fit_Data/FinalData")
@@ -79,17 +79,17 @@ MAP <- rbind(MAPtet, MAPamp, MAPbroil); colnames(MAP) <- c("phi", "theta", "beta
 
 # ABC-SMC Posterior -------------------------------------------------------
 
-mybiglist1 <- list()
+plotlist1 <- list()
 
 for(j in 1:length(unique(data$fit))) {
-  mybiglist2 <- list()
+  plotlist2 <- list()
   
   for (i in 1:length(colnames(MAP))) { # Loop over loop.vector
     
     dens <- density(data[,colnames(MAP)[i]][data$fit == unique(data$fit)[j] & data$group == "data5"])
     dataplot <- melt(data[data$fit == unique(data$fit)[j],], id.vars = "group", measure.vars = colnames(MAP)[i])
     
-    mybiglist2[[i]] <- local({
+    plotlist2[[i]] <- local({
       i = i
       p1 <- ggplot(data[data$fit == unique(data$fit)[j],], aes(x=get(colnames(MAP)[i]), fill=group)) + geom_density(alpha=.5) + theme_bw() + 
         scale_y_continuous(limits = c(0,(max(dens$y)*1.1)), expand = c(0, 0), name = " ") +
@@ -113,13 +113,13 @@ for(j in 1:length(unique(data$fit))) {
     })
     print(paste0("Plot Parameter: ",colnames(MAP)[i], " | Data: ", unique(data$fit)[j] ))
   }
-  mybiglist1[[unique(data$fit)[j]]] <- mybiglist2
+  plotlist1[[unique(data$fit)[j]]] <- plotlist2
 }
 
-abc <- ggarrange(mybiglist1[[1]][[1]],mybiglist1[[2]][[1]],mybiglist1[[3]][[1]],
-                 mybiglist1[[1]][[2]],mybiglist1[[2]][[2]],mybiglist1[[3]][[2]],
-                 mybiglist1[[1]][[3]],mybiglist1[[2]][[3]],mybiglist1[[3]][[3]],
-                 mybiglist1[[1]][[4]],mybiglist1[[2]][[4]],mybiglist1[[3]][[4]],
+abc <- ggarrange(plotlist1[[1]][[1]], plotlist1[[2]][[1]], plotlist1[[3]][[1]],
+                 plotlist1[[1]][[2]], plotlist1[[2]][[2]], plotlist1[[3]][[2]],
+                 plotlist1[[1]][[3]], plotlist1[[2]][[3]], plotlist1[[3]][[3]],
+                 plotlist1[[1]][[4]], plotlist1[[2]][[4]], plotlist1[[3]][[4]],
                  nrow = 4, ncol =3, 
                  labels =  c("A","B","C",
                              "","","",
@@ -128,13 +128,12 @@ abc <- ggarrange(mybiglist1[[1]][[1]],mybiglist1[[2]][[1]],mybiglist1[[3]][[1]],
                  font.label = c(size = 20), common.legend = TRUE, legend = "bottom",
                  align = "hv")
 
-ggsave(abc, filename = "ABC_SMC_Post.png", dpi = 300, type = "cairo", width = 10, height = 15, units = "in",
-       path = "C:/Users/amorg/Documents/PhD/Chapter_2/Write Up/Redraft/Figures")
-
+ggsave(abc, filename = "ABC_SMC_Post.png", dpi = 300, type = "cairo", width = 10, height = 10, units = "in",
+       path = "C:/Users/amorg/Documents/PhD/Chapter_2/Figures/Redraft Figures")
 
 # Model Fit with Data -----------------------------------------------------
 
-parmtau <- seq(0,0.035, by = 0.001)
+parmtau <- seq(0,0.035, by = 0.002)
 init <- c(Sa=0.98, Isa=0.01, Ira=0.01, Sh=1, Ish=0, Irh=0)
 icombhdata <- data.frame(matrix(ncol = 8, nrow = 0))
 times <- seq(0, 200000, by = 100)
@@ -192,24 +191,52 @@ fits <- ggarrange(amp, tet, broil, nrow = 1, ncol = 3, align = "h", labels = c("
                   common.legend = TRUE, legend = "bottom") 
 
 ggsave(fits, filename = "Model_Fits.png", dpi = 300, type = "cairo", width = 14, height = 5, units = "in",
-       path = "C:/Users/amorg/Documents/PhD/Chapter_2/Write Up/Redraft/Figures")
+       path = "C:/Users/amorg/Documents/PhD/Chapter_2/Figures/Redraft Figures")
 
+# Tau and ICombH Base Plot ----------------------------------------------------------
 
-# Tau and ICombH ----------------------------------------------------------
+icombhlist <- list()
 
-plotdata <- melt(icombhdata[icombhdata$group == "MAPtet",],
-                 id.vars = c("tau"), measure.vars = c("ResInfHumans","InfHumans")) 
+#tet, amp, broil
+averagesales <- c(0.0106, 0.009877583, 0.0062)
 
-ggplot(plotdata, aes(fill = variable,x = tau, y = value))+ theme_bw() + 
-  geom_bar(position="stack", stat="identity") + scale_x_discrete(expand = c(0, 0)) + 
-  scale_y_continuous(limits = c(0,5), expand = c(0, 0))  + 
-  geom_text(data=datatetra, aes(x=pig_tetra_sales/1000, y=Freq, label=lab),vjust=0)
+for(i in 1: length(unique(icombhdata$group))){
+  i = i 
+  
+  icombhlist[[i]] <- local({
+    
+    plotdata <- melt(icombhdata[icombhdata$group == unique(icombhdata$group)[i],],
+                     id.vars = c("tau"), measure.vars = c("ResInfHumans","InfHumans")) 
+    
+    p1 <- ggplot(plotdata, aes(fill = variable, x = tau, y = value)) + theme_bw() + 
+      geom_vline(xintercept = averagesales[i], alpha = 0.3, size = 2) + 
+      geom_col(color = "black",position= "stack", width  = 0.0015) + scale_x_continuous(expand = c(0, 0.0005)) + 
+      scale_y_continuous(limits = c(0,5), expand = c(0, 0))  + 
+      geom_text(label= c(round(icombhdata$IResRat[icombhdata$group == unique(icombhdata$group)[i]],digits = 2),rep("",length(parmtau))),vjust=-0.5, hjust = 0.05,
+                position = "stack", angle = 45) +
+      theme(legend.position=c(0.75, 0.875), legend.text=element_text(size=12), legend.title = element_blank(), axis.text=element_text(size=12), 
+            axis.title.y=element_text(size=12), axis.title.x= element_text(size=12), plot.margin = unit(c(0.35,1,0.35,1), "cm")) + 
+      scale_fill_manual(labels = c("Antibiotic-Sensitive Infection", "Antibiotic-Resistant Infection"), values = c("#F8766D", "#619CFF")) 
+    
+    if(unique(icombhdata$group)[i] == "MAPtet") {
+      p1 <- p1 + labs(x ="Tetracycline Sales in Fattening Pig (g/PCU)", y = "Infected Humans (per 100,000)")  
+    }
+    if(unique(icombhdata$group)[i] == "MAPamp") {
+      p1 <- p1 + labs(x ="Ampicillin Sales in Fattening Pig (g/PCU)", y = "Infected Humans (per 100,000)")  
+    }
+    if(unique(icombhdata$group)[i] == "MAPbroil") {
+      p1 <- p1 + labs(x ="Tetracycline Sales in Broiler Poultry (g/PCU)", y = "Infected Humans (per 100,000)")  
+    }
+    
+    return(p1)
+    
+  })
+  
+}
 
-plot_ly(output2, x= ~tau, y = ~InfHumans, type = "bar", name = "Antibiotic-Sensitive Infection (Human)") %>%
-  add_trace(y= ~ResInfHumans, name = "Antibiotic-Resistant Infection (Human)", textfont = list(size = 30)) %>% 
-  layout(yaxis = list(title = "Proportion of Infected Humans (ICombH) per 100,000", range = c(0,6), showline = TRUE),
-         xaxis = list(title = "Livestock Antibiotic Usage (g/PCU)"),
-         legend = list(orientation = "v", x = 0.6, y=1), showlegend = T,
-         barmode = "stack", annotations = list(x = ~tau, y = ~ICombH, text = ~IResRat, yanchor = "bottom", showarrow = FALSE, textangle = 310,
-                                               xshift =3))
+icombh <- ggarrange(icombhlist[[1]], icombhlist[[2]], icombhlist[[3]], nrow = 3, ncol = 1, align = "v", labels = c("A","B", "C"), font.label = c(size = 20),
+                  common.legend = TRUE, legend = "bottom") 
+
+ggsave(icombh, filename = "Icombh.png", dpi = 300, type = "cairo", width = 8, height = 11, units = "in",
+       path = "C:/Users/amorg/Documents/PhD/Chapter_2/Figures/Redraft Figures")
 
