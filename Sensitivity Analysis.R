@@ -150,7 +150,7 @@ ggsave(sensplot, filename = "Sensitivity.png", dpi = 300, type = "cairo", width 
        path = "C:/Users/amorg/Documents/PhD/Chapter_2/Figures/Redraft Figures")
 
 
-# Effect of Parameters ----------------------------------------------------
+# Effect on Parameters ----------------------------------------------------
 
 parmdetails <- rbind(data.frame("Parameter" = "betaAA", "Value" = seq(0, 0.74716, by = 0.74716/50)),
                      data.frame("Parameter" = "betaHA", "Value" = seq(0, 0.0001, by = 0.0001/50)),
@@ -170,7 +170,6 @@ tau_range <- c(0, 0.0106)
 
 parms = c(ra = 60^-1, rh =  (5.5^-1), ua = 240^-1, uh = 28835^-1, betaAA = (0.074716), betaAH = 0.00001, betaHH = 0.00001, 
           betaHA = (0.00001), phi = 0.010948457, theta = 0.008345866, alpha = 0.28247322)
-
 
 for (j in 1:length(unique(parmdetails[,1]))) { 
   output <- data.frame()
