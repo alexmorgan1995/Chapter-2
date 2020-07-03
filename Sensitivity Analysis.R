@@ -1,5 +1,6 @@
 library("deSolve"); library("ggplot2"); library("plotly"); library("reshape2")
-library("bayestestR"); library("tmvtnorm"); library("ggpubr"); library("sensitivity"); library("fast")
+library("bayestestR"); library("tmvtnorm"); library("ggpubr"); library("sensitivity"); library("fast");
+library("cowplot")
 
 rm(list=ls())
 setwd("C:/Users/amorg/Documents/PhD/Chapter_2/Chapter2_Fit_Data/FinalData")
@@ -106,7 +107,7 @@ tauanalysis2 <- tauanalysis2[tauanalysis2 < quantile(tauanalysis2, 0.99)]
 #removes all negative changes - might need to review
 #The tail of the distribution has also been trimmed to prevent massive artificial increases from showing up
 
-hist(tauanalysis2, xlab = "% Increase above Baseline (Tau = 0.032)", breaks = 50)
+hist(tauanalysis2, xlab = "% Increase above Baseline ICombH (3.262 per 100,000)", breaks = 50)
 
 # Plotting Sensitivity Analysis -------------------------------------------
 
@@ -130,39 +131,41 @@ p1 <- ggplot(df.equilibrium, aes(x = reorder(parameter, -value), y = value)) + g
   scale_x_discrete(expand = c(0, 0.7), name = "Parameter", 
                    labels = c(expression(alpha), expression(phi), expression(r[A]), expression(beta[AA]), expression(mu[A]), 
                               expression(theta), expression(beta[HA]), expression(beta[AH]), expression(r[H]), expression(beta[HH]), expression(mu[H]))) +
-  labs(fill = NULL) + scale_fill_discrete(labels = c("Generation 1", "Generation 2", "Generation 3", "Generation 4", "Generation 5"))+
-  theme(legend.text=element_text(size=14), axis.text=element_text(size=14),
-        axis.title.y=element_text(size=14), axis.title.x= element_text(size=14), plot.margin = unit(c(0.15,0.4,0.15,0.55), "cm"))
+  labs(fill = NULL, title = bquote(bold("Increase in ICombH from" ~ tau ~ "=" ~ 0.106 ~ "to" ~ tau ~ "=" ~  0))) + 
+  scale_fill_discrete(labels = c("Generation 1", "Generation 2", "Generation 3", "Generation 4", "Generation 5"))+
+  theme(legend.text=element_text(size=14), axis.text=element_text(size=14), plot.title = element_text(size = 15, vjust = 1.5, hjust = 0.5),
+        axis.title.y=element_text(size=14), axis.title.x= element_text(size=14), plot.margin = unit(c(0.4,0.4,0.4,0.55), "cm"))
 
 p2 <- ggplot(df.equilibrium1, aes(x = reorder(parameter, -value), y = value)) + geom_bar(stat="identity", fill="lightgrey", col = "black", width  = 0.8) + theme_bw() + 
   scale_y_continuous(limits = c(0,  max(df.equilibrium1$value)*1.1), expand = c(0, 0), name = "Variance") + 
   scale_x_discrete(expand = c(0, 0.7), name = "Parameter", 
                    labels = c(expression(r[H]), expression(beta[HA]), expression(beta[AA]), expression(r[A]), expression(beta[AH]),
                               expression(alpha), expression(mu[A]), expression(phi), expression(mu[H]), expression(beta[HH]),  expression(theta))) +
-  labs(fill = NULL) + scale_fill_discrete(labels = c("Generation 1", "Generation 2", "Generation 3", "Generation 4", "Generation 5"))+
-  theme(legend.text=element_text(size=14), axis.text=element_text(size=14),
-        axis.title.y=element_text(size=14), axis.title.x= element_text(size=14), plot.margin = unit(c(0.15,0.4,0.15,0.55), "cm"))
+  labs(fill = NULL, title = bquote(bold("Mitigating Increases from Baseline ICombH = 3.262"))) + 
+  scale_fill_discrete(labels = c("Generation 1", "Generation 2", "Generation 3", "Generation 4", "Generation 5"))+
+  theme(legend.text=element_text(size=14), axis.text=element_text(size=14), plot.title = element_text(size = 15, vjust = 1.5, hjust = 0.5),
+        axis.title.y=element_text(size=14), axis.title.x= element_text(size=14), plot.margin = unit(c(0.4,0.4,0.4,0.55), "cm"))
 
 sensplot <- ggarrange(p1,p2, nrow = 2, ncol = 1,
                       align = "v", labels = c("A","B"), font.label = c(size = 20)) 
 
-ggsave(sensplot, filename = "Sensitivity.png", dpi = 300, type = "cairo", width = 5, height = 8, units = "in",
+ggsave(sensplot, filename = "Sensitivity.png", dpi = 300, type = "cairo", width = 7, height = 8, units = "in",
        path = "C:/Users/amorg/Documents/PhD/Chapter_2/Figures/Redraft Figures")
 
 
 # Effect on Parameters ----------------------------------------------------
 
-parmdetails <- rbind(data.frame("Parameter" = "betaAA", "Value" = seq(0, 0.74716, by = 0.74716/50)),
-                     data.frame("Parameter" = "betaHA", "Value" = seq(0, 0.0001, by = 0.0001/50)),
-                     data.frame("Parameter" = "betaHH", "Value" = seq(0, 0.0001, by = 0.0001/50)),
-                     data.frame("Parameter" = "betaAH", "Value" = seq(0, 0.0001, by = 0.0001/50)),
-                     data.frame("Parameter" = "phi", "Value" = seq(0, 0.10948457, by = 0.10948457/50)),
-                     data.frame("Parameter" = "theta", "Value" = seq(0, 0.08345866, by = 0.08345866/50)),
-                     data.frame("Parameter" = "alpha", "Value" = seq(0, 1, by = 1/50)),
-                     data.frame("Parameter" = "rh", "Value" = seq(0, 0.55^-1, by = 0.55^-1/50)),
-                     data.frame("Parameter" = "ra", "Value" = seq(0, 6^-1, by = 6^-1/50)),
-                     data.frame("Parameter" = "uh", "Value" = seq(0, 2883.5^-1, by = 2883.5^-1/50)),
-                     data.frame("Parameter" = "ua", "Value" = seq(0, 24^-1, by = 24^-1/50)))
+parmdetails <- rbind(data.frame("Parameter" = "betaAA", "Value" = seq(0, 0.74716, by = 0.74716/100)),
+                     data.frame("Parameter" = "betaHA", "Value" = seq(0, 0.0001, by = 0.0001/100)),
+                     data.frame("Parameter" = "betaHH", "Value" = seq(0, 0.0001, by = 0.0001/100)),
+                     data.frame("Parameter" = "betaAH", "Value" = seq(0, 0.0001, by = 0.0001/100)),
+                     data.frame("Parameter" = "phi", "Value" = seq(0, 0.10948457, by = 0.10948457/100)),
+                     data.frame("Parameter" = "theta", "Value" = seq(0, 0.08345866, by = 0.08345866/100)),
+                     data.frame("Parameter" = "alpha", "Value" = seq(0, 1, by = 1/100)),
+                     data.frame("Parameter" = "rh", "Value" = seq(0, 0.55^-1, by = 0.55^-1/100)),
+                     data.frame("Parameter" = "ra", "Value" = seq(0, 6^-1, by = 6^-1/100)),
+                     data.frame("Parameter" = "uh", "Value" = seq(0, 2883.5^-1, by = 2883.5^-1/100)),
+                     data.frame("Parameter" = "ua", "Value" = seq(0, 24^-1, by = 24^-1/100)))
 
 times <- seq(0,30000, by = 100) 
 init <- c(Sa=0.98, Isa=0.01, Ira=0.01, Sh=1, Ish=0, Irh=0)
@@ -171,111 +174,177 @@ tau_range <- c(0, 0.0106)
 parms = c(ra = 60^-1, rh =  (5.5^-1), ua = 240^-1, uh = 28835^-1, betaAA = (0.074716), betaAH = 0.00001, betaHH = 0.00001, 
           betaHA = (0.00001), phi = 0.010948457, theta = 0.008345866, alpha = 0.28247322)
 
+suppplotlist <- list()
+
 for (j in 1:length(unique(parmdetails[,1]))) { 
-  output <- data.frame()
-  for (x in 1:length(parmdetails[parmdetails == as.character(unique(parmdetails[,1])[j]),2])) { #for the individual parameter values in the sequence
-    temp1 <- data.frame()
-    for (i in 1:length(tau_range)) {
-      temp <- data.frame(matrix(nrow = 0, ncol=3))
-      parmstemp <- c(parms, tau = tau_range[i])
-      parmstemp[as.character(unique(parmdetails[,1])[j])] <- parmdetails[parmdetails == as.character(unique(parmdetails[,1])[j]), 2][x]
-      out <- ode(y = init, func = amr, times = times, parms = parmstemp)
-      temp[1,1] <- (rounding(out[nrow(out),6]) + rounding(out[nrow(out),7]))*100000
-      temp[1,2] <- as.character(parmdetails[parmdetails == as.character(unique(parmdetails[,1])[j]), 2][x]) #what is the parameter value used
-      temp[1,3] <- as.character(unique(parmdetails[,1])[j]) # what is the parameter explored 
-      temp1 <- rbind.data.frame(temp1, temp)
+  
+  suppplotlist[[j]] <- local ({ 
+    output <- data.frame()
+    
+    for (x in 1:length(parmdetails[parmdetails == as.character(unique(parmdetails[,1])[j]),2])) { #for the individual parameter values in the sequence
+      temp1 <- data.frame()
+      
+      for (i in 1:length(tau_range)) {
+        temp <- data.frame(matrix(nrow = 0, ncol=3))
+        parmstemp <- c(parms, tau = tau_range[i])
+        parmstemp[as.character(unique(parmdetails[,1])[j])] <- parmdetails[parmdetails == as.character(unique(parmdetails[,1])[j]), 2][x]
+        out <- ode(y = init, func = amr, times = times, parms = parmstemp)
+        temp[1,1] <- (rounding(out[nrow(out),6]) + rounding(out[nrow(out),7]))*100000
+        temp[1,2] <- as.character(parmdetails[parmdetails == as.character(unique(parmdetails[,1])[j]), 2][x]) #what is the parameter value used
+        temp[1,3] <- as.character(unique(parmdetails[,1])[j]) # what is the parameter explored 
+        temp1 <- rbind.data.frame(temp1, temp)
+      }
+      output <- rbind(output, stringsAsFactors = FALSE,
+                      c(as.numeric(temp1[1,1]), 
+                        as.numeric(temp1[2,1]), 
+                        as.numeric(abs(temp1[1,1] - temp1[2,1])),
+                        as.numeric(abs(((temp1[1,1] / temp1[2,1]) - 1)* 100)),
+                        as.numeric(abs(((temp1[1,1] / 3.382) - 1)* 100)),
+                        as.numeric(temp1[i,2]),
+                        as.factor(temp1[i,3])))
+      
+      print(paste0("Parameter ",unique(parmdetails[,1])[j], " | ", round(x/101, digits = 2)*100,"%" ))
     }
-    print(temp1)
-    output <- rbind(output, stringsAsFactors = FALSE,
-                    c(as.numeric(temp1[1,1]), 
-                      as.numeric(temp1[2,1]), 
-                      as.numeric(abs(temp1[1,1] - temp1[2,1])),
-                      as.numeric(abs(((temp1[1,1] / temp1[2,1]) - 1)* 100)),
-                      as.numeric(abs(((temp1[1,1] / 3.382) - 1)* 100)),
-                      as.numeric(temp1[i,2]),
-                      temp1[i,3]))
-  }
-  colnames(output)[1:7] <- c("ICombHCurt", "ICombHUsage","IDiff", "PercInc", "RelInc", "ParmValue","Parm")
-  output$Parm <- as.factor(output$Parm)
-  assign(paste("output", as.character(unique(parmdetails[,1])[j]), sep=""), output) 
+    
+    colnames(output)[1:7] <- c("ICombHCurt", "ICombHUsage","IDiff", "PercInc", "RelInc", "ParmValue", "Parm")
+    output <- output[!is.nan(output$PercInc) & !is.nan(output$RelInc) & !is.infinite(output$PercInc),]
+
+    plotnames <- c(bquote(beta["AA"]~Parameter), bquote(beta["HA"]~Parameter), bquote(beta["HH"]~Parameter), bquote(beta["AH"]~Parameter), 
+                   bquote(phi~Parameter), bquote(theta~Parameter), bquote(alpha~Parameter), bquote(r["H"]~Parameter), bquote(r["A"]~Parameter), 
+                   bquote(mu["H"]~Parameter), bquote(mu["A"]~Parameter))[[j]]
+
+    p1 <- ggplot(output[], aes(x = as.numeric(ParmValue), y = as.numeric(PercInc))) + theme_bw() + geom_line(lwd = 1.02, col ="darkblue") +
+      scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(limits = c(0, max(output$PercInc) + 10), expand = c(0, 0)) +
+      labs(x = plotnames) + theme(plot.margin=unit(c(0.3,0.3,0.3,0.3),"cm"), axis.title.y=element_blank())
+
+    p2 <- ggplot(output, aes(x = as.numeric(ParmValue), y = as.numeric(RelInc))) + theme_bw() + geom_line(lwd = 1.02, col ="darkblue") +
+      scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(limits = c(0, max(output$RelInc) + 10), expand = c(0, 0)) +
+      labs(x = plotnames) + theme(plot.margin=unit(c(0.3,0.3,0.3,0.3),"cm"), axis.title.y=element_blank())
+    
+    return(list(p1,p))
+  })
 }
 
 #Absolute Diff
-pbetaAA <- ggplot(outputbetaAA, aes(x = as.numeric(ParmValue), y = as.numeric(PercInc))) + geom_line(lwd = 1.02, col ="darkblue") +
-  scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0)) +
-  labs(x ="BetaAA Parameter Value") + theme(plot.margin=unit(c(0.5,0.5,0.5,0.5),"cm"), axis.title.y=element_blank())
-pbetaHH <- ggplot(outputbetaHH, aes(x = as.numeric(ParmValue), y = as.numeric(PercInc))) + geom_line(lwd = 1.02, col ="darkblue") +
-  scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0), limits = c(0,100)) +
-  labs(x ="BetaHH Parameter Value") + theme(plot.margin=unit(c(0.5,0.5,0.5,0.5),"cm"), axis.title.y=element_blank())
-pbetaHA <- ggplot(outputbetaHA, aes(x = as.numeric(ParmValue), y = as.numeric(PercInc))) + geom_line(lwd = 1.02, col ="darkblue") +
-  scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0), limits = c(0,100)) +
-  labs(x ="BetaHA Parameter Value") + theme(plot.margin=unit(c(0.5,0.5,0.5,0.5),"cm"), axis.title.y=element_blank())
-pbetaAH <- ggplot(outputbetaAH, aes(x = as.numeric(ParmValue), y = as.numeric(PercInc))) + geom_line(lwd = 1.02, col ="darkblue") +
-  scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0), limits = c(0,100)) +
-  labs(x ="BetaAH Parameter Value") + theme(plot.margin=unit(c(0.5,0.5,0.5,0.5),"cm"), axis.title.y=element_blank())
-
-palpha <- ggplot(outputalpha, aes(x = as.numeric(ParmValue), y = as.numeric(PercInc))) + geom_line(lwd = 1.02, col ="darkblue") +
-  scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0), limits = c(0,100)) +
-  labs(x ="Alpha Parameter Value") + theme(plot.margin=unit(c(0.5,0.5,0.5,0.5),"cm"), axis.title.y=element_blank())
-pphi <- ggplot(outputphi, aes(x = as.numeric(ParmValue), y = as.numeric(PercInc))) + geom_line(lwd = 1.02, col ="darkblue") +
-  scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0), limits = c(0,100)) +
-  labs(x ="Phi Parameter Value") + theme(plot.margin=unit(c(0.5,0.5,0.5,0.5),"cm"), axis.title.y=element_blank())
-ptheta <- ggplot(outputtheta, aes(x = as.numeric(ParmValue), y = as.numeric(PercInc))) + geom_line(lwd = 1.02, col ="darkblue") +
-  scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0), limits = c(0,100)) +
-  labs(x ="Theta Parameter Value") + theme(plot.margin=unit(c(0.5,0.5,0.5,0.5),"cm"), axis.title.y=element_blank())
-
-pra <- ggplot(outputra, aes(x = as.numeric(ParmValue), y = as.numeric(PercInc))) + geom_line(lwd = 1.02, col ="darkblue") +
-  scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0), limits = c(0,500)) +
-  labs(x ="rA Parameter Value") + theme(plot.margin=unit(c(0.5,0.5,0.5,0.5),"cm"), axis.title.y=element_blank())
-prh <- ggplot(outputrh, aes(x = as.numeric(ParmValue), y = as.numeric(PercInc))) + geom_line(lwd = 1.02, col ="darkblue") +
-  scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0), limits = c(0,500)) +
-  labs(x ="rH Parameter Value") + theme(plot.margin=unit(c(0.5,0.5,0.5,0.5),"cm"), axis.title.y=element_blank())
-pua <- ggplot(outputua, aes(x = as.numeric(ParmValue), y = as.numeric(PercInc))) + geom_line(lwd = 1.02, col ="darkblue") +
-  scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0), limits = c(0,500)) +
-  labs(x ="uA Parameter Value") + theme(plot.margin=unit(c(0.5,0.5,0.5,0.5),"cm"), axis.title.y=element_blank())
-puh <- ggplot(outputuh, aes(x = as.numeric(ParmValue), y = as.numeric(PercInc))) + geom_line(lwd = 1.02, col ="darkblue") +
-  scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0), limits = c(0,500)) +
-  labs(x ="uH Parameter Value") + theme(plot.margin=unit(c(0.5,0.5,0.5,0.5),"cm"), axis.title.y=element_blank())
-
-plot_grid(plot_grid(pbetaAA, pbetaHH, pbetaHA,pbetaAH, palpha, pphi, ptheta, pra, prh, pua, puh, nrow = 4, ncol =3), scale=0.95) + 
+pabdiff <- plot_grid(plot_grid(suppplotlist[[1]][[1]], suppplotlist[[2]][[1]], suppplotlist[[3]][[1]],suppplotlist[[4]][[1]], suppplotlist[[5]][[1]], 
+                    suppplotlist[[6]][[1]], suppplotlist[[7]][[1]], suppplotlist[[8]][[1]], suppplotlist[[9]][[1]], suppplotlist[[10]][[1]], 
+                    suppplotlist[[11]][[1]], nrow = 4, ncol =3), scale=0.95) + 
   draw_label("% Increase in ICombH Relative to Baseline Usage", x=  0, y=0.5, vjust= 1.5, angle=90, size = 12)
 
+
+ggsave(pabdiff, filename = "Sensitivity_RelInc.png", dpi = 300, type = "cairo", width = 5, height = 7, units = "in",
+       path = "C:/Users/amorg/Documents/PhD/Chapter_2/Figures/Redraft Figures")
+
 #Relative Increase from 3.382
-pbetaAA <- ggplot(outputbetaAA, aes(x = as.numeric(ParmValue), y = as.numeric(RelInc))) + geom_line(lwd = 1.02, col ="darkblue") +
-  scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0)) +
-  labs(x ="BetaAA Parameter Value") + theme(plot.margin=unit(c(0.5,0.5,0.5,0.5),"cm"), axis.title.y=element_blank())
-pbetaHH <- ggplot(outputbetaHH, aes(x = as.numeric(ParmValue), y = as.numeric(RelInc))) + geom_line(lwd = 1.02, col ="darkblue") +
-  scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0), limits = c(0,100)) +
-  labs(x ="BetaHH Parameter Value") + theme(plot.margin=unit(c(0.5,0.5,0.5,0.5),"cm"), axis.title.y=element_blank())
-pbetaHA <- ggplot(outputbetaHA, aes(x = as.numeric(ParmValue), y = as.numeric(RelInc))) + geom_line(lwd = 1.02, col ="darkblue") +
-  scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0), limits = c(0,1000)) +
-  labs(x ="BetaHA Parameter Value") + theme(plot.margin=unit(c(0.5,0.5,0.5,0.5),"cm"), axis.title.y=element_blank())
-pbetaAH <- ggplot(outputbetaAH, aes(x = as.numeric(ParmValue), y = as.numeric(RelInc))) + geom_line(lwd = 1.02, col ="darkblue") +
-  scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0), limits = c(0,100)) +
-  labs(x ="BetaAH Parameter Value") + theme(plot.margin=unit(c(0.5,0.5,0.5,0.5),"cm"), axis.title.y=element_blank())
-
-palpha <- ggplot(outputalpha, aes(x = as.numeric(ParmValue), y = as.numeric(RelInc))) + geom_line(lwd = 1.02, col ="darkblue") +
-  scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0), limits = c(0,100)) +
-  labs(x ="Alpha Parameter Value") + theme(plot.margin=unit(c(0.5,0.5,0.5,0.5),"cm"), axis.title.y=element_blank())
-pphi <- ggplot(outputphi, aes(x = as.numeric(ParmValue), y = as.numeric(RelInc))) + geom_line(lwd = 1.02, col ="darkblue") +
-  scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0), limits = c(0,100)) +
-  labs(x ="Phi Parameter Value") + theme(plot.margin=unit(c(0.5,0.5,0.5,0.5),"cm"), axis.title.y=element_blank())
-ptheta <- ggplot(outputtheta, aes(x = as.numeric(ParmValue), y = as.numeric(RelInc))) + geom_line(lwd = 1.02, col ="darkblue") +
-  scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0), limits = c(0,100)) +
-  labs(x ="Theta Parameter Value") + theme(plot.margin=unit(c(0.5,0.5,0.5,0.5),"cm"), axis.title.y=element_blank())
-
-pra <- ggplot(outputra, aes(x = as.numeric(ParmValue), y = as.numeric(RelInc))) + geom_line(lwd = 1.02, col ="darkblue") +
-  scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0), limits = c(0,200)) +
-  labs(x ="rA Parameter Value") + theme(plot.margin=unit(c(0.5,0.5,0.5,0.5),"cm"), axis.title.y=element_blank())
-prh <- ggplot(outputrh, aes(x = as.numeric(ParmValue), y = as.numeric(RelInc))) + geom_line(lwd = 1.02, col ="darkblue") +
-  scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0), limits = c(0,500)) +
-  labs(x ="rH Parameter Value") + theme(plot.margin=unit(c(0.5,0.5,0.5,0.5),"cm"), axis.title.y=element_blank())
-pua <- ggplot(outputua, aes(x = as.numeric(ParmValue), y = as.numeric(RelInc))) + geom_line(lwd = 1.02, col ="darkblue") +
-  scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0), limits = c(0,100)) +
-  labs(x ="uA Parameter Value") + theme(plot.margin=unit(c(0.5,0.5,0.5,0.5),"cm"), axis.title.y=element_blank())
-puh <- ggplot(outputuh, aes(x = as.numeric(ParmValue), y = as.numeric(RelInc))) + geom_line(lwd = 1.02, col ="darkblue") +
-  scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0), limits = c(0,100)) +
-  labs(x ="uH Parameter Value") + theme(plot.margin=unit(c(0.5,0.5,0.5,0.5),"cm"), axis.title.y=element_blank())
-
-plot_grid(plot_grid(pbetaAA, pbetaHH, pbetaHA,pbetaAH, palpha, pphi, ptheta, pra, prh, pua, puh, nrow = 4, ncol =3), scale=0.95) + 
+pcompdiff <- plot_grid(plot_grid(suppplotlist[[1]][[2]], suppplotlist[[2]][[2]], suppplotlist[[3]][[2]],suppplotlist[[4]][[2]], suppplotlist[[5]][[2]], 
+                    suppplotlist[[6]][[2]], suppplotlist[[7]][[2]], suppplotlist[[8]][[2]], suppplotlist[[9]][[2]], suppplotlist[[10]][[2]], 
+                    suppplotlist[[11]][[2]], nrow = 4, ncol =3), scale=0.95) + 
   draw_label("% Increase in ICombH Relative to Case Study Baseline (3.382 per 100,000)", x=  0, y=0.5, vjust= 1.5, angle=90, size = 12)
+
+ggsave(pcompdiff, filename = "Sensitivity_Compen.png", dpi = 300, type = "cairo", width = 5, height = 7, units = "in",
+       path = "C:/Users/amorg/Documents/PhD/Chapter_2/Figures/Redraft Figures")
+
+# Generic Heatmap Sensitivity Analysis - ICombH + ResRatio ------------------------
+
+times <- seq(0,30000, by = 100) 
+init <- c(Sa=0.98, Isa=0.01, Ira=0.01, Sh=1, Ish=0, Irh=0)
+tau_range <- c(0, 0.0106) # Comparing Baseline Average with Curtailment
+
+#These PArameters Are Based on MAP from Model Fitting
+parms = fast_parameters(minimum = c(600^-1, 55^-1, 2400^-1, 288350^-1, 
+                                    0.0074716, 0.000001, 0.000001, 0.000001, 
+                                    0, 0, 0), 
+                        maximum = c(6^-1, 0.55^-1, 24^-1, 2883.5^-1, 
+                                    0.74716, 0.0001, 0.0001, 0.0001, 
+                                    0.10948457, 0.08345866, 1), 
+                        factor=11, names = c("ra", "rh" ,"ua", "uh", 
+                                             "betaAA", "betaAH", "betaHH", "betaHA",
+                                             "phi", "theta", "alpha"))
+
+parameterspace <- expand.grid("trigday" = seq(0,100, by =5), "length" = seq(1,200, by =5))
+
+scensens <- list()
+
+for(j in 1:5) {
+  
+  scensens[[j]] = local({
+    i = 0
+    scendata <- data.frame(matrix(nrow = nrow(parameterspace), ncol = 5))
+    
+    for(i in 1:nrow(parameterspace)) {
+      
+      print(paste0("Scenario ", j," - ", round(i/nrow(parameterspace), digits = 2)))
+      parms["tstart"] <- parameterspace[i,1]
+      parms["t_dur"] <- parameterspace[i,2] 
+      parms["scen"] <- j
+      
+      out <- data.frame(ode(y = init, func = SIR, times = times, parms = parms))
+      scendata[i,] <- c("peak" = max(out$I), "cum" = max(out$C), "scen" = parms[["scen"]], 
+                        "tstart" = parms[["tstart"]], "t_dur" = parms[["t_dur"]])
+    }
+    
+    colnames(scendata) <- c("peak", "cum", "scen", "tstart", "t_dur")
+    
+    p1 <- ggplot(scendata, aes(x = tstart, y = t_dur, fill= peak))  + geom_tile()  +
+      scale_y_continuous(expand = c(0,0)) + scale_x_continuous(expand = c(0, 0)) + theme_bw() +
+      theme(legend.position = "right", legend.title = element_text(size=15), legend.text=element_text(size=15),  axis.text=element_text(size=15),
+            axis.title.y=element_text(size=15),axis.title.x = element_text(size=15),  plot.title = element_text(size = 20, vjust = 3, hjust = -0.2, face = "bold"),
+            legend.spacing.x = unit(0.3, 'cm'), plot.margin=unit(c(0.5,0.4,0.4,0.4),"cm"), legend.key.height =unit(0.7, "cm"),
+            legend.key.width =  unit(0.5, "cm")) + 
+      labs(x = "Intervention Trigger", y = "Intervention Duration", fill = "Peak I(t)", title = paste("Scenario", j)) + 
+      scale_fill_viridis_c(direction = -1)
+    
+    p2<- ggplot(scendata, aes(x = tstart, y = t_dur, fill = cum))  + geom_tile() +
+      scale_y_continuous(expand = c(0,0)) + scale_x_continuous(expand = c(0, 0)) + theme_bw() +
+      theme(legend.position = "right", legend.title = element_text(size=15), legend.text=element_text(size=15),  axis.text=element_text(size=15),
+            axis.title.y=element_text(size=15),axis.title.x = element_text(size=15),  plot.title = element_text(size = 20, vjust = 3, hjust = -0.2),
+            legend.spacing.x = unit(0.3, 'cm'), plot.margin=unit(c(0.5,0.4,0.4,0.4),"cm"), legend.key.height =unit(0.7, "cm"),
+            legend.key.width =  unit(0.5, "cm")) + 
+      labs(x = "Intervention Trigger", y = "Intervention Duration", fill = "Cumulative\nIncidence", title = "") + 
+      scale_fill_viridis_c(direction = -1, option = "magma") 
+    
+    combplot <- ggarrange(p1,p2, ncol = 2, nrow = 1, widths = c(1,1.05), align = "h")
+    print(combplot)
+    return(combplot)
+  })
+  
+}
+
+
+
+parmtau <- seq(0,0.035, by = 0.002)
+init <- c(Sa=0.98, Isa=0.01, Ira=0.01, Sh=1, Ish=0, Irh=0)
+icombhdata <- data.frame(matrix(ncol = 8, nrow = 0))
+times <- seq(0, 200000, by = 100)
+
+for(j in 1:nrow(MAP)) {
+  output1 <- data.frame()
+  for (i in 1:length(parmtau)) {
+    temp <- data.frame(matrix(NA, nrow = 1, ncol=7))
+    parms2 = c(ra = 60^-1, rh =  (5.5^-1), ua = 240^-1, uh = 28835^-1, betaAA = MAP[j,"betaAA"], betaAH = 0.00001, betaHH = 0.00001, 
+               betaHA = (0.00001), phi = MAP[j,"phi"], theta = MAP[j,"theta"], alpha = MAP[j,"alpha"], tau = parmtau[i])
+    out <- ode(y = init, func = amr, times = times, parms = parms2)
+    temp[1,1] <- parmtau[i]
+    temp[1,2] <- rounding(out[nrow(out),5]) 
+    temp[1,3] <- rounding(out[nrow(out),6]) 
+    temp[1,4] <- rounding(out[nrow(out),7])
+    temp[1,5] <- temp[1,3] + temp[1,4]
+    temp[1,6] <- signif(as.numeric(temp[1,4]/temp[1,5]), digits = 3)
+    temp[1,7] <- rounding(out[nrow(out),4]) / (rounding(out[nrow(out),3]) + rounding(out[nrow(out),4]))
+    temp[1,8] <- rownames(MAP)[j]
+    print(temp[1,3])
+    output1 <- rbind.data.frame(output1, temp)
+  }
+  icombhdata <- rbind(icombhdata, output1)
+}
+
+colnames(icombhdata)[1:8] <- c("tau", "SuscHumans","InfHumans","ResInfHumans","ICombH","IResRat","IResRatA", "group")
+icombhdata[,2:5] <- icombhdata[,2:5]*100000 #Scaling the prevalence (per 100,000)
+
+
+combplot <- ggarrange(scensens[[1]],scensens[[2]],scensens[[3]],scensens[[4]],scensens[[5]],
+                      nrow = 5, ncol = 1)
+
+ggsave(combplot, filename = "Heat_5_scenarios_sensitivity.png", dpi = 300, type = "cairo", width = 10, height = 16, units = "in")
+
+
