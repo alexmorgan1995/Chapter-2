@@ -6,7 +6,6 @@ rm(list=ls())
 setwd("C:/Users/amorg/Documents/PhD/Chapter_2/Chapter2_Fit_Data/FinalData")
 
 # Model Functions ----------------------------------------------------------
-
 #Function to remove negative prevalence values and round large DP numbers
 rounding <- function(x) {
   if(as.numeric(x) < 1e-10) {x <- 0
@@ -40,13 +39,74 @@ tau_range <- c(0, 0.0106) # Comparing Baseline Average with Curtailment
 #These PArameters Are Based on MAP from Model Fitting
 parms = fast_parameters(minimum = c(600^-1, 55^-1, 2400^-1, 288350^-1, 
                                     0.0074716, 0.000001, 0.000001, 0.000001, 
-                                    0, 0, 0), 
+                                    0, 0, 0, 0), 
                         maximum = c(6^-1, 0.55^-1, 24^-1, 2883.5^-1, 
                                     0.74716, 0.0001, 0.0001, 0.0001, 
-                                    0.10948457, 0.08345866, 1), 
+                                    0.10948457, 0.08345866, 1, 0.1), 
                         factor=11, names = c("ra", "rh" ,"ua", "uh", 
                                              "betaAA", "betaAH", "betaHH", "betaHA",
-                                             "phi", "theta", "alpha"))
+                                             "phi", "theta", "alpha", "tau"))
+
+# General Sensitivity Analysis - ICombH and ResRat -------------------------
+
+output <- data.frame(matrix(ncol = 2, nrow = nrow(parms)))
+colnames(output) <- c("ICombH", "IResRat")
+
+for (i in 1:nrow(parms)) {
+  temp <- numeric(1)
+  parms1 = c(ra = parms$ra[i], rh = parms$rh[i], ua = parms$ua[i], uh = parms$uh[i], betaAA = parms$betaAA[i],
+             betaAH = parms$betaAH[i], betaHH = parms$betaHH[i], betaHA = parms$betaHA[i], phi=parms$phi[i],
+             tau=parms$tau[i], theta=parms$theta[i], alpha = parms$alpha[i])
+  out <- ode(y = init, func = amr, times = times, parms = parms1)
+  temp[1] <- rounding(out[nrow(out),6]) + rounding(out[nrow(out),7])
+  temp[2] <- rounding(out[nrow(out),7])/(rounding(out[nrow(out),6]) + rounding(out[nrow(out),7]))
+  print(paste0("Progress: ",signif(i/nrow(parms))*100, digits = 3, "%"))
+  output[i,] <- temp
+}
+
+output1 <- output
+output1$IResRat[is.nan(output1$IResRat)] <- 0
+output1 <- output1[!is.infinite(rowSums(output1)),]
+
+#ICombH
+sensit1 <- NULL; df.equilibrium <- NULL
+sensit1 <- output1$ICombH #Creating Variable for the output variable of interest
+sens1 <- sensitivity(x=sensit1, numberf=12, make.plot=T, names = c("ra", "rh" ,"ua", "uh", "betaAA", "betaAH", "betaHH", "betaHA",
+                                                                   "phi", "theta", "alpha", "tau"))
+df.equilibrium <- data.frame(parameter=rbind("ra", "rh" ,"ua", "uh", "betaAA", "betaAH", "betaHH", "betaHA",
+                                             "phi", "theta", "alpha", "tau"), value=sens1)
+
+ICombH <- ggplot(df.equilibrium, aes(x = reorder(parameter, -value), y = value)) + geom_bar(stat="identity", fill="lightgrey", col = "black", width  = 0.8) + theme_bw() + 
+  scale_y_continuous(limits = c(0,  max(df.equilibrium$value)*1.1), expand = c(0, 0), name = "Variance") + 
+  scale_x_discrete(expand = c(0, 0.7), name = "Parameter", 
+                   labels = c(expression(r[H]), expression(beta[HA]), expression(beta[AA]), expression(r[A]), expression(mu[A]),
+                              expression(alpha), expression(tau), expression(phi), expression(mu[H]), expression(beta[HH]), 
+                              expression(beta[AH]), expression(theta))) + 
+  labs(fill = NULL, title = "Sensitivity Analysis of ICombH") + 
+  theme(legend.text=element_text(size=14), axis.text=element_text(size=14), plot.title = element_text(size = 15, vjust = 1.5, hjust = 0.5, face = "bold"),
+        axis.title.y=element_text(size=14), axis.title.x= element_text(size=14), plot.margin = unit(c(0.4,0.4,0.4,0.55), "cm"))
+
+#ResProp
+sensit2 <- NULL; df.equilibrium1 <- NULL
+sensit2 <- output1$IResRat #Creating Variable for the output variable of interest
+sens2 <- sensitivity(x=sensit2, numberf=12, make.plot=T, names = c("ra", "rh" ,"ua", "uh", "betaAA", "betaAH", "betaHH", "betaHA",
+                                                                   "phi", "theta", "alpha", "tau"))
+df.equilibrium1 <- data.frame(parameter=rbind("ra", "rh" ,"ua", "uh", "betaAA", "betaAH", "betaHH", "betaHA",
+                                              "phi", "theta", "alpha", "tau"), value=sens2)
+
+resprop <- ggplot(df.equilibrium1, aes(x = reorder(parameter, -value), y = value)) + geom_bar(stat="identity", fill="lightgrey", col = "black", width  = 0.8) + theme_bw() + 
+  scale_y_continuous(limits = c(0,  max(df.equilibrium1$value)*1.1), expand = c(0, 0), name = "Variance") + 
+  scale_x_discrete(expand = c(0, 0.7), name = "Parameter", 
+                   labels = c(expression(alpha), expression(tau), expression(phi), expression(beta[AA]), expression(r[A]), expression(mu[A]), 
+                              expression(r[H]), expression(beta[HA]), expression(mu[H]), expression(theta), expression(beta[AH]), expression(beta[HH]))) +
+  labs(fill = NULL, title = "Sensitivity Analysis of ResProp") + 
+  theme(legend.text=element_text(size=14), axis.text=element_text(size=14), plot.title = element_text(size = 15, vjust = 1.5, hjust = 0.5, face = "bold"),
+        axis.title.y=element_text(size=14), axis.title.x= element_text(size=14), plot.margin = unit(c(0.4,0.4,0.4,0.55), "cm"))
+
+sensplot <- ggarrange(ICombH, resprop, nrow = 2, ncol = 1, align = "v", labels = c("A","B"), font.label = c(size = 20)) 
+
+ggsave(sensplot, filename = "Sensitivity_ICombH_ResRat.png", dpi = 300, type = "cairo", width = 7, height = 8, units = "in",
+       path = "C:/Users/amorg/Documents/PhD/Chapter_2/Figures/Redraft Figures")
 
 # What Parameters Cause the Largest Relative Increase? --------------------
 
@@ -132,7 +192,6 @@ p1 <- ggplot(df.equilibrium, aes(x = reorder(parameter, -value), y = value)) + g
                    labels = c(expression(alpha), expression(phi), expression(r[A]), expression(beta[AA]), expression(mu[A]), 
                               expression(theta), expression(beta[HA]), expression(beta[AH]), expression(r[H]), expression(beta[HH]), expression(mu[H]))) +
   labs(fill = NULL, title = bquote(bold("Increase in ICombH from" ~ tau ~ "=" ~ 0.106 ~ "to" ~ tau ~ "=" ~  0))) + 
-  scale_fill_discrete(labels = c("Generation 1", "Generation 2", "Generation 3", "Generation 4", "Generation 5"))+
   theme(legend.text=element_text(size=14), axis.text=element_text(size=14), plot.title = element_text(size = 15, vjust = 1.5, hjust = 0.5),
         axis.title.y=element_text(size=14), axis.title.x= element_text(size=14), plot.margin = unit(c(0.4,0.4,0.4,0.55), "cm"))
 
@@ -142,7 +201,6 @@ p2 <- ggplot(df.equilibrium1, aes(x = reorder(parameter, -value), y = value)) + 
                    labels = c(expression(r[H]), expression(beta[HA]), expression(beta[AA]), expression(r[A]), expression(beta[AH]),
                               expression(alpha), expression(mu[A]), expression(phi), expression(mu[H]), expression(beta[HH]),  expression(theta))) +
   labs(fill = NULL, title = bquote(bold("Mitigating Increases from Baseline ICombH = 3.262"))) + 
-  scale_fill_discrete(labels = c("Generation 1", "Generation 2", "Generation 3", "Generation 4", "Generation 5"))+
   theme(legend.text=element_text(size=14), axis.text=element_text(size=14), plot.title = element_text(size = 15, vjust = 1.5, hjust = 0.5),
         axis.title.y=element_text(size=14), axis.title.x= element_text(size=14), plot.margin = unit(c(0.4,0.4,0.4,0.55), "cm"))
 
