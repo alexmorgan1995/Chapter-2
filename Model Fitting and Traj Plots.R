@@ -142,8 +142,17 @@ for(j in 1:nrow(MAP)) {
   output1 <- data.frame()
   for (i in 1:length(parmtau)) {
     temp <- data.frame(matrix(NA, nrow = 1, ncol=7))
-    parms2 = c(ra = 60^-1, rh =  (5.5^-1), ua = 240^-1, uh = 28835^-1, betaAA = MAP[j,"betaAA"], betaAH = 0.00001, betaHH = 0.00001, 
-               betaHA = (0.00001), phi = MAP[j,"phi"], theta = MAP[j,"theta"], alpha = MAP[j,"alpha"], tau = parmtau[i])
+    
+    if(rownames(MAP)[j] == "MAPbroil") {
+      parms2 = c(ra = 0, rh =  (5.5^-1), ua = 42^-1, uh = 28835^-1, betaAA = MAP[j,"betaAA"], betaAH = 0.00001, betaHH = 0.00001, 
+                 betaHA = (0.00001), phi = MAP[j,"phi"], theta = MAP[j,"theta"], alpha = MAP[j,"alpha"], tau = parmtau[i])
+    } 
+    
+    else {
+      parms2 = c(ra = 60^-1, rh =  (5.5^-1), ua = 240^-1, uh = 28835^-1, betaAA = MAP[j,"betaAA"], betaAH = 0.00001, betaHH = 0.00001, 
+                 betaHA = (0.00001), phi = MAP[j,"phi"], theta = MAP[j,"theta"], alpha = MAP[j,"alpha"], tau = parmtau[i])
+    }
+
     out <- ode(y = init, func = amr, times = times, parms = parms2)
     temp[1,1] <- parmtau[i]
     temp[1,2] <- rounding(out[nrow(out),5]) 
