@@ -93,20 +93,25 @@ for(j in 1:length(unique(data$fit))) {
       i = i
       p1 <- ggplot(data[data$fit == unique(data$fit)[j],], aes(x=get(colnames(MAP)[i]), fill=group)) + geom_density(alpha=.5) + theme_bw() + 
         scale_y_continuous(limits = c(0,(max(dens$y)*1.1)), expand = c(0, 0), name = " ") +
-        labs(fill = NULL) + scale_fill_discrete(labels = c("Generation 1", "Generation 2", "Generation 3", "Generation 4", "Generation 5"))+
+        scale_fill_discrete(labels = c("Generation 1", "Generation 2", "Generation 3", "Generation 4", "Generation 5"))+
         theme(legend.text=element_text(size=10), axis.text.x=element_text(size=10),axis.ticks.y=element_blank(), axis.text.y=element_blank(),
-              axis.title.y=element_text(size=10), axis.title.x= element_text(size=10), plot.margin = unit(c(0.15,0.4,0.15,0.55), "cm"))
+              axis.title.y=element_text(size=10), axis.title.x= element_text(size=10), plot.margin = unit(c(0.25,0.4,0.15,0.55), "cm"),
+              plot.title = element_text(size = 12, vjust = 3, hjust = 0.5, face = "bold"))
       if(colnames(MAP)[i] == "phi") {
-        p1 <- p1 + scale_x_continuous(limits = c(0,0.03), expand = c(0, 0), name = expression(paste("Rate of Resistance Reversion (", phi, ")"))) 
+        p1 <- p1 + scale_x_continuous(limits = c(0,0.03), expand = c(0, 0), name = expression(paste("Rate of Resistance Reversion (", phi, ")"))) +
+        labs(fill = NULL, title = c("Tetracycline Sales in Fattening Pigs", "Ampicillin Sales in Fattening Pigs", "Tetracycline Sales in Boiler Poultry")[j])  
       }
       if(colnames(MAP)[i] == "theta") {
-        p1 <- p1 + scale_x_continuous(limits = c(0,0.1),expand = c(0, 0), name = expression(paste("Efficacy of Antibiotic-Mediated Recovery (", theta, ")"))) 
+        p1 <- p1 + scale_x_continuous(limits = c(0,0.1),expand = c(0, 0), name = expression(paste("Efficacy of Antibiotic-Mediated Recovery (", theta, ")"))) +
+          labs(fill = NULL, title = "")  
       }
       if(colnames(MAP)[i] == "betaAA") {
-        p1 <- p1 + scale_x_continuous(limits = c(0,0.3),expand = c(0, 0), name = expression(paste("Rate of Animal-to-Animal Transmission (", beta[AA], ")"))) 
+        p1 <- p1 + scale_x_continuous(limits = c(0,0.3),expand = c(0, 0), name = expression(paste("Rate of Animal-to-Animal Transmission (", beta[AA], ")")))+
+          labs(fill = NULL, title = "")   
       }
       if(colnames(MAP)[i] == "alpha") {
-        p1 <- p1 + scale_x_continuous(limits = c(0,0.6),expand = c(0, 0), name = expression(paste("Antibiotic-Resistant Fitness Cost (", alpha, ")"))) 
+        p1 <- p1 + scale_x_continuous(limits = c(0,0.6),expand = c(0, 0), name = expression(paste("Antibiotic-Resistant Fitness Cost (", alpha, ")"))) +
+          labs(fill = NULL, title = "")  
       }
       return(p1)
       
@@ -126,7 +131,7 @@ abc <- ggarrange(plotlist1[[1]][[1]], plotlist1[[2]][[1]], plotlist1[[3]][[1]],
                              "","","",
                              "","",""),
                  font.label = c(size = 20), common.legend = TRUE, legend = "bottom",
-                 align = "hv")
+                 align = "hv", vjust = 1.05)
 
 ggsave(abc, filename = "ABC_SMC_Post.png", dpi = 300, type = "cairo", width = 10, height = 10, units = "in",
        path = "C:/Users/amorg/Documents/PhD/Chapter_2/Figures/Redraft Figures")

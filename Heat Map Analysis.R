@@ -96,7 +96,7 @@ heatmaptetpig <- ggplot(heatmap[[1]], aes(percbetaAA, percbetaHA, z = icombh)) +
         legend.spacing.x = unit(0.3, 'cm'), plot.margin=unit(c(0.5,0.4,0.4,0.4),"cm"), legend.key.height =unit(1, "cm"),
         legend.key.width =  unit(0.5, "cm")) + 
   labs(x = bquote("% of Baseline"~beta["AA"]), y = bquote("% of Baseline"~beta["HA"]), fill = "ICombH", 
-       title = paste("Tetracycline Usage in Fattening Pigs"))
+       title = paste("Tetracycline Sales in Fattening Pigs"))
 
 # Tetracycline Usage in Broiler Poultry 
 
@@ -114,7 +114,7 @@ heatmaptetbroil <- ggplot(heatmap[[2]], aes(percbetaAA, percbetaHA, z = icombh))
         legend.spacing.x = unit(0.3, 'cm'), plot.margin=unit(c(0.5,0.4,0.4,0.4),"cm"), legend.key.height =unit(1, "cm"),
         legend.key.width =  unit(0.5, "cm")) + 
   labs(x = bquote("% of Baseline"~beta["AA"]), y = bquote("% of Baseline"~beta["HA"]), fill = "ICombH", 
-       title = paste("Tetracycline Usage in Broiler Poultry"))
+       title = paste("Tetracycline Sales in Broiler Poultry"))
 
 # Ampicillin Usage in Fattening Pigs 
 
@@ -132,7 +132,7 @@ heatmapamppigs <- ggplot(heatmap[[3]], aes(percbetaAA, percbetaHA, z = icombh)) 
         legend.spacing.x = unit(0.3, 'cm'), plot.margin=unit(c(0.5,0.4,0.4,0.4),"cm"), legend.key.height =unit(1, "cm"),
         legend.key.width =  unit(0.5, "cm")) + 
   labs(x = bquote("% of Baseline"~beta["AA"]), y = bquote("% of Baseline"~beta["HA"]), fill = "ICombH", 
-       title = paste("Ampicillin Usage in Fattening Pigs"))
+       title = paste("Ampicillin Sales in Fattening Pigs"))
 
 # Combination Plot
 
