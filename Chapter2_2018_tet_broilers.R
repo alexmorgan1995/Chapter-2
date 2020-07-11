@@ -29,7 +29,7 @@ datatetra <- read.csv("salm_broilers_2018.csv")
 
 datatetra$mgpcuuseage <- datatetra$mgpcuuseage / 1000
 datatetra$tetra_sales <- datatetra$tetra_sales / 1000
-datatetra <- datatetra[!datatetra$N < 10,]
+datatetra <- datatetra[!datatetra$N < 5,]
 
 ggplot()  + geom_point(data = datatetra, aes(x = tetra_sales, y= ResPropAnim)) +
   geom_text(data = datatetra, aes(x = tetra_sales, y= ResPropAnim, label = Country), vjust = -0.5, hjust = - 0.05) +
