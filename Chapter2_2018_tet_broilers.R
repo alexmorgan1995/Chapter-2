@@ -93,12 +93,12 @@ ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, ini
       } else{ 
         p <- sample(seq(1,N),1,prob= w.old) # check w.old here
         par <- rtmvnorm(1,mean=res.old[p,], sigma=sigma, lower=lm.low, upper=lm.upp)
-        d_phi<-par[1]
-        d_theta<-par[2]
-        d_betaAA<-par[3]
+        d_betaAA<-par[1]
+        d_phi<-par[2]
+        d_theta<-par[3]
         d_alpha<-par[4]
       }
-      if(prior.non.zero(c(d_phi,d_theta,d_betaAA,d_alpha))) {
+      if(prior.non.zero(c(d_betaAA,d_phi,d_theta,d_alpha))) {
         m <- 0
         thetaparm <- c(ra = 0, rh =  (5.5^-1), ua = 42^-1, uh = 28835^-1, betaAA = d_betaAA, betaAH = 0.00001, betaHH = 0.00001, 
                        betaHA = 0.00001, phi = d_phi, theta = d_theta, alpha = d_alpha)
@@ -107,7 +107,8 @@ ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, ini
         #print(dist)
         if((dist[1] <= epsilon_dist[g]) && (dist[2] <= epsilon_food[g]) && (dist[3] <= epsilon_AMR[g]) && (!is.na(dist))) {
           # Store results
-          res.new[i,]<-c(d_phi, d_theta, d_betaAA, d_alpha)  
+          print(dist)
+          res.new[i,]<-c(d_betaAA, d_phi, d_theta, d_alpha)  
           # Calculate weights
           w1<-prod(c(sapply(1:3, function(b) dunif(res.new[i,b], min=lm.low[b], max=lm.upp[b])),
                      dbeta(res.new[i,4], 1.5, 8.5))) 
@@ -127,7 +128,7 @@ ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, ini
     sigma <- cov(res.new) 
     res.old <- res.new
     w.old <- w.new/sum(w.new)
-    colnames(res.new) <- c("phi", "theta", "d_betaAA", "d_alpha")
+    colnames(res.new) <- c("d_betaAA", "phi", "theta", "d_alpha")
     write.csv(res.new, file = paste("results_ABC_SMC_gen_broil_",g,".csv",sep=""), row.names=FALSE)
     ####
   }

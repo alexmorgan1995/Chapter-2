@@ -75,7 +75,7 @@ computeDistanceABC_ALEX <- function(sum.stats, distanceABC, fitmodel, tau_range,
   colnames(tauoutput) <- c("tau", "ICombH", "ResPropAnim", "ResPropHum")  
   return(c(distanceABC(list(sum.stats), data, tauoutput[!tauoutput$tau == 0.0106,]),
            abs(tauoutput$ICombH[tauoutput$tau == 0.0106] - 3.26),
-           abs(tauoutput$ResPropHum[tauoutput$tau == 0.0106] - 0.32)))
+           abs(tauoutput$ResPropHum[tauoutput$tau == 0.0106] - 0.34)))
 }
 
 #Run the fit - This is where I will build the ABC-SMC Approach
@@ -136,7 +136,7 @@ ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, ini
     print(res.old)
     w.old <- w.new/sum(w.new)
     colnames(res.new) <- c("phi", "theta", "d_betaAA", "d_alpha")
-    write.csv(res.new, file = paste("results_ABC_SMC_gen_",g,".csv",sep=""), row.names=FALSE)
+    write.csv(res.new, file = paste("results_ABC_SMC_gen_tet_",g,".csv",sep=""), row.names=FALSE)
     ####
   }
 }
@@ -144,7 +144,7 @@ ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, ini
 N <- 1000 #(ACCEPTED PARTICLES PER GENERATION)
 
 lm.low <- c(0, 0, 0, 0)
-lm.upp <- c(0.2, 0.03, 0.4, 1)
+lm.upp <- c(0.05, 0.4, 0.3, 1)
 
 # Empty matrices to store results (5 model parameters)
 res.old<-matrix(ncol=4,nrow=N)
@@ -156,7 +156,7 @@ w.new<-matrix(ncol=1,nrow=N)
 
 epsilon_dist <- c(2, 1.5, 1, 0.9, 0.85)
 epsilon_food <- c(3.26*0.2, 3.26*0.15, 3.26*0.125, 3.26*0.10, 3.26*0.09)
-epsilon_AMR <- c(0.32*0.2, 0.32*0.15, 0.32*0.125, 0.32*0.10,  0.32*0.09)
+epsilon_AMR <- c(0.34*0.2, 0.34*0.15, 0.34*0.125, 0.34*0.10,  0.34*0.09)
 
 ABC_algorithm(N = 1000, 
               G = 5,
