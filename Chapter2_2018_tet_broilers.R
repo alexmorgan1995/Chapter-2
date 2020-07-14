@@ -29,7 +29,7 @@ datatetra <- read.csv("salm_broilers_2018.csv")
 
 datatetra$mgpcuuseage <- datatetra$mgpcuuseage / 1000
 datatetra$tetra_sales <- datatetra$tetra_sales / 1000
-datatetra <- datatetra[!datatetra$N < 5,]
+datatetra <- datatetra[!datatetra$N < 10,]
 
 ggplot()  + geom_point(data = datatetra, aes(x = tetra_sales, y= ResPropAnim)) +
   geom_text(data = datatetra, aes(x = tetra_sales, y= ResPropAnim, label = Country), vjust = -0.5, hjust = - 0.05) +
@@ -86,9 +86,9 @@ ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, ini
     i <- 1
     while(i <= N) {
       if(g==1) {
-        d_betaAA <- runif(1, min = 0, max = 0.5)
-        d_phi <- runif(1, min = 0, max = 0.1)
-        d_theta <- runif(1, min = 0, max = 0.1)
+        d_betaAA <- runif(1, min = 0, max = 0.3)
+        d_phi <- runif(1, min = 0, max = 0.05)
+        d_theta <- runif(1, min = 0, max = 0.4)
         d_alpha <- rbeta(1, 1.5, 8.5)
       } else{ 
         p <- sample(seq(1,N),1,prob= w.old) # check w.old here
@@ -128,7 +128,7 @@ ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, ini
     sigma <- cov(res.new) 
     res.old <- res.new
     w.old <- w.new/sum(w.new)
-    colnames(res.new) <- c("d_betaAA", "phi", "theta", "d_alpha")
+    colnames(res.new) <- c("betaAA", "phi", "theta", "alpha")
     write.csv(res.new, file = paste("results_ABC_SMC_gen_broil_",g,".csv",sep=""), row.names=FALSE)
     ####
   }
@@ -137,7 +137,7 @@ ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, ini
 N <- 1000 #(ACCEPTED PARTICLES PER GENERATION)
 
 lm.low <- c(0, 0, 0, 0)
-lm.upp <- c(0.5, 0.1, 0.1, 1)
+lm.upp <- c(0.3, 0.05, 0.4, 1)
 
 # Empty matrices to store results (5 model parameters)
 res.old<-matrix(ncol=4,nrow=N)
@@ -147,7 +147,7 @@ res.new<-matrix(ncol=4,nrow=N)
 w.old<-matrix(ncol=1,nrow=N)
 w.new<-matrix(ncol=1,nrow=N)
 
-epsilon_dist <- c(4, 3, 2.5, 2, 1.71)
+epsilon_dist <- c(4, 3, 2.5, 2, 1.75)
 epsilon_food <- c(3.26*0.3, 3.26*0.25, 3.26*0.2, 3.26*0.15, 3.26*0.1)
 epsilon_AMR <- c(0.31*0.3, 0.31*0.25, 0.31*0.2, 0.31*0.15,  0.31*0.1)
 

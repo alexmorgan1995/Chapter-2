@@ -30,7 +30,7 @@ datatetrahum <- read.csv("resistanceprofHum_v1.csv")
 datatetra$mgpcuuseage <- datatetra$mgpcuuseage / 1000; datatetrahum$mgpcuuseage <- datatetrahum$mgpcuuseage / 1000
 datatetra$pig_tetra_sales <- datatetra$pig_tetra_sales / 1000; datatetrahum$pig_tetra_sales <- datatetrahum$pig_tetra_sales / 1000
 datatetrahum$ResPropHum <- datatetrahum$ResPropHum/ 100 
-datatetra <- datatetra[!datatetra$N < 5,]
+datatetra <- datatetra[!datatetra$N < 10,]
 
 ggplot()  + geom_point(data = datatetra, aes(x = pig_tetra_sales, y= ResPropAnim)) +
   geom_text(data = datatetra, aes(x = pig_tetra_sales, y= ResPropAnim, label = Country), vjust = -0.5, hjust = - 0.05) +
@@ -94,26 +94,26 @@ ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, ini
       if(g==1) {
         d_betaAA <- runif(1, min = 0, max = 0.3)
         d_phi <- runif(1, min = 0, max = 0.05)
-        d_theta <- runif(1, min = 0, max = 0.4)
+        d_theta <- runif(1, min = 0, max = 0.5)
         d_alpha <- rbeta(1, 1.5, 8.5)
       } else{ 
         p <- sample(seq(1,N),1,prob= w.old) # check w.old here
         par <- rtmvnorm(1,mean=res.old[p,], sigma=sigma, lower=lm.low, upper=lm.upp)
-        d_phi<-par[1]
-        d_theta<-par[2]
-        d_betaAA<-par[3]
+        d_betaAA<-par[1]
+        d_phi<-par[2]
+        d_theta<-par[3]
         d_alpha<-par[4]
       }
-      if(prior.non.zero(c(d_phi,d_theta,d_betaAA,d_alpha))) {
+      if(prior.non.zero(c(d_betaAA, d_phi, d_theta, d_alpha))) {
         m <- 0
         thetaparm <- c(ra = 60^-1, rh =  (5.5^-1), ua = 240^-1, uh = 28835^-1, betaAA = d_betaAA, betaAH = 0.00001, betaHH = 0.00001, 
                        betaHA = 0.00001, phi = d_phi, theta = d_theta, alpha = d_alpha)
         
         dist <- computeDistanceABC_ALEX(sum.stats, distanceABC, fitmodel, tau_range, thetaparm, init.state, times, data)
-        #print(dist)
         if((dist[1] <= epsilon_dist[g]) && (dist[2] <= epsilon_food[g]) && (dist[3] <= epsilon_AMR[g]) && (!is.na(dist))) {
           # Store results
-          res.new[i,]<-c(d_phi, d_theta, d_betaAA, d_alpha)  
+          res.new[i,]<-c(d_betaAA, d_phi, d_theta, d_alpha)  
+          print(dist)
           # Calculate weights
           w1<-prod(c(sapply(1:3, function(b) dunif(res.new[i,b], min=lm.low[b], max=lm.upp[b])),
                      dbeta(res.new[i,4], 1.5, 8.5))) 
@@ -135,7 +135,7 @@ ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, ini
     res.old <- res.new
     print(res.old)
     w.old <- w.new/sum(w.new)
-    colnames(res.new) <- c("phi", "theta", "d_betaAA", "d_alpha")
+    colnames(res.new) <- c("betaAA", "phi", "theta", "alpha")
     write.csv(res.new, file = paste("results_ABC_SMC_gen_tet_",g,".csv",sep=""), row.names=FALSE)
     ####
   }
@@ -144,7 +144,7 @@ ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, ini
 N <- 1000 #(ACCEPTED PARTICLES PER GENERATION)
 
 lm.low <- c(0, 0, 0, 0)
-lm.upp <- c(0.05, 0.4, 0.3, 1)
+lm.upp <- c(0.3, 0.05, 0.5, 1)
 
 # Empty matrices to store results (5 model parameters)
 res.old<-matrix(ncol=4,nrow=N)
@@ -154,9 +154,9 @@ res.new<-matrix(ncol=4,nrow=N)
 w.old<-matrix(ncol=1,nrow=N)
 w.new<-matrix(ncol=1,nrow=N)
 
-epsilon_dist <- c(2, 1.5, 1, 0.9, 0.85)
-epsilon_food <- c(3.26*0.2, 3.26*0.15, 3.26*0.125, 3.26*0.10, 3.26*0.09)
-epsilon_AMR <- c(0.34*0.2, 0.34*0.15, 0.34*0.125, 0.34*0.10,  0.34*0.09)
+epsilon_dist <- c(2, 1.5, 1, 0.9, 0.8)
+epsilon_food <- c(3.26*0.2, 3.26*0.15, 3.26*0.125, 3.26*0.10, 3.26*0.05)
+epsilon_AMR <- c(0.34*0.2, 0.34*0.15, 0.34*0.125, 0.34*0.10,  0.34*0.05)
 
 ABC_algorithm(N = 1000, 
               G = 5,

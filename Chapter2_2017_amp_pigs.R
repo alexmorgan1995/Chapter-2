@@ -29,7 +29,7 @@ dataamp <- read.csv("resistanceprofAnim_amp.csv")
 
 dataamp$mgpcuuseage <- dataamp$mgpcuuseage / 1000
 dataamp$pig_amp_sales <- dataamp$pig_amp_sales / 1000
-dataamp <- dataamp[!dataamp$N < 5,]
+dataamp <- dataamp[!dataamp$N < 10,]
 
 dataamp$lower <- unlist(lapply(1:nrow(dataamp), function(i) prop.test(dataamp$Positive.Sample[i],dataamp$N[i])[[6]][[1]]))
 dataamp$upper <- unlist(lapply(1:nrow(dataamp), function(i) prop.test(dataamp$Positive.Sample[i],dataamp$N[i])[[6]][[2]]))
@@ -95,7 +95,7 @@ ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, ini
       if(g==1) {
         d_betaAA <- runif(1, min = 0, max = 0.3)
         d_phi <- runif(1, min = 0, max = 0.05)
-        d_theta <- runif(1, min = 0, max = 0.4)
+        d_theta <- runif(1, min = 0, max = 0.5)
         d_alpha <- rbeta(1, 1.5, 8.5)
       } else{ 
         p <- sample(seq(1,N),1,prob= w.old) # check w.old here
@@ -136,7 +136,7 @@ ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, ini
     res.old <- res.new
     print(res.old)
     w.old <- w.new/sum(w.new)
-    colnames(res.new) <- c("d_betaAA", "phi", "theta", "d_alpha")
+    colnames(res.new) <- c("betaAA", "phi", "theta", "alpha")
     write.csv(res.new, file = paste("results_ABC_SMC_gen_amp_",g,".csv",sep=""), row.names=FALSE)
     ####
   }
@@ -145,7 +145,7 @@ ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, ini
 N <- 1000 #(ACCEPTED PARTICLES PER GENERATION)
 
 lm.low <- c(0, 0, 0, 0)
-lm.upp <- c(0.3, 0.4, 0.05, 1)
+lm.upp <- c(0.3, 0.05, 0.5, 1)
 
 # Empty matrices to store results (5 model parameters)
 res.old<-matrix(ncol=4,nrow=N)
@@ -155,7 +155,7 @@ res.new<-matrix(ncol=4,nrow=N)
 w.old<-matrix(ncol=1,nrow=N)
 w.new<-matrix(ncol=1,nrow=N)
 
-epsilon_dist <- c(2, 1.5, 1.25, 1.1, 1.05)
+epsilon_dist <- c(2, 1.5, 1.25, 1, 0.8)
 epsilon_food <- c(3.26*0.2, 3.26*0.15, 3.26*0.125, 3.26*0.10, 3.26*0.09)
 epsilon_AMR <- c(0.2795067*0.2, 0.2795067*0.15, 0.2795067*0.125, 0.2795067*0.10,  0.2795067*0.09)
 
@@ -295,7 +295,7 @@ dataamp <- read.csv("resistanceprofAnim_amp.csv")
 
 dataamp$mgpcuuseage <- dataamp$mgpcuuseage / 1000
 dataamp$pig_amp_sales <- dataamp$pig_amp_sales / 1000
-dataamp <- dataamp[!dataamp$N < 5,]
+dataamp <- dataamp[!dataamp$N < 10,]
 
 dataamp$lower <- unlist(lapply(1:nrow(dataamp), function(i) prop.test(dataamp$Positive.Sample[i],dataamp$N[i])[[6]][[1]]))
 dataamp$upper <- unlist(lapply(1:nrow(dataamp), function(i) prop.test(dataamp$Positive.Sample[i],dataamp$N[i])[[6]][[2]]))

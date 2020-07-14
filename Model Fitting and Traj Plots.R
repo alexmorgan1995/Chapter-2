@@ -40,7 +40,6 @@ import <- function(id) {
 # Data Import -------------------------------------------------------------
 #Import of Posterior Distributions
 data <- do.call(rbind, list(import(tet), import(amp), import(broil)))
-colnames(data)[3:4] <- c("betaAA", "alpha")
 
 #Import of Fitting Data
 dataamp <- read.csv("resistanceprofAnim_amp.csv")
@@ -92,17 +91,17 @@ for(j in 1:length(unique(data$fit))) {
     plotlist2[[i]] <- local({
       i = i
       p1 <- ggplot(data[data$fit == unique(data$fit)[j],], aes(x=get(colnames(MAP)[i]), fill=group)) + geom_density(alpha=.5) + theme_bw() + 
-        scale_y_continuous(limits = c(0,(max(dens$y)*1.1)), expand = c(0, 0), name = " ") +
+        scale_y_continuous(expand = c(0, 0), name = " ") +
         scale_fill_discrete(labels = c("Generation 1", "Generation 2", "Generation 3", "Generation 4", "Generation 5"))+
         theme(legend.text=element_text(size=10), axis.text.x=element_text(size=10),axis.ticks.y=element_blank(), axis.text.y=element_blank(),
               axis.title.y=element_text(size=10), axis.title.x= element_text(size=10), plot.margin = unit(c(0.25,0.4,0.15,0.55), "cm"),
               plot.title = element_text(size = 12, vjust = 3, hjust = 0.5, face = "bold"))
       if(colnames(MAP)[i] == "phi") {
-        p1 <- p1 + scale_x_continuous(limits = c(0,0.03), expand = c(0, 0), name = expression(paste("Rate of Resistance Reversion (", phi, ")"))) +
+        p1 <- p1 + scale_x_continuous(limits = c(0,0.05), expand = c(0, 0), name = expression(paste("Rate of Resistance Reversion (", phi, ")"))) +
         labs(fill = NULL, title = c("Tetracycline Sales in Fattening Pigs", "Ampicillin Sales in Fattening Pigs", "Tetracycline Sales in Boiler Poultry")[j])  
       }
       if(colnames(MAP)[i] == "theta") {
-        p1 <- p1 + scale_x_continuous(limits = c(0,0.1),expand = c(0, 0), name = expression(paste("Efficacy of Antibiotic-Mediated Recovery (", theta, ")"))) +
+        p1 <- p1 + scale_x_continuous(limits = c(0,0.3),expand = c(0, 0), name = expression(paste("Efficacy of Antibiotic-Mediated Recovery (", theta, ")"))) +
           labs(fill = NULL, title = "")  
       }
       if(colnames(MAP)[i] == "betaAA") {
@@ -177,7 +176,7 @@ colnames(icombhdata)[1:8] <- c("tau", "SuscHumans","InfHumans","ResInfHumans","I
 icombhdata[,2:5] <- icombhdata[,2:5]*100000 #Scaling the prevalence (per 100,000)
 
 amp <- ggplot(dataamp, aes(x = pig_amp_sales/1000, y= ResPropAnim))  + geom_point() + theme_bw() + 
-  scale_x_continuous(expand = c(0, 0), limits = c(0, 0.031)) + scale_y_continuous(expand = c(0, 0), limits = c(0,1)) +
+  scale_x_continuous(limits = c(0,0.035),expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0), limits = c(0,1)) +
   labs(x ="Fattening Pig Ampicillin Sales (g/PCU)", y = "Ampicillin-Resistant Fattening Pig Carriage") +
   geom_errorbar(aes(ymin=lower, ymax=upper), colour="black", size=1.01, inherit.aes =  TRUE) + 
   geom_line(data = icombhdata[icombhdata$group == "MAPtet",], aes(x = tau, y= IResRatA), col = "red", size = 1.02) +
@@ -185,7 +184,7 @@ amp <- ggplot(dataamp, aes(x = pig_amp_sales/1000, y= ResPropAnim))  + geom_poin
         axis.title.y=element_text(size=12), axis.title.x= element_text(size=12), plot.margin = unit(c(1,1,1,1), "cm"))
 
 tet <- ggplot(datatetra, aes(x = pig_tetra_sales/1000, y= ResPropAnim))  + geom_point() + theme_bw() + 
-  scale_x_continuous(expand = c(0, 0), limits = c(0,0.033)) + scale_y_continuous(expand = c(0, 0), limits = c(0,1)) +
+  scale_x_continuous(limits = c(0,0.035), expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0), limits = c(0,1)) +
   labs(x ="Fattening Pig Tetracycline Sales (g/PCU)", y = "Tetracycline-Resistant Fattening Pig Carriage") +
   geom_errorbar(aes(ymin=lower, ymax=upper), colour="black", size=1.01, inherit.aes =  TRUE) + 
   geom_line(data = icombhdata[icombhdata$group == "MAPamp",], aes(x = tau, y= IResRatA), col = "red", size = 1.02)+
@@ -193,7 +192,7 @@ tet <- ggplot(datatetra, aes(x = pig_tetra_sales/1000, y= ResPropAnim))  + geom_
         axis.title.y=element_text(size=12), axis.title.x= element_text(size=12), plot.margin = unit(c(1,1,1,1), "cm"))
 
 broil <- ggplot(databroil, aes(x = tetra_sales/1000, y= ResPropAnim))  + geom_point() + theme_bw() + 
-  scale_x_continuous(expand = c(0, 0), limits = c(0,0.022)) + scale_y_continuous(expand = c(0, 0), limits = c(0,1)) +
+  scale_x_continuous(limits = c(0,0.035), expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0), limits = c(0,1)) +
   labs(x ="Broiler Poultry Tetracycline Sales (g/PCU)", y = "Tetracycline-Resistant Broiler Poultry Carriage") +
   geom_errorbar(aes(ymin=lower, ymax=upper), colour="black", size=1.01, inherit.aes =  TRUE) + 
   geom_line(data = icombhdata[icombhdata$group == "MAPbroil",], aes(x = tau, y= IResRatA), col = "red", size = 1.02)+
@@ -201,7 +200,7 @@ broil <- ggplot(databroil, aes(x = tetra_sales/1000, y= ResPropAnim))  + geom_po
         axis.title.y=element_text(size=12), axis.title.x= element_text(size=12), plot.margin = unit(c(1,1,1,1), "cm"))
 
 
-fits <- ggarrange(amp, tet, broil, nrow = 1, ncol = 3, align = "h", labels = c("A","B", "C"), font.label = c(size = 20),
+fits <- ggarrange(tet, amp, broil, nrow = 1, ncol = 3, align = "h", labels = c("A","B", "C"), font.label = c(size = 20),
                   common.legend = TRUE, legend = "bottom") 
 
 ggsave(fits, filename = "Model_Fits.png", dpi = 300, type = "cairo", width = 14, height = 5, units = "in",
