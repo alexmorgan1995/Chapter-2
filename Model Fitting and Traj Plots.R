@@ -90,27 +90,27 @@ for(j in 1:length(unique(data$fit))) {
     
     plotlist2[[i]] <- local({
       i = i
-      p1 <- ggplot(data[data$fit == unique(data$fit)[j],], aes(x=get(colnames(MAP)[i]), fill=group)) + geom_density(alpha=.5) + theme_bw() + 
-        scale_y_continuous(limits = c(0, max(dens$y)*1.5), expand = c(0, 0), name = " ") +
+      p1 <- ggplot(data[data$fit == unique(data$fit)[j],], aes(x=get(colnames(MAP)[i]), fill=group)) + geom_density(alpha=.5) + theme_bw()  +
         scale_fill_discrete(labels = c("Generation 1", "Generation 2", "Generation 3", "Generation 4", "Generation 5"))+
         theme(legend.text=element_text(size=10), axis.text.x=element_text(size=10),axis.ticks.y=element_blank(), axis.text.y=element_blank(),
               axis.title.y=element_text(size=10), axis.title.x= element_text(size=10), plot.margin = unit(c(0.25,0.4,0.15,0.55), "cm"),
               plot.title = element_text(size = 12, vjust = 3, hjust = 0.5, face = "bold"))
       if(colnames(MAP)[i] == "phi") {
-        p1 <- p1 + scale_x_continuous(limits = c(0,0.05), expand = c(0, 0), name = expression(paste("Rate of Resistance Reversion (", phi, ")"))) +
-        labs(fill = NULL, title = c("Tetracycline Sales in Fattening Pigs", "Ampicillin Sales in Fattening Pigs", "Tetracycline Sales in Boiler Poultry")[j])  
+        p1 <- p1 + scale_x_continuous(limits = c(0,0.04), expand = c(0, 0), name = expression(paste("Rate of Resistance Reversion (", phi, ")"))) +
+        labs(fill = NULL, title = c("Tetracycline Sales in Fattening Pigs", "Ampicillin Sales in Fattening Pigs", "Tetracycline Sales in Boiler Poultry")[j]) + 
+          scale_y_continuous(limits = c(0, max(dens$y)*1.2), expand = c(0, 0), name = " ") 
       }
       if(colnames(MAP)[i] == "theta") {
-        p1 <- p1 + scale_x_continuous(limits = c(0,0.3),expand = c(0, 0), name = expression(paste("Efficacy of Antibiotic-Mediated Recovery (", theta, ")"))) +
-          labs(fill = NULL, title = "")  
+        p1 <- p1 + scale_x_continuous(limits = c(0,0.5),expand = c(0, 0), name = expression(paste("Efficacy of Antibiotic-Mediated Recovery (", theta, ")"))) +
+          labs(fill = NULL, title = "") + scale_y_continuous(limits = c(0, 5), expand = c(0, 0), name = " ") 
       }
       if(colnames(MAP)[i] == "betaAA") {
-        p1 <- p1 + scale_x_continuous(limits = c(0,0.3),expand = c(0, 0), name = expression(paste("Rate of Animal-to-Animal Transmission (", beta[AA], ")")))+
-          labs(fill = NULL, title = "")   
+        p1 <- p1 + scale_x_continuous(limits = c(0,0.2),expand = c(0, 0), name = expression(paste("Rate of Animal-to-Animal Transmission (", beta[AA], ")")))+
+          labs(fill = NULL, title = "") + scale_y_continuous(limits = c(0, max(dens$y)*1.2), expand = c(0, 0), name = " ")
       }
       if(colnames(MAP)[i] == "alpha") {
         p1 <- p1 + scale_x_continuous(limits = c(0,0.6),expand = c(0, 0), name = expression(paste("Antibiotic-Resistant Fitness Cost (", alpha, ")"))) +
-          labs(fill = NULL, title = "")  
+          labs(fill = NULL, title = "") + scale_y_continuous(limits = c(0, max(dens$y)*1.2), expand = c(0, 0), name = " ")
       }
       return(p1)
       
