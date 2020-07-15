@@ -91,7 +91,7 @@ for(j in 1:length(unique(data$fit))) {
     plotlist2[[i]] <- local({
       i = i
       p1 <- ggplot(data[data$fit == unique(data$fit)[j],], aes(x=get(colnames(MAP)[i]), fill=group)) + geom_density(alpha=.5) + theme_bw() + 
-        scale_y_continuous(expand = c(0, 0), name = " ") +
+        scale_y_continuous(limits = c(0, max(dens$y)*1.5), expand = c(0, 0), name = " ") +
         scale_fill_discrete(labels = c("Generation 1", "Generation 2", "Generation 3", "Generation 4", "Generation 5"))+
         theme(legend.text=element_text(size=10), axis.text.x=element_text(size=10),axis.ticks.y=element_blank(), axis.text.y=element_blank(),
               axis.title.y=element_text(size=10), axis.title.x= element_text(size=10), plot.margin = unit(c(0.25,0.4,0.15,0.55), "cm"),

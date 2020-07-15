@@ -92,8 +92,8 @@ ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, ini
     i <- 1
     while(i <= N) {
       if(g==1) {
-        d_betaAA <- runif(1, min = 0, max = 0.3)
-        d_phi <- runif(1, min = 0, max = 0.05)
+        d_betaAA <- runif(1, min = 0, max = 0.2)
+        d_phi <- runif(1, min = 0, max = 0.04)
         d_theta <- runif(1, min = 0, max = 0.5)
         d_alpha <- rbeta(1, 1.5, 8.5)
       } else{ 
@@ -113,7 +113,6 @@ ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, ini
         if((dist[1] <= epsilon_dist[g]) && (dist[2] <= epsilon_food[g]) && (dist[3] <= epsilon_AMR[g]) && (!is.na(dist))) {
           # Store results
           res.new[i,]<-c(d_betaAA, d_phi, d_theta, d_alpha)  
-          print(dist)
           # Calculate weights
           w1<-prod(c(sapply(1:3, function(b) dunif(res.new[i,b], min=lm.low[b], max=lm.upp[b])),
                      dbeta(res.new[i,4], 1.5, 8.5))) 
@@ -144,7 +143,7 @@ ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, ini
 N <- 1000 #(ACCEPTED PARTICLES PER GENERATION)
 
 lm.low <- c(0, 0, 0, 0)
-lm.upp <- c(0.3, 0.05, 0.5, 1)
+lm.upp <- c(0.2, 0.04, 0.5, 1)
 
 # Empty matrices to store results (5 model parameters)
 res.old<-matrix(ncol=4,nrow=N)
@@ -154,9 +153,9 @@ res.new<-matrix(ncol=4,nrow=N)
 w.old<-matrix(ncol=1,nrow=N)
 w.new<-matrix(ncol=1,nrow=N)
 
-epsilon_dist <- c(2, 1.5, 1, 0.9, 0.8)
-epsilon_food <- c(3.26*0.2, 3.26*0.15, 3.26*0.125, 3.26*0.10, 3.26*0.05)
-epsilon_AMR <- c(0.34*0.2, 0.34*0.15, 0.34*0.125, 0.34*0.10,  0.34*0.05)
+epsilon_dist <- c(2, 1.5, 1, 0.85, 0.8)
+epsilon_food <- c(3.26*0.2, 3.26*0.15, 3.26*0.1, 3.26*0.075, 3.26*0.05)
+epsilon_AMR <- c(0.34*0.2, 0.34*0.15, 0.34*0.1, 0.34*0.075,  0.34*0.05)
 
 ABC_algorithm(N = 1000, 
               G = 5,
@@ -179,15 +178,15 @@ data5 <- cbind(read.csv("results_ABC_SMC_gen_tet_5.csv", header = TRUE), "group"
 
 map_phi <- map_estimate(data5[,"phi"], precision = 20) 
 map_theta <- map_estimate(data5[,"theta"], precision = 20) 
-map_betaAA <- map_estimate(data5[,"d_betaAA"], precision = 20) 
-map_alpha <- map_estimate(data5[,"d_alpha"], precision = 20) 
+map_betaAA <- map_estimate(data5[,"betaAA"], precision = 20) 
+map_alpha <- map_estimate(data5[,"alpha"], precision = 20) 
 
 #Plotting the Distributions
 
 testphi <- melt(rbind(data1, data2, data3, data4, data5), id.vars = "group",measure.vars = "phi")
 testtheta <- melt(rbind(data1, data2, data3, data4,data5), id.vars = "group",measure.vars = "theta")
-testbetaAA <- melt(rbind(data1, data2, data3, data4, data5), id.vars = "group",measure.vars = "d_betaAA")
-testalpha <- melt(rbind(data1, data2, data3, data4, data5), id.vars = "group",measure.vars = "d_alpha")
+testbetaAA <- melt(rbind(data1, data2, data3, data4, data5), id.vars = "group",measure.vars = "betaAA")
+testalpha <- melt(rbind(data1, data2, data3, data4, data5), id.vars = "group",measure.vars = "alpha")
 
 p1 <- ggplot(testphi, aes(x=value, fill=group)) + geom_density(alpha=.5) + 
   scale_x_continuous(expand = c(0, 0), name = expression(paste("Rate of Antibiotic-Resistant to Antibiotic-Sensitive Reversion (", phi, ")"))) + 
