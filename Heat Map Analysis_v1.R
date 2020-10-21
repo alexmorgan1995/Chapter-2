@@ -136,7 +136,7 @@ heatmapamppigs <- ggplot(heatmap[[3]], aes(percbetaAA, percbetaHA, z = icombh)) 
 
 # Combination Plot
 
-combplot <- ggarrange(heatmaptetpig, heatmaptetbroil, heatmapamppigs, 
+combplot <- ggarrange(heatmaptetpig, heatmapamppigs,heatmaptetbroil, 
                       ncol = 1, nrow = 3, labels = c("A", "B", "C"), font.label = list(size = 25), vjust = 1.2)
 
 ggsave(combplot, filename = "HeatMapcomb.png", dpi = 300, type = "cairo", width = 8, height = 14, units = "in",
