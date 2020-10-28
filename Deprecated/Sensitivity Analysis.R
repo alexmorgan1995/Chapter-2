@@ -43,7 +43,7 @@ parms = fast_parameters(minimum = c(600^-1, 55^-1, 2400^-1, 288350^-1,
                         maximum = c(6^-1, 0.55^-1, 24^-1, 2883.5^-1, 
                                     0.74716, 0.0001, 0.0001, 0.0001, 
                                     0.10948457, 0.08345866, 1, 0.1), 
-                        factor=11, names = c("ra", "rh" ,"ua", "uh", 
+                        factor=12, names = c("ra", "rh" ,"ua", "uh", 
                                              "betaAA", "betaAH", "betaHH", "betaHA",
                                              "phi", "theta", "alpha", "tau"))
 
@@ -109,6 +109,16 @@ ggsave(sensplot, filename = "Sensitivity_ICombH_ResRat.png", dpi = 300, type = "
        path = "C:/Users/amorg/Documents/PhD/Chapter_2/Figures/Redraft Figures")
 
 # What Parameters Cause the Largest Relative Increase? --------------------
+
+parms = fast_parameters(minimum = c(600^-1, 55^-1, 2400^-1, 288350^-1, 
+                                    0.0074716, 0.000001, 0.000001, 0.000001, 
+                                    0, 0, 0), 
+                        maximum = c(6^-1, 0.55^-1, 24^-1, 2883.5^-1, 
+                                    0.74716, 0.0001, 0.0001, 0.0001, 
+                                    0.10948457, 0.08345866, 1), 
+                        factor=11, names = c("ra", "rh" ,"ua", "uh", 
+                                             "betaAA", "betaAH", "betaHH", "betaHA",
+                                             "phi", "theta", "alpha"))
 
 tauoutput <- data.frame(matrix(nrow = 0, ncol = 3))
 

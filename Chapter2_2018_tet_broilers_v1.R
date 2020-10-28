@@ -283,7 +283,7 @@ times <- seq(0, 200000, by = 100)
 
 for (i in 1:length(parmtau)) {
   temp <- data.frame(matrix(NA, nrow = 1, ncol=7))
-  parms2 = c(ra = 0, rh =  (5.5^-1), ua = 240^-1, uh = 28835^-1, betaAA = map_betaAA, betaAH = 0.00001, betaHH = 0.00001, 
+  parms2 = c(ra = 0, rh =  (5.5^-1), ua = 42^-1, uh = 28835^-1, betaAA = map_betaAA, betaAH = 0.00001, betaHH = 0.00001, 
              betaHA = (0.00001), phi = map_phi, theta = map_theta, alpha = map_alpha, tau = parmtau[i], zeta = map_zeta)
   out <- ode(y = init, func = amr, times = times, parms = parms2)
   temp[1,1] <- parmtau[i]
