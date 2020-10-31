@@ -27,7 +27,49 @@ amr <- function(t, y, parms) {
   })
 }
 
-# Sensitivity Analysis ----------------------------------------------------
+#Importing in the Datasets
+import <- function(id) {
+  data <- data.frame(matrix(ncol = 6, nrow = 0))
+  for(i in 1:5) {
+    test  <- cbind(read.csv(paste0("results_ABC_SMC_gen_",substitute(id),"_",i,".csv"), 
+                            header = TRUE), "group" = paste0("data",i), "fit" = as.character(substitute(id)))
+    data <- rbind(data, test)
+  }
+  return(data)
+}
+
+# Identify the MAP averages for the Parameter Sets ---------------------------------
+#Import of Posterior Distributions
+data <- do.call(rbind, list(import(tet), import(amp), import(broil)))
+
+MAPtet <- c("phi" <- mean(data$phi[which(data$group == "data5" & data$fit == "tet")]),
+            "theta" <- mean(data$theta[which(data$group == "data5" & data$fit == "tet")]),
+            "betaAA" <- mean(data$betaAA[which(data$group == "data5" & data$fit == "tet")]),
+            "alpha" <- mean(data$alpha[which(data$group == "data5" & data$fit == "tet")]),
+            "zeta" <- mean(data$zeta[which(data$group == "data5" & data$fit == "tet")]))
+
+MAPamp <- c("phi" <- mean(data$phi[which(data$group == "data5" & data$fit == "amp")]),
+            "theta" <- mean(data$theta[which(data$group == "data5" & data$fit == "amp")]),
+            "betaAA" <- mean(data$betaAA[which(data$group == "data5" & data$fit == "amp")]),
+            "alpha" <- mean(data$alpha[which(data$group == "data5" & data$fit == "amp")]),
+            "zeta" <- mean(data$zeta[which(data$group == "data5" & data$fit == "amp")]))
+
+MAPbroil <- c("phi" <- mean(data$phi[which(data$group == "data5" & data$fit == "broil")]),
+              "theta" <- mean(data$theta[which(data$group == "data5" & data$fit == "broil")]),
+              "betaAA" <- mean(data$betaAA[which(data$group == "data5" & data$fit == "broil")]),
+              "alpha" <- mean(data$alpha[which(data$group == "data5" & data$fit == "broil")]),
+              "zeta" <- mean(data$zeta[which(data$group == "data5" & data$fit == "broil")]))
+
+MAP <- rbind(MAPtet, MAPamp, MAPbroil); colnames(MAP) <- c("phi", "theta", "betaAA", "alpha", "zeta")
+
+sensparms <- c("phi" = mean(MAP[1:3]), 
+               "theta" = mean(MAP[4:6]),
+               "betaAA" = mean(MAP[7:9]),
+               "alpha" = mean(MAP[10:12]),
+               "zeta" = mean(MAP[13:15]),
+               "tau" = mean(c(0.0122887,0.01156391,0.006666697)))
+
+# Sensitivity Analysis ---------------------------------------------------
 # Joint Parameters
 
 #We do this for Tetracycline for the Parameter Bounds
@@ -37,14 +79,24 @@ times <- seq(0,30000, by = 100)
 init <- c(Sa=0.98, Isa=0.01, Ira=0.01, Sh=1, Ish=0, Irh=0)
 
 #These Parameters Are Based on MAP from Model Fitting
+#parms = fast_parameters(minimum = c(600^-1, 55^-1, 2400^-1, 288350^-1, 
+#                                    0, 0.000001, 0.000001, 0.000001, 
+#                                    0, 0, 0, 0, 0), 
+#                        maximum = c(6^-1, 0.55^-1, 24^-1, 2883.5^-1, 
+#                                    0.5, 0.0001, 0.0001, 0.0001, 
+#                                    0.1310852 , 11.30831, 1, 0.1, 0.5), 
+#                        factor=13, names = c("ra", "rh" ,"ua", "uh", 
+#                                             "betaAA", "betaAH", "betaHH", "betaHA",
+#                                             "phi", "theta", "alpha", "tau", "zeta"))
+
 parms = fast_parameters(minimum = c(600^-1, 55^-1, 2400^-1, 288350^-1, 
-                                    0, 0.000001, 0.000001, 0.000001, 
-                                    0, 0, 0, 0, 0), 
+                                    sensparms["betaAA"]/10, 0.000001, 0.000001, 0.000001, 
+                                    sensparms["phi"]/10 , sensparms["theta"]/10, 0, sensparms["tau"]/10, sensparms["zeta"]/10), 
                         maximum = c(6^-1, 0.55^-1, 24^-1, 2883.5^-1, 
-                                    0.5, 0.0001, 0.0001, 0.0001, 
-                                    0.1310852 , 11.30831, 1, 0.1, 0.5), 
+                                    sensparms["betaAA"]*10, 0.0001, 0.0001, 0.0001, 
+                                    sensparms["phi"]*10 , sensparms["theta"]*10, 1, sensparms["tau"]*10, sensparms["zeta"]*10), 
                         factor=13, names = c("ra", "rh" ,"ua", "uh", 
-                                             "betaAA", "betaAH", "betaHH", "betaHA",
+                                           "betaAA", "betaAH", "betaHH", "betaHA",
                                              "phi", "theta", "alpha", "tau", "zeta"))
 
 # General Sensitivity Analysis - ICombH and ResRat -------------------------
@@ -82,9 +134,9 @@ ggplot(df.equilibrium, aes(x = reorder(parameter, -value), y = value)) + geom_ba
 ICombH <- ggplot(df.equilibrium, aes(x = reorder(parameter, -value), y = value)) + geom_bar(stat="identity", fill="lightgrey", col = "black", width  = 0.8) + theme_bw() + 
   scale_y_continuous(limits = c(0,  max(df.equilibrium$value)*1.1), expand = c(0, 0), name = "Variance") + 
   scale_x_discrete(expand = c(0, 0.7), name = "Parameter", 
-                   labels = c(expression(r[H]), expression(beta[HA]),  expression(alpha), expression(beta[HH]),expression(zeta),
-                              expression(tau), expression(theta), expression(r[A]),  expression(beta[AA]), expression(mu[H]),
-                              expression(mu[A]), expression(phi),  expression(beta[AH]))) +
+                   labels = c(expression(r[H]), expression(beta[HA]),  expression(alpha),expression(zeta), expression(beta[HH]),
+                              expression(tau), expression(theta), expression(r[A]), expression(beta[AA]), expression(mu[H]),
+                              expression(mu[A]),  expression(beta[AH]), expression(phi))) +
   labs(fill = NULL, title = "Sensitivity Analysis of ICombH") + 
   theme(legend.text=element_text(size=14), axis.text=element_text(size=14), plot.title = element_text(size = 15, vjust = 1.5, hjust = 0.5, face = "bold"),
         axis.title.y=element_text(size=14), axis.title.x= element_text(size=14), plot.margin = unit(c(0.4,0.4,0.4,0.55), "cm"))
@@ -105,7 +157,7 @@ resprop <- ggplot(df.equilibrium1, aes(x = reorder(parameter, -value), y = value
   scale_x_discrete(expand = c(0, 0.7), name = "Parameter", 
                    labels = c(expression(alpha), expression(tau), expression(phi), expression(theta), expression(r[A]), expression(mu[A]),
                               expression(beta[AA]), expression(zeta), expression(mu[H]), expression(beta[AH]),
-                              expression(r[H]), expression(beta[HH]), expression(beta[HA]))) +
+                              expression(r[H]), expression(beta[HA]), expression(beta[HH]))) +
   labs(fill = NULL, title = "Sensitivity Analysis of ResProp") + 
   theme(legend.text=element_text(size=14), axis.text=element_text(size=14), plot.title = element_text(size = 15, vjust = 1.5, hjust = 0.5, face = "bold"),
         axis.title.y=element_text(size=14), axis.title.x= element_text(size=14), plot.margin = unit(c(0.4,0.4,0.4,0.55), "cm"))
@@ -118,17 +170,18 @@ ggsave(sensplot, filename = "Sensitivity_ICombH_ResRat.png", dpi = 300, type = "
 # What Parameters Cause the Largest Relative Increase? --------------------
 
 parms = fast_parameters(minimum = c(600^-1, 55^-1, 2400^-1, 288350^-1, 
-                                    0, 0.000001, 0.000001, 0.000001, 
-                                    0, 0, 0, 0), 
+                                    sensparms["betaAA"]/10, 0.000001, 0.000001, 0.000001, 
+                                    sensparms["phi"]/10 , sensparms["theta"]/10, 0, sensparms["zeta"]/10), 
                         maximum = c(6^-1, 0.55^-1, 24^-1, 2883.5^-1, 
-                                    0.5, 0.0001, 0.0001, 0.0001, 
-                                    0.1310852 , 11.30831, 1, 0.5), 
+                                    sensparms["betaAA"]*10, 0.0001, 0.0001, 0.0001, 
+                                    sensparms["phi"]*10 , sensparms["theta"]*10, 1, sensparms["zeta"]*10), 
                         factor=12, names = c("ra", "rh" ,"ua", "uh", 
                                              "betaAA", "betaAH", "betaHH", "betaHA",
                                              "phi", "theta", "alpha", "zeta"))
 
+
 tauoutput <- data.frame(matrix(nrow = 0, ncol = 3))
-tau_range <- c(0, 0.0122887) # Comparing Baseline Average with Curtailment
+tau_range <- c(0, sensparms[["tau"]]) # Comparing Baseline Average with Curtailment
 
 for (j in 1:nrow(parms)) {
   temp <- numeric(2)
@@ -211,9 +264,9 @@ ggplot(df.equilibrium, aes(x = reorder(parameter, -value), y = value)) + geom_ba
 p1 <- ggplot(df.equilibrium, aes(x = reorder(parameter, -value), y = value)) + geom_bar(stat="identity", fill="lightgrey", col = "black", width  = 0.8) + theme_bw() + 
   scale_y_continuous(limits = c(0,  max(df.equilibrium$value)*1.1), expand = c(0, 0), name = "Variance") + 
   scale_x_discrete(expand = c(0, 0.7), name = "Parameter", 
-                   labels = c(expression(zeta), expression(theta), expression(alpha), expression(r[A]), expression(phi), expression(beta[AA]),
-                              expression(mu[A]), expression(beta[AH]), expression(mu[H]), expression(beta[HH]), expression(beta[HA]),
-                              expression(r[H]))) +
+                   labels = c(expression(zeta), expression(theta), expression(alpha), expression(r[A]), expression(phi), expression(mu[H]),
+                              expression(mu[A]), expression(beta[AA]),expression(r[H]),
+                              expression(beta[AH]) , expression(beta[HH]), expression(beta[HA]))) +
   labs(fill = NULL, title = bquote(bold("Increase in ICombH from" ~ tau ~ "=" ~ 0.0123 ~ "to" ~ tau ~ "=" ~  0))) + 
   theme(legend.text=element_text(size=14), axis.text=element_text(size=14), plot.title = element_text(size = 15, vjust = 1.5, hjust = 0.5),
         axis.title.y=element_text(size=14), axis.title.x= element_text(size=14), plot.margin = unit(c(0.4,0.4,0.4,0.55), "cm"))
@@ -223,9 +276,9 @@ ggplot(df.equilibrium1, aes(x = reorder(parameter, -value), y = value)) + geom_b
 p2 <- ggplot(df.equilibrium1, aes(x = reorder(parameter, -value), y = value)) + geom_bar(stat="identity", fill="lightgrey", col = "black", width  = 0.8) + theme_bw() + 
   scale_y_continuous(limits = c(0,  max(df.equilibrium1$value)*1.1), expand = c(0, 0), name = "Variance") + 
   scale_x_discrete(expand = c(0, 0.7), name = "Parameter", 
-                   labels = c(expression(r[H]), expression(beta[HA]), expression(r[A]), expression(beta[AA]), expression(alpha), 
-                              expression(zeta), expression(beta[AH]), expression(beta[HH]), expression(theta), 
-                              expression(mu[A]), expression(mu[H]),  expression(phi))) +
+                   labels = c(expression(r[H]), expression(beta[HA]), expression(r[A]), expression(alpha), 
+                              expression(zeta),expression(beta[AA]), expression(theta), expression(beta[AH]),
+                              expression(mu[A]), expression(beta[HH]), expression(phi),expression(mu[H]))) +
   labs(fill = NULL, title = bquote(bold("Mitigating Increases from Baseline ICombH = 3.26"))) + 
   theme(legend.text=element_text(size=14), axis.text=element_text(size=14), plot.title = element_text(size = 15, vjust = 1.5, hjust = 0.5),
         axis.title.y=element_text(size=14), axis.title.x= element_text(size=14), plot.margin = unit(c(0.4,0.4,0.4,0.55), "cm"))
@@ -238,14 +291,14 @@ ggsave(sensplot, filename = "Sensitivity.png", dpi = 300, type = "cairo", width 
 
 # Effect on Parameters ----------------------------------------------------
 
-parmdetails <- rbind(data.frame("Parameter" = "betaAA", "Value" = seq(0, 0.5, by = 0.5/100)),
+parmdetails <- rbind(data.frame("Parameter" = "betaAA", "Value" = seq(0, sensparms["betaAA"]*10, by = (sensparms["betaAA"]*10)/100)),
                      data.frame("Parameter" = "betaHA", "Value" = seq(0, 0.0001, by = 0.0001/100)),
                      data.frame("Parameter" = "betaHH", "Value" = seq(0, 0.0001, by = 0.0001/100)),
                      data.frame("Parameter" = "betaAH", "Value" = seq(0, 0.0001, by = 0.0001/100)),
-                     data.frame("Parameter" = "phi", "Value" = seq(0, 0.1310852, by = 0.1310852/100)),
-                     data.frame("Parameter" = "theta", "Value" = seq(0, 11.30831, by = 11.30831/100)),
+                     data.frame("Parameter" = "phi", "Value" = seq(0, sensparms["phi"]*10, by = (sensparms["phi"]*10)/100)),
+                     data.frame("Parameter" = "theta", "Value" = seq(0, sensparms["theta"]*10, by = (sensparms["theta"]*10)/100)),
                      data.frame("Parameter" = "alpha", "Value" = seq(0, 1, by = 1/100)),
-                     data.frame("Parameter" = "zeta", "Value" = seq(0, 0.5, by = 0.5/100)),
+                     data.frame("Parameter" = "zeta", "Value" = seq(0, sensparms["zeta"]*10, by = (sensparms["zeta"]*10)/100)),
                      data.frame("Parameter" = "rh", "Value" = seq(0, 0.55^-1, by = 0.55^-1/100)),
                      data.frame("Parameter" = "ra", "Value" = seq(0, 6^-1, by = 6^-1/100)),
                      data.frame("Parameter" = "uh", "Value" = seq(0, 2883.5^-1, by = 2883.5^-1/100)),
@@ -253,10 +306,10 @@ parmdetails <- rbind(data.frame("Parameter" = "betaAA", "Value" = seq(0, 0.5, by
 
 times <- seq(0,30000, by = 100) 
 init <- c(Sa=0.98, Isa=0.01, Ira=0.01, Sh=1, Ish=0, Irh=0)
-tau_range <- c(0, 0.0122887)
+tau_range <- c(0, sensparms[["tau"]])
 
-parms = c(ra = 60^-1, rh =  (5.5^-1), ua = 240^-1, uh = 28835^-1, betaAA = (0.03), betaAH = 0.00001, betaHH = 0.00001, 
-          betaHA = (0.00001), phi = 0.01310852, theta = 1.130831, alpha = 0.4, zeta = 0.4)
+parms = c(ra = 60^-1, rh =  (5.5^-1), ua = 240^-1, uh = 28835^-1, betaAA = (sensparms[["betaAA"]]), betaAH = 0.00001, betaHH = 0.00001, 
+          betaHA = (0.00001), phi = sensparms[["phi"]], theta = sensparms[["theta"]], alpha = sensparms[["alpha"]], zeta = sensparms[["zeta"]])
 
 suppplotlist <- list()
 
@@ -314,7 +367,6 @@ pabdiff <- plot_grid(plot_grid(suppplotlist[[1]][[1]], suppplotlist[[2]][[1]], s
                     suppplotlist[[6]][[1]], suppplotlist[[7]][[1]], suppplotlist[[8]][[1]], suppplotlist[[9]][[1]], suppplotlist[[10]][[1]], suppplotlist[[11]][[1]],
                     suppplotlist[[12]][[1]], nrow = 4, ncol =3), scale=0.95) + 
   draw_label("% Increase in ICombH Relative to Baseline Usage", x=  0, y=0.5, vjust= 1.5, angle=90, size = 12)
-
 
 ggsave(pabdiff, filename = "Sensitivity_RelInc.png", dpi = 300, type = "cairo", width = 5, height = 7, units = "in",
        path = "C:/Users/amorg/Documents/PhD/Chapter_2/Figures/Redraft_v1")

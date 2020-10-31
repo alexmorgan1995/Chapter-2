@@ -2,7 +2,7 @@ library("deSolve"); library("ggplot2"); library("plotly"); library("reshape2")
 library("bayestestR"); library("tmvtnorm"); library("ggpubr"); library("sensitivity"); library("fast")
 
 rm(list=ls())
-setwd("C:/Users/amorg/Documents/PhD/Chapter_2/Chapter2_Fit_Data/FinalData")
+setwd("C:/Users/amorg/Documents/PhD/Chapter_2/Chapter2_Fit_Data/FinalData/olddata")
 
 # Model Functions ----------------------------------------------------------
 
@@ -40,6 +40,9 @@ import <- function(id) {
 # Data Import -------------------------------------------------------------
 #Import of Posterior Distributions
 data <- do.call(rbind, list(import(tet), import(amp), import(broil)))
+
+colnames(data)[3] <- "betaAA"
+colnames(data)[4] <- "alpha"
 
 #Import of Fitting Data
 dataamp <- read.csv("resistanceprofAnim_amp.csv")
@@ -253,3 +256,90 @@ icombh <- ggarrange(icombhlist[[1]], icombhlist[[2]], icombhlist[[3]], nrow = 3,
 ggsave(icombh, filename = "Icombh.png", dpi = 300, type = "cairo", width = 8, height = 11, units = "in",
        path = "C:/Users/amorg/Documents/PhD/Chapter_2/Figures/Redraft Figures")
 
+
+# Distances for Fits ------------------------------------------------------
+
+summarystatprev <- function(prev) {
+  return(prev$ResPropAnim)
+}
+
+sum_square_diff_dist <- function(sum.stats, data.obs, model.obs) {
+  sumsquare <- sapply(sum.stats, function(x) {
+    sumsquare <- abs((x(data.obs) - x(model.obs))^2)
+  })
+  return(sum(sumsquare))
+}
+
+computeDistanceABC_ALEX <- function(sum.stats, distanceABC, fitmodel, tau_range, parms, init.state, times, data) {
+  tauoutput <- matrix(nrow = 0, ncol=4)
+  for (i in 1:length(tau_range)) {
+    parms1 <- parms
+    parms1[["tau"]] <- tau_range[[i]]
+    temp <- matrix(NA, nrow = 1, ncol=4)
+    out <- ode(y = init.state, func = fitmodel, times = times, parms = parms1)
+    temp[1,1] <- tau_range[i]
+    temp[1,2] <- (rounding(out[nrow(out),6]) + rounding(out[nrow(out),7]))*100000
+    temp[1,3] <- (rounding(out[nrow(out),4]) / (rounding(out[nrow(out),3]) + rounding(out[nrow(out),4])))
+    temp[1,4] <- (rounding(out[nrow(out),7]) / (rounding(out[nrow(out),6]) + rounding(out[nrow(out),7])))
+    tauoutput <- rbind(tauoutput, temp)
+  }
+  tauoutput <- data.frame(tauoutput)
+  colnames(tauoutput) <- c("tau", "ICombH", "ResPropAnim", "ResPropHum")  
+  return(c(distanceABC(list(sum.stats), data, tauoutput)))
+}
+
+
+datatetra <- read.csv("resistanceprofAnim_v1.csv"); datatetra <- datatetra[!datatetra$N < 10,]
+colnames(datatetra)[12] <- "usage"; datatetra$usage <- datatetra$usage/1000 
+databroil <- read.csv("salm_broilers_2018.csv"); databroil <- databroil[!databroil$N < 10,]
+colnames(databroil)[9] <- "usage"; databroil$usage <- databroil$usage/1000 
+dataamp <- read.csv("resistanceprofAnim_amp.csv"); dataamp <- dataamp[!dataamp$N < 10,]
+colnames(dataamp)[9] <- "usage"; dataamp$usage <- dataamp$usage/1000 
+
+parmstet_pigs = c(ra = 60^-1, rh = (5.5^-1), ua = 240^-1, uh = 28835^-1, betaAA = MAP["MAPtet","betaAA"], 
+                  betaAH = 0.00001, betaHH = 0.00001, betaHA = (0.00001), phi = MAP["MAPtet","phi"] , 
+                  theta = MAP["MAPtet","theta"], alpha = MAP["MAPtet","alpha"] , tau = 0)
+
+parmstet_broil = c(ra = 0, rh = (5.5^-1), ua = 42^-1, uh = 28835^-1, betaAA = MAP["MAPbroil","betaAA"], 
+                   betaAH = 0.00001, betaHH = 0.00001, betaHA = (0.00001), phi = MAP["MAPbroil","phi"], 
+                   theta = MAP["MAPbroil","theta"], alpha = MAP["MAPbroil","alpha"] , tau = 0)
+
+parms_amppigs = c(ra = 60^-1, rh = (5.5^-1), ua = 240^-1, uh = 28835^-1, betaAA = MAP["MAPamp","betaAA"], 
+                  betaAH = 0.00001, betaHH = 0.00001, betaHA = (0.00001), phi = MAP["MAPamp","phi"], 
+                  theta = MAP["MAPamp","theta"], alpha = MAP["MAPamp","alpha"], tau = 0)
+
+for(i in 1:3) {
+  casestudy <- list(datatetra, databroil, dataamp)[[i]]
+  parms <- list(parmstet_pigs, parmstet_broil, parms_amppigs)[[i]]
+  #print(parms)
+  test<- computeDistanceABC_ALEX(sum.stats = summarystatprev, 
+                                 distanceABC = sum_square_diff_dist, 
+                                 fitmodel = amr, 
+                                 tau_range = casestudy$usage, 
+                                 parms = parms,
+                                 init.state = c(Sa=0.98, Isa=0.01, Ira=0.01, Sh=1, Ish=0, Irh=0), 
+                                 times = seq(0, 2000, by = 100), 
+                                 data = casestudy)
+  print(test)
+}
+
+
+
+
+tauoutput <- matrix(nrow = 0, ncol=4)
+
+init.state = c(Sa=0.98, Isa=0.01, Ira=0.01, Sh=1, Ish=0, Irh=0)
+times = seq(0, 2000, by = 100)
+for (i in 1:length(datatetra$usage)) {
+  parms1 <- parmstet_pigs
+  parms1[["tau"]] <- datatetra$usage[[i]]
+  temp <- matrix(NA, nrow = 1, ncol=4)
+  out <- ode(y = init.state, func = amr, times = times, parms = parms1)
+  temp[1,1] <- datatetra$usage[i]
+  temp[1,2] <- (rounding(out[nrow(out),6]) + rounding(out[nrow(out),7]))*100000
+  temp[1,3] <- (rounding(out[nrow(out),4]) / (rounding(out[nrow(out),3]) + rounding(out[nrow(out),4])))
+  temp[1,4] <- (rounding(out[nrow(out),7]) / (rounding(out[nrow(out),6]) + rounding(out[nrow(out),7])))
+  tauoutput <- rbind(tauoutput, temp)
+}
+tauoutput <- data.frame(tauoutput)
+colnames(tauoutput) <- c("tau", "ICombH", "ResPropAnim", "ResPropHum")  
