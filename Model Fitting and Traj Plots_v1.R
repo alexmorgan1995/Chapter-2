@@ -235,7 +235,7 @@ fits <- ggarrange(tet, amp, broil, nrow = 1, ncol = 3, align = "h", labels = c("
 ggsave(fits, filename = "Model_Fits.png", dpi = 300, type = "cairo", width = 14, height = 5, units = "in",
        path = "C:/Users/amorg/Documents/PhD/Chapter_2/Figures/Redraft_v1")
 
-# Tau and ICombH Base Plot ----------------------------------------------------------
+# Tau and ICombH Base Plot - Requires you to run previous section ----------------------------------------------------------
 
 icombhlist <- list()
 
@@ -299,7 +299,6 @@ sum_square_diff_dist <- function(sum.stats, data.obs, model.obs) {
   return(sum(sumsquare))
 }
 
-
 computeDistanceABC_ALEX <- function(sum.stats, distanceABC, fitmodel, tau_range, parms, init.state, times, data) {
   tauoutput <- matrix(nrow = 0, ncol=4)
   for (i in 1:length(tau_range)) {
@@ -354,23 +353,28 @@ for(i in 1:3) {
   print(test)
 }
 
+#Identify the Exact Values of the Fit
 tauoutput <- matrix(nrow = 0, ncol=4)
+
+averagesales <- c(0.0122887, 0.01156391, 0.006666697)
+
+exploredtau <- c(parmstet_pigs$usage, averagesales[1], 0)
 
 init.state = c(Sa=0.98, Isa=0.01, Ira=0.01, Sh=1, Ish=0, Irh=0)
 times = seq(0, 2000, by = 100)
-for (i in 1:length(datatetra$usage)) {
+for (i in 1:length(exploredtau)) {
   parms1 <- parmstet_pigs
-  parms1[["tau"]] <- datatetra$usage[[i]]
+  parms1[["tau"]] <- exploredtau[[i]]
   temp <- matrix(NA, nrow = 1, ncol=4)
   out <- ode(y = init.state, func = amr, times = times, parms = parms1)
-  temp[1,1] <- datatetra$usage[i]
+  temp[1,1] <- exploredtau[i]
   temp[1,2] <- (rounding(out[nrow(out),6]) + rounding(out[nrow(out),7]))*100000
   temp[1,3] <- (rounding(out[nrow(out),4]) / (rounding(out[nrow(out),3]) + rounding(out[nrow(out),4])))
   temp[1,4] <- (rounding(out[nrow(out),7]) / (rounding(out[nrow(out),6]) + rounding(out[nrow(out),7])))
   tauoutput <- rbind(tauoutput, temp)
 }
+
 tauoutput <- data.frame(tauoutput)
 colnames(tauoutput) <- c("tau", "ICombH", "ResPropAnim", "ResPropHum")  
 
-
-
+tauoutput$ICombH[tauoutput$tau == 0]/tauoutput$ICombH[tauoutput$tau == averagesales[1]]

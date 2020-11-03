@@ -74,19 +74,19 @@ parmstet_pigs = c(ra = 60^-1, rh = (5.5^-1), ua = 240^-1, uh = 28835^-1, betaAA 
                   betaAH = 0.00001, betaHH = 0.00001, betaHA = (0.00001), phi = MAP["MAPtet","phi"] , 
                   theta = MAP["MAPtet","theta"], alpha = MAP["MAPtet","alpha"] , tau = 0, zeta = MAP["MAPtet","zeta"])
 
+parms_amppigs = c(ra = 60^-1, rh = (5.5^-1), ua = 240^-1, uh = 28835^-1, betaAA = MAP["MAPamp","betaAA"], 
+                  betaAH = 0.00001, betaHH = 0.00001, betaHA = (0.00001), phi = MAP["MAPamp","phi"], 
+                  theta = MAP["MAPamp","theta"], alpha = MAP["MAPamp","alpha"], tau = 0, zeta = MAP["MAPamp","zeta"])
+
 parmstet_broil = c(ra = 0, rh = (5.5^-1), ua = 42^-1, uh = 28835^-1, betaAA = MAP["MAPbroil","betaAA"], 
                    betaAH = 0.00001, betaHH = 0.00001, betaHA = (0.00001), phi = MAP["MAPbroil","phi"], 
                    theta = MAP["MAPbroil","theta"], alpha = MAP["MAPbroil","alpha"] , tau = 0, 
                    zeta = MAP["MAPbroil","zeta"])
 
-parms_amppigs = c(ra = 60^-1, rh = (5.5^-1), ua = 240^-1, uh = 28835^-1, betaAA = MAP["MAPamp","betaAA"], 
-                  betaAH = 0.00001, betaHH = 0.00001, betaHA = (0.00001), phi = MAP["MAPamp","phi"], 
-                  theta = MAP["MAPamp","theta"], alpha = MAP["MAPamp","alpha"], tau = 0, zeta = MAP["MAPamp","zeta"])
-
 heatmap <- list()
 
 for(j in 1:3) {
-  parms = list(parmstet_pigs, parmstet_broil, parms_amppigs)[[j]]
+  parms = list(parmstet_pigs, parms_amppigs, parmstet_broil)[[j]]
   
   heatmap[[j]] = local({
     
@@ -144,7 +144,7 @@ for(j in 1:3) {
           scendata[["percdecrease_both"]] == 1 
         }
         
-        print(paste0(c("parmstet_pigs 1", "parmstet_broil 2", "parms_amppigs 3")[j], " - " ,
+        print(paste0(c("parmstet_pigs 1", "parms_amppigs 3", "parmstet_broil 2")[j], " - " ,
                      c("beta 1", "zeta 2", "both 3")[z], " - ",round(i/nrow(parameterspace), digit = 2)*100, "%"))
       }
       colnames(scendata) <- c("icombh", "resrat", "betaAA","percbetaAA", "betaHA", "percbetaHA", "zeta", "perczeta", "percdecrease")
@@ -207,8 +207,8 @@ for(i in 1:3) {
   
   combplot <- ggarrange(plottemp[[1]], plottemp[[2]], plottemp[[3]], ncol = 3, nrow = 1, common.legend = TRUE,
                         legend = "bottom", labels = c("A", "B", "C")[i], font.label = list(size = 25), vjust = 1.2)
-  title1=text_grob(c("Tetracycline Sales in Fattening Pigs", "Tetracycline Sales in Broiler Poultry",
-                     "Ampicillin Sales in Fattening Pigs")[i], size = 18, face = "bold", vjust = 2)
+  title1=text_grob(c("Tetracycline Sales in Fattening Pigs","Ampicillin Sales in Fattening Pigs",
+                     "Tetracycline Sales in Broiler Poultry")[i], size = 18, face = "bold", vjust = 2)
   
   combplot <- grid.arrange(combplot, top = title1)
   plotheat[[i]] <- combplot

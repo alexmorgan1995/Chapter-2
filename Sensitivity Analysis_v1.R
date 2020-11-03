@@ -211,7 +211,9 @@ tauanalysis <- tauanalysis[tauanalysis < quantile(tauanalysis, 0.99)]
 #The tail of the distribution has also been trimmed to prevent massive artificial increases from showing up
 
 #We then view the Distribution of Increases Above Baseline
-hist(tauanalysis, xlab = "% Increase above Baseline (Tau = 0.0122887)", breaks = 50)
+
+mean(c(0.0122887, 0.01156391, 0.006666697))
+hist(tauanalysis, xlab = "% Increase above Baseline (Tau = 0.0102)", breaks = 50)
 
 # What Parameters Can Compensate? ------------------------------------------
 
@@ -267,7 +269,7 @@ p1 <- ggplot(df.equilibrium, aes(x = reorder(parameter, -value), y = value)) + g
                    labels = c(expression(zeta), expression(theta), expression(alpha), expression(r[A]), expression(phi), expression(mu[H]),
                               expression(mu[A]), expression(beta[AA]),expression(r[H]),
                               expression(beta[AH]) , expression(beta[HH]), expression(beta[HA]))) +
-  labs(fill = NULL, title = bquote(bold("Increase in ICombH from" ~ tau ~ "=" ~ 0.0123 ~ "to" ~ tau ~ "=" ~  0))) + 
+  labs(fill = NULL, title = bquote(bold("Increase in"~ I[CombH] ~ "from" ~ tau ~ "=" ~ 0.0102 ~ "to" ~ tau ~ "=" ~  0))) + 
   theme(legend.text=element_text(size=14), axis.text=element_text(size=14), plot.title = element_text(size = 15, vjust = 1.5, hjust = 0.5),
         axis.title.y=element_text(size=14), axis.title.x= element_text(size=14), plot.margin = unit(c(0.4,0.4,0.4,0.55), "cm"))
 
@@ -279,9 +281,11 @@ p2 <- ggplot(df.equilibrium1, aes(x = reorder(parameter, -value), y = value)) + 
                    labels = c(expression(r[H]), expression(beta[HA]), expression(r[A]), expression(alpha), 
                               expression(zeta),expression(beta[AA]), expression(theta), expression(beta[AH]),
                               expression(mu[A]), expression(beta[HH]), expression(phi),expression(mu[H]))) +
-  labs(fill = NULL, title = bquote(bold("Mitigating Increases from Baseline ICombH = 3.26"))) + 
+  labs(fill = NULL, title = bquote(bold(.(Mitigating ~ Increases ~ from ~ Baseline ~ I[CombH] ~ "=" ~ 3.26~ per ~ "100,000")))) + 
   theme(legend.text=element_text(size=14), axis.text=element_text(size=14), plot.title = element_text(size = 15, vjust = 1.5, hjust = 0.5),
         axis.title.y=element_text(size=14), axis.title.x= element_text(size=14), plot.margin = unit(c(0.4,0.4,0.4,0.55), "cm"))
+
+#bquote(bold(.(Mitigating ~ Increases ~ from ~ Baseline ~ I[CombH] ~ "=" ~ 3.26)))
 
 sensplot <- ggarrange(p1,p2, nrow = 2, ncol = 1,
                       align = "v", labels = c("A","B"), font.label = c(size = 20)) 
