@@ -1,6 +1,6 @@
 library("deSolve"); library("ggplot2"); library("reshape2")
-library("bayestestR"); library("tmvtnorm"); library("ggpubr"); library("sensitivity"); library("fast");
-library("cowplot"); library("metR"); library("grid"); library("gridExtra")
+library("bayestestR"); library("tmvtnorm"); library("ggpubr"); library("sensitivity"); library("fast"); library("metR"); 
+library("grid"); library("gridExtra")
 
 rm(list=ls())
 setwd("C:/Users/amorg/Documents/PhD/Chapter_2/Chapter2_Fit_Data/FinalData")
@@ -144,7 +144,7 @@ for(j in 1:3) {
           scendata[["percdecrease_both"]] == 1 
         }
         
-        print(paste0(c("parmstet_pigs 1", "parms_amppigs 3", "parmstet_broil 2")[j], " - " ,
+        print(paste0(c("parmstet_pigs 1", "parms_amppigs 2", "parmstet_broil 3")[j], " - " ,
                      c("beta 1", "zeta 2", "both 3")[z], " - ",round(i/nrow(parameterspace), digit = 2)*100, "%"))
       }
       colnames(scendata) <- c("icombh", "resrat", "betaAA","percbetaAA", "betaHA", "percbetaHA", "zeta", "perczeta", "percdecrease")

@@ -378,3 +378,55 @@ tauoutput <- data.frame(tauoutput)
 colnames(tauoutput) <- c("tau", "ICombH", "ResPropAnim", "ResPropHum")  
 
 tauoutput$ICombH[tauoutput$tau == 0]/tauoutput$ICombH[tauoutput$tau == averagesales[1]]
+
+
+# Plotting Prior Distribution ---------------------------------------------
+
+prior.data <- setNames(data.frame(runif(1000, min = 0, max = 0.2), runif(1000, min = 0, max = 0.04), runif(1000, min = 0, max = 2),
+                                  "p_alpha" <- rbeta(1000, 1.5, 8.5), runif(1000, min = 0, max = 0.15)), 
+                       c("p_betaAA", "p_phi", "p_theta", "p_alpha", "p_zeta"))
+
+prior.plot.list <- list()
+
+for (i in 1:length(colnames(prior.data))) { # Loop over loop.vector
+  
+  data <- data.frame("data" = prior.data[,colnames(prior.data)[i]])
+  p1 <- ggplot(data, aes(x=data)) + geom_histogram(color="black", fill="lightgrey", bins = 15, size = 0.7, alpha = 0.5) + theme_bw() +
+    theme(legend.text=element_text(size=14), axis.text.x=element_text(size=14),axis.text.y=element_text(size=14),
+          axis.title.y=element_text(size=14), axis.title.x= element_text(size=14), plot.margin = unit(c(0.25,0.4,0.15,0.55), "cm"),
+          plot.title = element_text(size = 14, vjust = 3, hjust = 0.5, face = "bold"),
+          panel.grid.major.x = element_blank(),panel.grid.minor.x = element_blank())
+  
+  max.y <- max(ggplot_build(p1)$data[[1]][1])*1.2
+  
+    
+  if(colnames(prior.data)[i] == "p_phi") {
+      p1 <- p1 + scale_x_continuous(expand = c(0, 0), name = expression(paste("Rate of Resistance Reversion (", phi, ")"))) +
+        labs(fill = NULL, title = "") + 
+        scale_y_continuous(limits = c(0,max.y), expand = c(0, 0), name = "Frequency") 
+    }
+    if(colnames(prior.data)[i] == "p_theta") {
+      p1 <- p1 + scale_x_continuous(expand = c(0, 0), name = expression(paste("Efficacy of Antibiotic-Mediated Recovery (", theta, ")"))) +
+        labs(fill = NULL, title = "") + 
+        scale_y_continuous(limits = c(0,max.y), expand = c(0, 0), name = "Frequency") 
+    }
+    if(colnames(prior.data)[i] == "p_betaAA") {
+      p1 <- p1 + scale_x_continuous(expand = c(0, 0), name = expression(paste("Rate of Animal-to-Animal Transmission (", beta[AA], ")")))+
+        labs(fill = NULL, title = "") + scale_y_continuous(limits = c(0,max.y), expand = c(0, 0), name = "Frequency")
+    }
+    if(colnames(prior.data)[i] == "p_alpha") {
+      p1 <- p1 + scale_x_continuous(expand = c(0, 0), name = expression(paste("Antibiotic-Resistant Fitness Cost (", alpha, ")"))) +
+        labs(fill = NULL, title = "") + scale_y_continuous(limits = c(0,max.y),expand = c(0, 0), name = "Frequency")
+    }
+    if(colnames(prior.data)[i] == "p_zeta") {
+      p1 <- p1 + scale_x_continuous(expand = c(0, 0), name = expression(paste("Background Infection Rate (", zeta, ")"))) +
+        labs(fill = NULL, title = "") + scale_y_continuous(limits = c(0,max.y),expand = c(0, 0), name = "Frequency")
+    }
+  prior.plot.list[[i]] <- p1
+}
+
+comb.prior.plot <- ggarrange(prior.plot.list[[1]],prior.plot.list[[2]],prior.plot.list[[3]],prior.plot.list[[4]],prior.plot.list[[5]],
+                             ncol = 1,nrow = 5)
+
+ggsave(comb.prior.plot, filename = "prior_parms.png", dpi = 300, type = "cairo", width = 8, height = 13, units = "in",
+       path = "C:/Users/amorg/Documents/PhD/Chapter_2/Figures/Redraft_v1")
