@@ -303,7 +303,7 @@ parmdetails <- rbind(data.frame("Parameter" = "betaAA", "Value" = seq(0, senspar
                      data.frame("Parameter" = "theta", "Value" = seq(0, sensparms["theta"]*10, by = (sensparms["theta"]*10)/100)),
                      data.frame("Parameter" = "alpha", "Value" = seq(0, 1, by = 1/100)),
                      data.frame("Parameter" = "zeta", "Value" = seq(0, sensparms["zeta"]*10, by = (sensparms["zeta"]*10)/100)),
-                     data.frame("Parameter" = "rh", "Value" = seq(0, 0.55^-1, by = 0.55^-1/100)),
+                     data.frame("Parameter" = "rh", "Value" = seq(0.01, 0.55^-1, by = 0.55^-1/100)),
                      data.frame("Parameter" = "ra", "Value" = seq(0, 6^-1, by = 6^-1/100)),
                      data.frame("Parameter" = "uh", "Value" = seq(0, 2883.5^-1, by = 2883.5^-1/100)),
                      data.frame("Parameter" = "ua", "Value" = seq(0, 24^-1, by = 24^-1/100)))
@@ -354,13 +354,30 @@ for (j in 1:length(unique(parmdetails[,1]))) {
                    bquote(phi~Parameter), bquote(theta~Parameter), bquote(alpha~Parameter), bquote(zeta~Parameter), bquote(r["H"]~Parameter), bquote(r["A"]~Parameter), 
                    bquote(mu["H"]~Parameter), bquote(mu["A"]~Parameter))[[j]]
 
-    p1 <- ggplot(output[], aes(x = as.numeric(ParmValue), y = as.numeric(PercInc))) + theme_bw() + geom_line(lwd = 1.02, col ="darkblue") +
+    p1 <- ggplot(output, aes(x = as.numeric(ParmValue), y = as.numeric(PercInc))) + theme_bw() + geom_line(lwd = 1.02, col ="darkblue") +
       scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(limits = c(0, max(output$PercInc) + 10), expand = c(0, 0)) +
       labs(x = plotnames) + theme(plot.margin=unit(c(0.3,0.3,0.3,0.3),"cm"), axis.title.y=element_blank())
 
     p2 <- ggplot(output, aes(x = as.numeric(ParmValue), y = as.numeric(RelInc))) + theme_bw() + geom_line(lwd = 1.02, col ="darkblue") +
       scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(limits = c(0, max(output$RelInc) + 10), expand = c(0, 0)) +
       labs(x = plotnames) + theme(plot.margin=unit(c(0.3,0.3,0.3,0.3),"cm"), axis.title.y=element_blank())
+    
+    if(unique(parmdetails[,1])[j] == "betaHA"){
+      p2 <- p2 + geom_vline(xintercept = 8.0e-06, col = "red", size  = 0.7, lty = 3)
+    }
+    if(unique(parmdetails[,1])[j] == "zeta"){
+      p2 <- p2 + geom_vline(xintercept = 0.011084193, col = "red", size  = 0.7, lty = 3)
+    }
+    if(unique(parmdetails[,1])[j] == "ra"){
+      p2 <- p2 + geom_vline(xintercept = 0.038333333, col = "red", size  = 0.7, lty = 3)
+    }
+    if(unique(parmdetails[,1])[j] == "ua"){
+      p2 <- p2 + geom_vline(xintercept = 0.0254166667, col = "red", size  = 0.7, lty = 3)
+    }
+    
+    if(unique(parmdetails[,1])[j] == "rh"){
+      p2 <- p2 + geom_vline(xintercept = 0.22818182, col = "red", size  = 0.7, lty = 3)
+    }
     
     return(list(p1,p2))
   })
@@ -379,7 +396,7 @@ ggsave(pabdiff, filename = "Sensitivity_RelInc.png", dpi = 300, type = "cairo", 
 pcompdiff <- plot_grid(plot_grid(suppplotlist[[1]][[2]], suppplotlist[[2]][[2]], suppplotlist[[3]][[2]],suppplotlist[[4]][[2]], suppplotlist[[5]][[2]], 
                     suppplotlist[[6]][[2]], suppplotlist[[7]][[2]], suppplotlist[[8]][[2]], suppplotlist[[9]][[2]], suppplotlist[[10]][[2]], suppplotlist[[11]][[2]], 
                     suppplotlist[[12]][[2]], nrow = 4, ncol =3), scale=0.95) + 
-  draw_label("% Increase in ICombH Relative to Case Study Baseline (3.26 per 100,000)", x=  0, y=0.5, vjust= 1.5, angle=90, size = 12)
+  draw_label("% Change in ICombH Relative to Case Study Baseline (3.26 per 100,000)", x=  0, y=0.5, vjust= 1.5, angle=90, size = 12)
 
 ggsave(pcompdiff, filename = "Sensitivity_Compen.png", dpi = 300, type = "cairo", width = 5, height = 7, units = "in",
        path = "C:/Users/amorg/Documents/PhD/Chapter_2/Figures/Redraft_v1")
