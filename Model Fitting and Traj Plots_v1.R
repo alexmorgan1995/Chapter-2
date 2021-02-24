@@ -430,3 +430,83 @@ comb.prior.plot <- ggarrange(prior.plot.list[[1]],prior.plot.list[[2]],prior.plo
 
 ggsave(comb.prior.plot, filename = "prior_parms.png", dpi = 300, type = "cairo", width = 8, height = 13, units = "in",
        path = "C:/Users/amorg/Documents/PhD/Chapter_2/Figures/Redraft_v1")
+
+# Supplementary Plots -----------------------------------------------------
+
+parmtau <- seq(0,0.035, by = 0.002)
+init <- c(Sa=0.98, Isa=0.01, Ira=0.01, Sh=1, Ish=0, Irh=0)
+output1 <- data.frame(matrix(ncol = 8, nrow = 0))
+times <- seq(0, 200000, by = 100)
+
+
+for (i in 1:length(parmtau)) {
+  temp <- data.frame(matrix(NA, nrow = 1, ncol=7))
+  
+  parms2 = c(ra = 60^-1, rh =  (5.5^-1), ua = 240^-1, uh = 28835^-1, betaAA = MAP[1,"betaAA"], betaAH = 0.00001, betaHH = 0.00001, 
+             betaHA = (0.00001), phi = MAP[1,"phi"], theta = 0, alpha = 0, tau = parmtau[i],
+             zeta = MAP[1,"zeta"])
+  
+  out <- ode(y = init, func = amr, times = times, parms = parms2)
+  temp[1,1] <- parmtau[i]
+  temp[1,2] <- rounding(out[nrow(out),5]) 
+  temp[1,3] <- rounding(out[nrow(out),6]) 
+  temp[1,4] <- rounding(out[nrow(out),7])
+  temp[1,5] <- temp[1,3] + temp[1,4]
+  temp[1,6] <- signif(as.numeric(temp[1,4]/temp[1,5]), digits = 3)
+  temp[1,7] <- rounding(out[nrow(out),4]) / (rounding(out[nrow(out),3]) + rounding(out[nrow(out),4]))
+  temp[1,8] <- rownames(MAP)[1]
+  print(temp[1,3])
+  output1 <- rbind.data.frame(output1, temp)
+}
+
+colnames(output1)[1:8] <- c("tau", "SuscHumans","InfHumans","ResInfHumans","ICombH","IResRat","IResRatA", "group")
+output1[,2:5] <- output1[,2:5]*100000 #Scaling the prevalence (per 100,000)
+
+plotdata <- melt(output1,
+                 id.vars = c("tau"), measure.vars = c("ResInfHumans","InfHumans")) 
+
+
+averagesales <- 0.0122887
+
+p1 <- ggplot(plotdata, aes(fill = variable, x = tau, y = value)) + theme_bw() + 
+  geom_vline(xintercept = averagesales, alpha = 0.3, size = 2) + 
+  geom_col(color = "black",position= "stack", width  = 0.0015) + scale_x_continuous(expand = c(0, 0.0005)) + 
+  scale_y_continuous(limits = c(0,7), expand = c(0, 0))  + 
+  geom_text(label= c(round(output1$IResRat,digits = 2),rep("",length(parmtau))),vjust=-0.5, hjust = 0.05,
+            position = "stack", angle = 45) +
+  theme(legend.position=c(0.75, 0.875), legend.text=element_text(size=12), legend.title = element_blank(), axis.text=element_text(size=12), 
+        axis.title.y=element_text(size=12), axis.title.x= element_text(size=12), plot.margin = unit(c(0.35,1,0.35,1), "cm"),
+        legend.spacing.x = unit(0.3, 'cm')) + 
+  scale_fill_manual(labels = c("Antibiotic-Resistant Infection", "Antibiotic-Sensitive Infection"), values = c("#F8766D", "#619CFF")) +
+  labs(x ="Tetracycline Sales in Fattening Pig (g/PCU)", y = "Infected Humans (per 100,000)")  
+
+
+ggsave(p1, filename = "Icombh_notheta.png", dpi = 300, type = "cairo", width = 7, height = 4, units = "in",
+       path = "C:/Users/amorg/Documents/PhD/Chapter_2/Figures/Redraft_v1")
+
+
+#### Null Neutrality ####
+
+init <- c(Sa=0.99, Isa=0.01, Ira=0.01, Sh=1, Ish=0, Irh=0)
+output1 <- data.frame(matrix(ncol = 8, nrow = 0))
+times <- seq(0, 2000, by = 1)
+
+parms2 = c(ra = 60^-1, rh =  (5.5^-1), ua = 240^-1, uh = 28835^-1, betaAA = MAP[1,"betaAA"], betaAH = 0.00001, betaHH = 0.00001, 
+           betaHA = (0.00001), phi = 0, theta = 0, alpha = 0, tau = 0,
+           zeta = 0)
+
+out <- data.frame(ode(y = init, func = amr, times = times, parms = parms2))
+
+t <- melt(data = out, id.vars  = c("time"), measure.vars = c("Isa", "Ira"))
+
+p2 <- ggplot(t, aes(x = time, y = value, col = variable)) + theme_bw() +  geom_line(stat = "identity", size = 1) + 
+  scale_color_manual(labels = c("Antibiotic-Resistant Infection", "Antibiotic-Sensitive Infection"), values = c("#F8766D", "#619CFF")) +
+  theme(legend.position=c(0.75, 0.875), legend.text=element_text(size=12), legend.title = element_blank(), axis.text=element_text(size=12), 
+        axis.title.y=element_text(size=12), axis.title.x= element_text(size=12), plot.margin = unit(c(0.35,1,0.35,1), "cm"),
+        legend.spacing.x = unit(0.3, 'cm'))  +  scale_x_continuous(expand = c(0, 0))  +  scale_y_continuous(expand = c(0, 0), limits = c(0,0.5))  +
+  labs(x ="Time (a.u)", y = "Prevalence (Animals)")  
+
+ggsave(p2, filename = "Nullneutral.png", dpi = 300, type = "cairo", width = 7, height = 4, units = "in",
+       path = "C:/Users/amorg/Documents/PhD/Chapter_2/Figures/Redraft_v1")
+
+
