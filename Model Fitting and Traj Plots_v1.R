@@ -283,7 +283,7 @@ icombh <- ggarrange(icombhlist[[1]], icombhlist[[2]], icombhlist[[3]], nrow = 3,
 ggsave(icombh, filename = "Icombh.png", dpi = 300, type = "cairo", width = 8, height = 11, units = "in",
        path = "C:/Users/amorg/Documents/PhD/Chapter_2/Figures/Redraft_v1")
 
-ggsave(icombh, filename = "Icombh_poster.png", dpi = 300, type = "cairo", width = 10, height = 9, units = "in",
+ggsave(icombh, filename = "Icombh_poster.png", dpi = 300, type = "cairo", width = 13, height = 9, units = "in",
        path = "C:/Users/amorg/Documents/PhD/Chapter_2/Figures/Redraft_v1")
 
 # Distances for Fits ------------------------------------------------------
