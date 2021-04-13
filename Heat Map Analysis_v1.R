@@ -170,15 +170,15 @@ for(i in 1:3) {
     if(j == 1) {
       plot <- ggplot(scentest, aes(percbetaAA, percbetaHA, z = icombh))
       if(i == 1) {
-        plot <- plot + labs(x = bquote("% of Baseline"~beta["AA"]), y = bquote("% of Baseline"~beta["HA"]), fill = "ICombH", 
+        plot <- plot + labs(x = bquote("% of Baseline"~beta["AA"]), y = bquote("% of Baseline"~beta["HA"]), fill = bquote("I*"["H"]), 
                             title = paste(""))
       }
       if(i == 2) {
-        plot <- plot + labs(x = bquote("% of Baseline"~beta["AA"]), y = bquote("% of Baseline"~beta["HA"]), fill = "ICombH", 
+        plot <- plot + labs(x = bquote("% of Baseline"~beta["AA"]), y = bquote("% of Baseline"~beta["HA"]), fill = bquote("I*"["H"]), 
                             title = paste(""))
       }
       if(i == 3) {
-        plot <- plot + labs(x = bquote("% of Baseline"~beta["AA"]), y = bquote("% of Baseline"~beta["HA"]), fill = "ICombH", 
+        plot <- plot + labs(x = bquote("% of Baseline"~beta["AA"]), y = bquote("% of Baseline"~beta["HA"]), fill = bquote("I*"["H"]), 
                             title = paste(""))
       }
     } 
@@ -220,5 +220,5 @@ combplot <- ggarrange(plotheat[[1]], plotheat[[2]], plotheat[[3]], ncol = 1, nro
 ggsave(combplot, filename = "HeatMapcomb_poster.png", dpi = 300, type = "cairo", width = 11, height = 13, units = "in",
        path = "C:/Users/amorg/Documents/PhD/Chapter_2/Figures/Redraft_v1")
 
-ggsave(combplot, filename = "HeatMapcomb.png", dpi = 300, type = "cairo", width = 12, height = 14, units = "in",
+ggsave(combplot, filename = "HeatMapcomb.png", dpi = 300, type = "cairo", width = 12, height = 12, units = "in",
        path = "C:/Users/amorg/Documents/PhD/Chapter_2/Figures/Redraft_v1")

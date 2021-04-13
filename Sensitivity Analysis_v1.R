@@ -132,12 +132,12 @@ df.equilibrium <- data.frame(parameter=rbind("ra", "rh" ,"ua", "uh", "betaAA", "
 ggplot(df.equilibrium, aes(x = reorder(parameter, -value), y = value)) + geom_bar(stat="identity", fill="lightgrey", col = "black", width  = 0.8)
 
 ICombH <- ggplot(df.equilibrium, aes(x = reorder(parameter, -value), y = value)) + geom_bar(stat="identity", fill="lightgrey", col = "black", width  = 0.8) + theme_bw() + 
-  scale_y_continuous(limits = c(0,  max(df.equilibrium$value)*1.1), expand = c(0, 0), name = "Variance") + 
+  scale_y_continuous(limits = c(0,  max(df.equilibrium$value)*1.1), expand = c(0, 0), name = "Partial Variance") + 
   scale_x_discrete(expand = c(0, 0.7), name = "Parameter", 
                    labels = c(expression(r[H]), expression(beta[HA]),  expression(alpha),expression(zeta), expression(beta[HH]),
                               expression(tau), expression(theta), expression(r[A]), expression(beta[AA]), expression(mu[H]),
                               expression(mu[A]),  expression(beta[AH]), expression(phi))) +
-  labs(fill = NULL, title = "Sensitivity Analysis of ICombH") + 
+  labs(fill = NULL, title = bquote(Sensitivity~Analysis~of~"I*"["H"])) + 
   theme(legend.text=element_text(size=14), axis.text=element_text(size=14), plot.title = element_text(size = 15, vjust = 1.5, hjust = 0.5, face = "bold"),
         axis.title.y=element_text(size=14), axis.title.x= element_text(size=14), plot.margin = unit(c(0.4,0.4,0.4,0.55), "cm"))
 
@@ -153,12 +153,12 @@ df.equilibrium1 <- data.frame(parameter=rbind("ra", "rh" ,"ua", "uh", "betaAA", 
 ggplot(df.equilibrium1, aes(x = reorder(parameter, -value), y = value)) + geom_bar(stat="identity", fill="lightgrey", col = "black", width  = 0.8)
 
 resprop <- ggplot(df.equilibrium1, aes(x = reorder(parameter, -value), y = value)) + geom_bar(stat="identity", fill="lightgrey", col = "black", width  = 0.8) + theme_bw() + 
-  scale_y_continuous(limits = c(0,  max(df.equilibrium1$value)*1.1), expand = c(0, 0), name = "Variance") + 
+  scale_y_continuous(limits = c(0,  max(df.equilibrium1$value)*1.1), expand = c(0, 0), name = "Partial Variance") + 
   scale_x_discrete(expand = c(0, 0.7), name = "Parameter", 
                    labels = c(expression(alpha), expression(tau), expression(phi), expression(theta), expression(r[A]), expression(mu[A]),
                               expression(beta[AA]), expression(zeta), expression(mu[H]), expression(beta[AH]),
                               expression(r[H]), expression(beta[HA]), expression(beta[HH]))) +
-  labs(fill = NULL, title = "Sensitivity Analysis of ResProp") + 
+  labs(fill = NULL, title = bquote(Sensitivity~Analysis~of~"I*"["RHProp"])) + 
   theme(legend.text=element_text(size=14), axis.text=element_text(size=14), plot.title = element_text(size = 15, vjust = 1.5, hjust = 0.5, face = "bold"),
         axis.title.y=element_text(size=14), axis.title.x= element_text(size=14), plot.margin = unit(c(0.4,0.4,0.4,0.55), "cm"))
 
@@ -213,7 +213,7 @@ tauanalysis <- tauanalysis[tauanalysis < quantile(tauanalysis, 0.99)]
 #We then view the Distribution of Increases Above Baseline
 
 mean(c(0.0122887, 0.01156391, 0.006666697))
-hist(tauanalysis, xlab = "% Increase above Baseline (Tau = 0.0102)", breaks = 50)
+hist(tauanalysis, xlab = bquote("% Increase above Baseline"~"I*"["H"]~" (Tau = 0.0102)"), breaks = 50)
 
 # What Parameters Can Compensate? ------------------------------------------
 
@@ -241,7 +241,7 @@ tauanalysis2 <- tauanalysis2[tauanalysis2 < quantile(tauanalysis2, 0.99)]
 #removes all negative changes - might need to review
 #The tail of the distribution has also been trimmed to prevent massive artificial increases from showing up
 
-hist(tauanalysis2, xlab = "% Increase above Baseline ICombH (3.26 per 100,000)", breaks = 50)
+hist(tauanalysis2, xlab = bquote("% Increase above Baseline"~"I*"["H"]~" (3.26 per 100,000)"), breaks = 50)
 
 # Plotting Sensitivity Analysis -------------------------------------------
 
@@ -264,24 +264,24 @@ df.equilibrium1 <- NULL; df.equilibrium1 <- data.frame(parameter=rbind("ra", "rh
 ggplot(df.equilibrium, aes(x = reorder(parameter, -value), y = value)) + geom_bar(stat="identity", fill="lightgrey", col = "black", width  = 0.8)
 
 p1 <- ggplot(df.equilibrium, aes(x = reorder(parameter, -value), y = value)) + geom_bar(stat="identity", fill="lightgrey", col = "black", width  = 0.8) + theme_bw() + 
-  scale_y_continuous(limits = c(0,  max(df.equilibrium$value)*1.1), expand = c(0, 0), name = "Variance") + 
+  scale_y_continuous(limits = c(0,  max(df.equilibrium$value)*1.1), expand = c(0, 0), name = "Partial Variance") + 
   scale_x_discrete(expand = c(0, 0.7), name = "Parameter", 
                    labels = c(expression(zeta), expression(theta), expression(alpha), expression(r[A]), expression(phi), expression(mu[H]),
                               expression(mu[A]), expression(beta[AA]),expression(r[H]),
                               expression(beta[AH]) , expression(beta[HH]), expression(beta[HA]))) +
-  labs(fill = NULL, title = bquote(bold("Increase in"~ I[CombH] ~ "from" ~ tau ~ "=" ~ 0.0102 ~ "to" ~ tau ~ "=" ~  0))) + 
+  labs(fill = NULL, title = bquote(bold("Increase in"~ "I*"["H"] ~ "from" ~ tau ~ "=" ~ 0.0102 ~ "to" ~ tau ~ "=" ~  0))) + 
   theme(legend.text=element_text(size=14), axis.text=element_text(size=14), plot.title = element_text(size = 15, vjust = 1.5, hjust = 0.5),
         axis.title.y=element_text(size=14), axis.title.x= element_text(size=14), plot.margin = unit(c(0.4,0.4,0.4,0.55), "cm"))
 
 ggplot(df.equilibrium1, aes(x = reorder(parameter, -value), y = value)) + geom_bar(stat="identity", fill="lightgrey", col = "black", width  = 0.8)
 
 p2 <- ggplot(df.equilibrium1, aes(x = reorder(parameter, -value), y = value)) + geom_bar(stat="identity", fill="lightgrey", col = "black", width  = 0.8) + theme_bw() + 
-  scale_y_continuous(limits = c(0,  max(df.equilibrium1$value)*1.1), expand = c(0, 0), name = "Variance") + 
+  scale_y_continuous(limits = c(0,  max(df.equilibrium1$value)*1.1), expand = c(0, 0), name = "Partial Variance") + 
   scale_x_discrete(expand = c(0, 0.7), name = "Parameter", 
                    labels = c(expression(r[H]), expression(beta[HA]), expression(r[A]), expression(alpha), 
                               expression(zeta),expression(beta[AA]), expression(theta), expression(beta[AH]),
                               expression(mu[A]), expression(beta[HH]), expression(phi),expression(mu[H]))) +
-  labs(fill = NULL, title = bquote(bold(.(Mitigating ~ Increases ~ from ~ Baseline ~ I[CombH] ~ "=" ~ 3.26~ per ~ "100,000")))) + 
+  labs(fill = NULL, title = bquote(bold(.(Mitigating ~ Increases ~ from ~ Baseline ~ "I*"["H"] ~ "=" ~ 3.26~ per ~ "100,000")))) + 
   theme(legend.text=element_text(size=14), axis.text=element_text(size=14), plot.title = element_text(size = 15, vjust = 1.5, hjust = 0.5),
         axis.title.y=element_text(size=14), axis.title.x= element_text(size=14), plot.margin = unit(c(0.4,0.4,0.4,0.55), "cm"))
 
@@ -388,7 +388,7 @@ for (j in 1:length(unique(parmdetails[,1]))) {
 pabdiff <- plot_grid(plot_grid(suppplotlist[[1]][[1]], suppplotlist[[2]][[1]], suppplotlist[[3]][[1]],suppplotlist[[4]][[1]], suppplotlist[[5]][[1]], 
                     suppplotlist[[6]][[1]], suppplotlist[[7]][[1]], suppplotlist[[8]][[1]], suppplotlist[[9]][[1]], suppplotlist[[10]][[1]], suppplotlist[[11]][[1]],
                     suppplotlist[[12]][[1]], nrow = 4, ncol =3), scale=0.95) + 
-  draw_label("% Change in ICombH Relative to Baseline Usage", x=  0, y=0.5, vjust= 1.5, angle=90, size = 12)
+  draw_label(bquote("% Change in"~ " I*"["H"]~" Relative to Baseline Usage"), x=  0, y=0.5, vjust= 1.5, angle=90, size = 12)
 
 ggsave(pabdiff, filename = "Sensitivity_RelInc.png", dpi = 300, type = "cairo", width = 5, height = 7, units = "in",
        path = "C:/Users/amorg/Documents/PhD/Chapter_2/Figures/Redraft_v1")
@@ -397,7 +397,7 @@ ggsave(pabdiff, filename = "Sensitivity_RelInc.png", dpi = 300, type = "cairo", 
 pcompdiff <- plot_grid(plot_grid(suppplotlist[[1]][[2]], suppplotlist[[2]][[2]], suppplotlist[[3]][[2]],suppplotlist[[4]][[2]], suppplotlist[[5]][[2]], 
                     suppplotlist[[6]][[2]], suppplotlist[[7]][[2]], suppplotlist[[8]][[2]], suppplotlist[[9]][[2]], suppplotlist[[10]][[2]], suppplotlist[[11]][[2]], 
                     suppplotlist[[12]][[2]], nrow = 4, ncol =3), scale=0.95) + 
-  draw_label("% Change in ICombH Relative to Case Study Baseline (3.26 per 100,000)", x=  0, y=0.5, vjust= 1.5, angle=90, size = 12)
+  draw_label(bquote("% Change in"~ " I*"["H"]~ " Relative to Case Study Baseline (3.26 per 100,000)"), x=  0, y=0.5, vjust= 1.5, angle=90, size = 12)
 
 ggsave(pcompdiff, filename = "Sensitivity_Compen.png", dpi = 300, type = "cairo", width = 5, height = 7, units = "in",
        path = "C:/Users/amorg/Documents/PhD/Chapter_2/Figures/Redraft_v1")

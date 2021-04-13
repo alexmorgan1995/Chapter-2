@@ -262,13 +262,13 @@ for(i in 1: length(unique(icombhdata$group))){
       scale_fill_manual(labels = c("Antibiotic-Resistant Infection", "Antibiotic-Sensitive Infection"), values = c("#F8766D", "#619CFF")) 
     
     if(unique(icombhdata$group)[i] == "MAPtet") {
-      p1 <- p1 + labs(x ="Tetracycline Sales in Fattening Pig (g/PCU)", y = "Infected Humans (per 100,000)")  
+      p1 <- p1 + labs(x ="Tetracycline Usage in Fattening Pig (g/PCU)", y = "Inf Humans (per 100,000)")  
     }
     if(unique(icombhdata$group)[i] == "MAPamp") {
-      p1 <- p1 + labs(x ="Ampicillin Sales in Fattening Pig (g/PCU)", y = "Infected Humans (per 100,000)")  
+      p1 <- p1 + labs(x ="Ampicillin Usage in Fattening Pig (g/PCU)", y = "Inf Humans (per 100,000)")  
     }
     if(unique(icombhdata$group)[i] == "MAPbroil") {
-      p1 <- p1 + labs(x ="Tetracycline Sales in Broiler Poultry (g/PCU)", y = "Infected Humans (per 100,000)")  
+      p1 <- p1 + labs(x ="Tetracycline Usage in Broiler Poultry (g/PCU)", y = "Inf Humans (per 100,000)")  
     }
     
     return(p1)
@@ -283,7 +283,7 @@ icombh <- ggarrange(icombhlist[[1]], icombhlist[[2]], icombhlist[[3]], nrow = 3,
 ggsave(icombh, filename = "Icombh.png", dpi = 300, type = "cairo", width = 8, height = 11, units = "in",
        path = "C:/Users/amorg/Documents/PhD/Chapter_2/Figures/Redraft_v1")
 
-ggsave(icombh, filename = "Icombh_poster.png", dpi = 300, type = "cairo", width = 13, height = 9, units = "in",
+ggsave(icombh, filename = "Icombh_poster.png", dpi = 300, type = "cairo", width = 10, height = 7, units = "in",
        path = "C:/Users/amorg/Documents/PhD/Chapter_2/Figures/Redraft_v1")
 
 # Distances for Fits ------------------------------------------------------
