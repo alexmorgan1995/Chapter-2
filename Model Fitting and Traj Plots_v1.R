@@ -138,9 +138,13 @@ for(j in 1:length(unique(data$fit))) {
         p1 <- p1 + scale_x_continuous(limits = c(0,0.15),expand = c(0, 0), name = expression(paste("Background Infection Rate (", zeta, ")"))) +
           labs(fill = NULL, title = "") + scale_y_continuous(limits = c(0, max(dens$y)*1.2), expand = c(0, 0), name = " ")
       }
+      
+      p1 <- p1 + geom_vline(xintercept = mean(dataplot$value[dataplot$group == "data5"]), size  = 1.2, color = "red", alpha = 0.5)
+      
       return(p1)
       
     })
+    
     print(paste0("Plot Parameter: ",colnames(MAP)[i], " | Data: ", unique(data$fit)[j] ))
   }
   plotlist1[[unique(data$fit)[j]]] <- plotlist2
