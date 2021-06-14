@@ -214,6 +214,70 @@ for(i in 1:3) {
   plotheat[[i]] <- combplot
 }
 
+
+#Lone Plots
+
+scentest1 <- heatmap[[1]][[3]]
+scentest2 <- heatmap[[2]][[3]]
+scentest3 <- heatmap[[3]][[3]]
+
+breaks1 <- c(0, 3.26, seq(3.4, max(scentest1$icombh)+0.1, by = 0.1))
+
+plot1 <- ggplot(scentest1, aes(percdecrease, percbetaHA, z = icombh)) + metR::geom_contour_fill(breaks = breaks1, color = "black", size = 0.1)  + 
+  labs(x = bquote("% of Baseline"~beta["AA"]~"and"~ zeta), y = bquote("% of Baseline"~beta["HA"]), fill = "ICombH", title = "Tetracycline Usage in Fattening Pigs") +
+  geom_contour(color = "red", size = 1, breaks = 3.26, alpha = 0.8) +
+  metR::geom_text_contour(col = "white",nudge_y = -0.4, fontface = "bold", size = 5, breaks = breaks1, label.placement = label_placement_fraction(frac = 0.5),
+                          stroke = 0.05, stroke.color = "black",) +
+  scale_fill_viridis_b(breaks = breaks1, direction = -1, begin = 0, end = 0.9, values = c(0, seq(0.75,1, by = 0.25/8))) +
+  scale_y_continuous(expand = c(0,0)) + scale_x_continuous(expand = c(0, 0)) + theme_bw() +
+  theme(legend.position = "right", legend.title = element_text(size=14), legend.text=element_text(size=12),  axis.text=element_text(size=14),
+        axis.title.y=element_text(size=14),axis.title.x = element_text(size=14),  
+        plot.title = element_text(size = 18, vjust = 3, hjust = 0.1, face = "bold"),
+        legend.spacing.x = unit(0.3, 'cm'), plot.margin=unit(c(0.5,0.4,0.4,0.4),"cm"), legend.key.height =unit(0.75, "cm"),
+        legend.key.width =  unit(2, "cm"))
+
+
+breaks2 <- c(0, 3.26, seq(3.4, max(scentest2$icombh)+0.1, by = 0.1))
+
+plot2 <- ggplot(scentest2, aes(percdecrease, percbetaHA, z = icombh)) + metR::geom_contour_fill(breaks = breaks2, color = "black", size = 0.1)  + 
+  labs(x = bquote("% of Baseline"~beta["AA"]~"and"~ zeta), y = bquote("% of Baseline"~beta["HA"]), fill = "ICombH", 
+       title = "Ampicillin Usage in Fattening Pigs") +
+  geom_contour(color = "red", size = 1, breaks = 3.26, alpha = 0.8) +
+  metR::geom_text_contour(col = "white",nudge_y = -0.4, fontface = "bold", size = 5, breaks = breaks2, label.placement = label_placement_fraction(frac = 0.5),
+                          stroke = 0.05, stroke.color = "black",) +
+  scale_fill_viridis_b(breaks = breaks2, direction = -1, begin = 0, end = 0.9, values = c(0, seq(0.75,1, by = 0.25/8))) +
+  scale_y_continuous(expand = c(0,0)) + scale_x_continuous(expand = c(0, 0)) + theme_bw() +
+  theme(legend.position = "right", legend.title = element_text(size=14), legend.text=element_text(size=12),  axis.text=element_text(size=14),
+        axis.title.y=element_text(size=14),axis.title.x = element_text(size=14),  
+        plot.title = element_text(size = 18, vjust = 3, hjust = 0.1, face = "bold"),
+        legend.spacing.x = unit(0.3, 'cm'), plot.margin=unit(c(0.5,0.4,0.4,0.4),"cm"), legend.key.height =unit(0.75, "cm"),
+        legend.key.width =  unit(2, "cm"))
+
+
+breaks3 <- c(0, 3.26, seq(3.4, max(scentest3$icombh)+0.1, by = 0.1))
+
+plot3 <- ggplot(scentest3, aes(percdecrease, percbetaHA, z = icombh)) + metR::geom_contour_fill(breaks = breaks3, color = "black", size = 0.1)  + 
+  labs(x = bquote("% of Baseline"~beta["AA"]~"and"~ zeta), y = bquote("% of Baseline"~beta["HA"]), fill = "ICombH", title = "Tetracycline Usage in Broiler Poultry") +
+  geom_contour(color = "red", size = 1, breaks = 3.26, alpha = 0.8) +
+  metR::geom_text_contour(col = "white",nudge_y = -0.4, fontface = "bold", size = 5, breaks = breaks3, label.placement = label_placement_fraction(frac = 0.5),
+                          stroke = 0.05, stroke.color = "black",) +
+  scale_fill_viridis_b(breaks = breaks3, direction = -1, begin = 0, end = 0.9, values = c(0, seq(0.75,1, by = 0.25/8))) +
+  scale_y_continuous(expand = c(0,0)) + scale_x_continuous(expand = c(0, 0)) + theme_bw() +
+  theme(legend.position = "right", legend.title = element_text(size=14), legend.text=element_text(size=12),  axis.text=element_text(size=14),
+        axis.title.y=element_text(size=14),axis.title.x = element_text(size=14),  
+        plot.title = element_text(size = 18, vjust = 3, hjust = 0.1, face = "bold"),
+        legend.spacing.x = unit(0.3, 'cm'), plot.margin=unit(c(0.5,0.4,0.4,0.4),"cm"), legend.key.height =unit(0.75, "cm"),
+        legend.key.width =  unit(2, "cm"))
+
+
+combplot_solo <- ggarrange(plot1, plot2, plot3, ncol = 1, nrow = 3, common.legend = TRUE,
+                      legend = "bottom", labels = c("A", "B", "C"), font.label = list(size = 25), vjust = 1.2)
+
+ggsave(combplot_solo, filename = "HeatMapcomb_solo.png", dpi = 300, type = "cairo", width = 8, height = 10, units = "in",
+       path = "C:/Users/amorg/Documents/PhD/Chapter_2/Figures/Redraft_v1")
+
+
+
 # Collating the Plots -----------------------------------------------------
 
 combplot <- ggarrange(plotheat[[1]], plotheat[[2]], plotheat[[3]], ncol = 1, nrow = 3)
