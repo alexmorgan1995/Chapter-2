@@ -152,30 +152,36 @@ abc <- ggarrange(plotlist1[[1]][[1]], plotlist1[[2]][[1]], plotlist1[[3]][[1]],
 ggsave(abc, filename = "ABC_SMC_Post_v1.png", dpi = 300, type = "cairo", width = 10, height = 10, units = "in",
        path = "C:/Users/amorg/Documents/PhD/Chapter_2/Figures/Redraft_v1")
 
-# Model Fit with Data -----------------------------------------------------
+# Model Fit with Data - Ribbon -----------------------------------------------------
+
+start_time <- Sys.time()
 
 parmtau <- seq(0,0.035, by = 0.002)
 init <- c(Sa=0.98, Isa=0.01, Ira=0.01, Sh=1, Ish=0, Irh=0)
 icombhdata <- data.frame(matrix(ncol = 8, nrow = 0))
+ribbon_final <- data.frame()
 times <- seq(0, 200000, by = 100)
 
 for(j in 1:nrow(MAP)) {
   output1 <- data.frame()
+  output_ribbon <- data.frame()
+  ribbondata <- data[data$group == "data10" & data$fit == unique(data$fit)[j],] 
+  
   for (i in 1:length(parmtau)) {
-    temp <- data.frame(matrix(NA, nrow = 1, ncol=7))
+    temp <- data.frame(matrix(NA, nrow = 1, ncol=3))
+    temp_ribbon <- data.frame(matrix(NA, nrow = 0, ncol=4))
     
     if(rownames(MAP)[j] == "MAPbroil") {
       parms2 = c(ra = 0, rh =  (5.5^-1), ua = 42^-1, uh = 28835^-1, betaAA = MAP[j,"betaAA"], betaAH = 0.00001, betaHH = 0.00001, 
                  betaHA = (0.00001), phi = MAP[j,"phi"], theta = MAP[j,"theta"], alpha = MAP[j,"alpha"], tau = parmtau[i],
                  zeta = MAP[j,"zeta"])
     } 
-    
     else {
       parms2 = c(ra = 60^-1, rh =  (5.5^-1), ua = 240^-1, uh = 28835^-1, betaAA = MAP[j,"betaAA"], betaAH = 0.00001, betaHH = 0.00001, 
                  betaHA = (0.00001), phi = MAP[j,"phi"], theta = MAP[j,"theta"], alpha = MAP[j,"alpha"], tau = parmtau[i],
                  zeta = MAP[j,"zeta"])
     }
-
+    
     out <- ode(y = init, func = amr, times = times, parms = parms2)
     temp[1,1] <- parmtau[i]
     temp[1,2] <- rounding(out[nrow(out),5]) 
@@ -185,43 +191,92 @@ for(j in 1:nrow(MAP)) {
     temp[1,6] <- signif(as.numeric(temp[1,4]/temp[1,5]), digits = 3)
     temp[1,7] <- rounding(out[nrow(out),4]) / (rounding(out[nrow(out),3]) + rounding(out[nrow(out),4]))
     temp[1,8] <- rownames(MAP)[j]
-    print(temp[1,3])
+    
+    for(z in 1:1000) {
+      temp_ribbon_tau <- data.frame(matrix(NA, nrow = 1, ncol=4))
+      
+      if(rownames(MAP)[j] == "MAPbroil") {
+        parms2 = c(ra = 0, rh =  (5.5^-1), ua = 42^-1, uh = 28835^-1, betaAA = ribbondata[z,"betaAA"], betaAH = 0.00001, betaHH = 0.00001, 
+                   betaHA = (0.00001), phi =  ribbondata[z,"phi"], theta = ribbondata[z,"theta"], alpha = ribbondata[z,"alpha"], tau = parmtau[i],
+                   zeta = ribbondata[z,"zeta"])
+      } 
+      else {
+        parms2 = c(ra = 60^-1, rh =  (5.5^-1), ua = 240^-1, uh = 28835^-1, betaAA = ribbondata[z,"betaAA"], betaAH = 0.00001, betaHH = 0.00001, 
+                   betaHA = (0.00001), phi = ribbondata[z,"phi"], theta = ribbondata[z,"theta"], alpha = ribbondata[z,"alpha"], tau = parmtau[i],
+                   zeta = ribbondata[z,"zeta"])
+      }
+      
+      out <- ode(y = init, func = amr, times = times, parms = parms2)
+      temp_ribbon_tau[1,1] <- parmtau[i]
+      temp_ribbon_tau[1,2] <- z
+      temp_ribbon_tau[1,3] <- rounding(out[nrow(out),4]) / (rounding(out[nrow(out),3]) + rounding(out[nrow(out),4]))
+      temp_ribbon_tau[1,4] <- rownames(MAP)[j]
+      
+      temp_ribbon <- rbind.data.frame(temp_ribbon, temp_ribbon_tau)
+      
+      print(paste0(temp_ribbon_tau[1,4], ", tau: ", temp_ribbon_tau[1,1], ", ", (z/1000)*100, "%"))
+      
+    }
     output1 <- rbind.data.frame(output1, temp)
+    output_ribbon <- rbind.data.frame(output_ribbon, temp_ribbon)
   }
   icombhdata <- rbind(icombhdata, output1)
+  ribbon_final <- rbind(ribbon_final, output_ribbon)
 }
 
 colnames(icombhdata)[1:8] <- c("tau", "SuscHumans","InfHumans","ResInfHumans","ICombH","IResRat","IResRatA", "group")
 icombhdata[,2:5] <- icombhdata[,2:5]*100000 #Scaling the prevalence (per 100,000)
 
+colnames(ribbon_final)[1:4] <- c("tau","particle","IResRatA", "group")
+
+HDI_ribbon <- data.frame()
+
+for(j in 1:length(unique(ribbon_final$group))) {
+  for(i in 1:length(unique(ribbon_final$tau))) {
+    HDI_ribbon <- rbind(HDI_ribbon, 
+                        data.frame("tau" = unique(ribbon_final$tau)[i],
+                                   "lowHDI" = hdi(ribbon_final$IResRatA[ribbon_final$tau == unique(ribbon_final$tau)[i] & ribbon_final$group == unique(ribbon_final$group)[j]], credMass = 0.95)[[2]],
+                                   "highHDI" = hdi(ribbon_final$IResRatA[ribbon_final$tau == unique(ribbon_final$tau)[i] & ribbon_final$group == unique(ribbon_final$group)[j]], credMass = 0.95)[[3]],
+                                   "scen" = unique(ribbon_final$group)[j]))
+  }
+}
+
+end_time <- Sys.time(); end_time - start_time
+
 amp <- ggplot(dataamp, aes(x = pig_amp_sales/1000, y= ResPropAnim))  + geom_point() + theme_bw() + 
   scale_x_continuous(limits = c(0,0.03),expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0), limits = c(0,1)) +
+  geom_ribbon(data = HDI_ribbon[HDI_ribbon$scen == "MAPamp",],
+              aes(x = tau ,ymin = lowHDI, ymax = highHDI), fill = "hotpink", alpha = 0.7, inherit.aes=FALSE) +
   labs(x ="Fattening Pig Ampicillin Sales (g/PCU)", y = "Ampicillin-Resistant Fattening Pig Carriage") +
   geom_errorbar(aes(ymin=lower, ymax=upper), colour="black", size=1.01, inherit.aes =  TRUE) + 
-  geom_line(data = icombhdata[icombhdata$group == "MAPtet",], aes(x = tau, y= IResRatA), col = "red", size = 1.02) +
+  geom_line(data = icombhdata[icombhdata$group == "MAPamp",], aes(x = tau, y= IResRatA), col = "red", size = 1.1) +
   theme(legend.text=element_text(size=12), axis.text=element_text(size=12), 
         axis.title.y=element_text(size=12), axis.title.x= element_text(size=12), plot.margin = unit(c(1,1,1,1), "cm"))
 
 tet <- ggplot(datatetra, aes(x = pig_tetra_sales/1000, y= ResPropAnim))  + geom_point() + theme_bw() + 
   scale_x_continuous(limits = c(0,0.034), expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0), limits = c(0,1)) +
   labs(x ="Fattening Pig Tetracycline Sales (g/PCU)", y = "Tetracycline-Resistant Fattening Pig Carriage") +
+  geom_ribbon(data = HDI_ribbon[HDI_ribbon$scen == "MAPtet",],
+              aes(x = tau ,ymin = lowHDI, ymax = highHDI), fill = "hotpink", alpha = 0.7, inherit.aes=FALSE) +
   geom_errorbar(aes(ymin=lower, ymax=upper), colour="black", size=1.01, inherit.aes =  TRUE) + 
-  geom_line(data = icombhdata[icombhdata$group == "MAPamp",], aes(x = tau, y= IResRatA), col = "red", size = 1.02)+
+  geom_line(data = icombhdata[icombhdata$group == "MAPtet",], aes(x = tau, y= IResRatA), col = "red", size = 1.1) +
   theme(legend.text=element_text(size=12), axis.text=element_text(size=12), 
         axis.title.y=element_text(size=12), axis.title.x= element_text(size=12), plot.margin = unit(c(1,1,1,1), "cm"))
 
 broil <- ggplot(databroil, aes(x = tetra_sales/1000, y= ResPropAnim))  + geom_point() + theme_bw() + 
   scale_x_continuous(limits = c(0,0.022), expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0), limits = c(0,1)) +
   labs(x ="Broiler Poultry Tetracycline Sales (g/PCU)", y = "Tetracycline-Resistant Broiler Poultry Carriage") +
+  geom_ribbon(data = HDI_ribbon[HDI_ribbon$scen == "MAPbroil",],
+              aes(x = tau ,ymin = lowHDI, ymax = highHDI), fill = "hotpink", alpha = 0.7, inherit.aes=FALSE) +
   geom_errorbar(aes(ymin=lower, ymax=upper), colour="black", size=1.01, inherit.aes =  TRUE) + 
-  geom_line(data = icombhdata[icombhdata$group == "MAPbroil",], aes(x = tau, y= IResRatA), col = "red", size = 1.02)+
+  geom_line(data = icombhdata[icombhdata$group == "MAPbroil",], aes(x = tau, y= IResRatA), col = "red", size = 1.1)+
   theme(legend.text=element_text(size=12), axis.text=element_text(size=12), 
         axis.title.y=element_text(size=12), axis.title.x= element_text(size=12), plot.margin = unit(c(1,1,1,1), "cm"))
 
 fits <- ggarrange(tet, amp, broil, nrow = 1, ncol = 3, align = "h", labels = c("A","B", "C"), font.label = c(size = 20),
                   common.legend = TRUE, legend = "bottom") 
 
-ggsave(fits, filename = "Model_Fits.png", dpi = 300, type = "cairo", width = 14, height = 5, units = "in",
+ggsave(fits, filename = "Model_Fits_v1.png", dpi = 300, type = "cairo", width = 14, height = 5, units = "in",
        path = "C:/Users/amorg/Documents/PhD/Chapter_2/Figures/Redraft_v1")
 
 # Tau and ICombH Base Plot - Requires you to run previous section ----------------------------------------------------------
@@ -261,9 +316,7 @@ for(i in 1: length(unique(icombhdata$group))){
     }
     
     return(p1)
-    
   })
-  
 }
 
 icombh <- ggarrange(icombhlist[[1]], icombhlist[[2]], icombhlist[[3]], nrow = 3, ncol = 1, align = "v", labels = c("A","B", "C"), font.label = c(size = 20),
@@ -420,7 +473,7 @@ comb.prior.plot <- ggarrange(prior.plot.list[[1]],prior.plot.list[[2]],prior.plo
 ggsave(comb.prior.plot, filename = "prior_parms.png", dpi = 300, type = "cairo", width = 8, height = 13, units = "in",
        path = "C:/Users/amorg/Documents/PhD/Chapter_2/Figures/Redraft_v1")
 
-# Supplementary Plots -----------------------------------------------------
+# Supplementary Plots (Theta Responsible for Co-Existence) -----------------------------------------------------
 
 parmtau <- seq(0,0.035, by = 0.002)
 init <- c(Sa=0.98, Isa=0.01, Ira=0.01, Sh=1, Ish=0, Irh=0)
@@ -454,7 +507,6 @@ output1[,2:5] <- output1[,2:5]*100000 #Scaling the prevalence (per 100,000)
 plotdata <- melt(output1,
                  id.vars = c("tau"), measure.vars = c("ResInfHumans","InfHumans")) 
 
-
 averagesales <- 0.0122887
 
 p1 <- ggplot(plotdata, aes(fill = variable, x = tau, y = value)) + theme_bw() + 
@@ -472,30 +524,3 @@ p1 <- ggplot(plotdata, aes(fill = variable, x = tau, y = value)) + theme_bw() +
 
 ggsave(p1, filename = "Icombh_notheta.png", dpi = 300, type = "cairo", width = 7, height = 4, units = "in",
        path = "C:/Users/amorg/Documents/PhD/Chapter_2/Figures/Redraft_v1")
-
-
-#### Null Neutrality ####
-
-init <- c(Sa=0.99, Isa=0.01, Ira=0.01, Sh=1, Ish=0, Irh=0)
-output1 <- data.frame(matrix(ncol = 8, nrow = 0))
-times <- seq(0, 2000, by = 1)
-
-parms2 = c(ra = 60^-1, rh =  (5.5^-1), ua = 240^-1, uh = 28835^-1, betaAA = MAP[1,"betaAA"], betaAH = 0.00001, betaHH = 0.00001, 
-           betaHA = (0.00001), phi = 0, theta = 0, alpha = 0, tau = 0,
-           zeta = 0)
-
-out <- data.frame(ode(y = init, func = amr, times = times, parms = parms2))
-
-t <- melt(data = out, id.vars  = c("time"), measure.vars = c("Isa", "Ira"))
-
-p2 <- ggplot(t, aes(x = time, y = value, col = variable)) + theme_bw() +  geom_line(stat = "identity", size = 1) + 
-  scale_color_manual(labels = c("Antibiotic-Resistant Infection", "Antibiotic-Sensitive Infection"), values = c("#F8766D", "#619CFF")) +
-  theme(legend.position=c(0.75, 0.875), legend.text=element_text(size=12), legend.title = element_blank(), axis.text=element_text(size=12), 
-        axis.title.y=element_text(size=12), axis.title.x= element_text(size=12), plot.margin = unit(c(0.35,1,0.35,1), "cm"),
-        legend.spacing.x = unit(0.3, 'cm'))  +  scale_x_continuous(expand = c(0, 0))  +  scale_y_continuous(expand = c(0, 0), limits = c(0,0.5))  +
-  labs(x ="Time (a.u)", y = "Prevalence (Animals)")  
-
-ggsave(p2, filename = "Nullneutral.png", dpi = 300, type = "cairo", width = 7, height = 4, units = "in",
-       path = "C:/Users/amorg/Documents/PhD/Chapter_2/Figures/Redraft_v1")
-
-
