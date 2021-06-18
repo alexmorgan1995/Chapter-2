@@ -16,9 +16,9 @@ rounding <- function(x) {
 #Model ODEs
 amr <- function(t, y, parms) {
   with(as.list(c(y, parms)), {
-    dSa = ua + ra*(Isa + Ira) + theta*tau*Isa - (betaAA*Isa*Sa) - (betaAH*Ish*Sa) - (1-alpha)*(betaAH*Irh*Sa) - (1-alpha)*(betaAA*Ira*Sa) - ua*Sa -
+    dSa = ua + ra*(Isa + Ira) + kappa*tau*Isa - (betaAA*Isa*Sa) - (betaAH*Ish*Sa) - (1-alpha)*(betaAH*Irh*Sa) - (1-alpha)*(betaAA*Ira*Sa) - ua*Sa -
       zeta*Sa*(1-alpha) - zeta*Sa 
-    dIsa = betaAA*Isa*Sa + betaAH*Ish*Sa + phi*Ira - theta*tau*Isa - tau*Isa - ra*Isa - ua*Isa + zeta*Sa
+    dIsa = betaAA*Isa*Sa + betaAH*Ish*Sa + phi*Ira - kappa*tau*Isa - tau*Isa - ra*Isa - ua*Isa + zeta*Sa
     dIra = (1-alpha)*betaAH*Irh*Sa + (1-alpha)*betaAA*Ira*Sa + tau*Isa - phi*Ira - ra*Ira - ua*Ira + zeta*Sa*(1-alpha)
     
     dSh = uh + rh*(Ish+Irh) - (betaHH*Ish*Sh) - (1-alpha)*(betaHH*Irh*Sh) - (betaHA*Isa*Sh) - (1-alpha)*(betaHA*Ira*Sh) - uh*Sh 
@@ -44,24 +44,24 @@ import <- function(id) {
 data <- do.call(rbind, list(import(tet), import(amp), import(broil)))
 
 MAPtet <- c("phi" <- mean(data$phi[which(data$group == "data5" & data$fit == "tet")]),
-            "theta" <- mean(data$theta[which(data$group == "data5" & data$fit == "tet")]),
+            "kappa" <- mean(data$kappa[which(data$group == "data5" & data$fit == "tet")]),
             "betaAA" <- mean(data$betaAA[which(data$group == "data5" & data$fit == "tet")]),
             "alpha" <- mean(data$alpha[which(data$group == "data5" & data$fit == "tet")]),
             "zeta" <- mean(data$zeta[which(data$group == "data5" & data$fit == "tet")]))
 
 MAPamp <- c("phi" <- mean(data$phi[which(data$group == "data5" & data$fit == "amp")]),
-            "theta" <- mean(data$theta[which(data$group == "data5" & data$fit == "amp")]),
+            "kappa" <- mean(data$kappa[which(data$group == "data5" & data$fit == "amp")]),
             "betaAA" <- mean(data$betaAA[which(data$group == "data5" & data$fit == "amp")]),
             "alpha" <- mean(data$alpha[which(data$group == "data5" & data$fit == "amp")]),
             "zeta" <- mean(data$zeta[which(data$group == "data5" & data$fit == "amp")]))
 
 MAPbroil <- c("phi" <- mean(data$phi[which(data$group == "data5" & data$fit == "broil")]),
-              "theta" <- mean(data$theta[which(data$group == "data5" & data$fit == "broil")]),
+              "kappa" <- mean(data$kappa[which(data$group == "data5" & data$fit == "broil")]),
               "betaAA" <- mean(data$betaAA[which(data$group == "data5" & data$fit == "broil")]),
               "alpha" <- mean(data$alpha[which(data$group == "data5" & data$fit == "broil")]),
               "zeta" <- mean(data$zeta[which(data$group == "data5" & data$fit == "broil")]))
 
-MAP <- rbind(MAPtet, MAPamp, MAPbroil); colnames(MAP) <- c("phi", "theta", "betaAA", "alpha", "zeta")
+MAP <- rbind(MAPtet, MAPamp, MAPbroil); colnames(MAP) <- c("phi", "kappa", "betaAA", "alpha", "zeta")
 
 # Generic Heatmap Sensitivity Analysis - ICombH + ResRatio ------------------------
 
@@ -72,15 +72,15 @@ init <- c(Sa=0.98, Isa=0.01, Ira=0.01, Sh=1, Ish=0, Irh=0)
 
 parmstet_pigs = c(ra = 60^-1, rh = (5.5^-1), ua = 240^-1, uh = 28835^-1, betaAA = MAP["MAPtet","betaAA"], 
                   betaAH = 0.00001, betaHH = 0.00001, betaHA = (0.00001), phi = MAP["MAPtet","phi"] , 
-                  theta = MAP["MAPtet","theta"], alpha = MAP["MAPtet","alpha"] , tau = 0, zeta = MAP["MAPtet","zeta"])
+                  kappa = MAP["MAPtet","kappa"], alpha = MAP["MAPtet","alpha"] , tau = 0, zeta = MAP["MAPtet","zeta"])
 
 parms_amppigs = c(ra = 60^-1, rh = (5.5^-1), ua = 240^-1, uh = 28835^-1, betaAA = MAP["MAPamp","betaAA"], 
                   betaAH = 0.00001, betaHH = 0.00001, betaHA = (0.00001), phi = MAP["MAPamp","phi"], 
-                  theta = MAP["MAPamp","theta"], alpha = MAP["MAPamp","alpha"], tau = 0, zeta = MAP["MAPamp","zeta"])
+                  kappa = MAP["MAPamp","kappa"], alpha = MAP["MAPamp","alpha"], tau = 0, zeta = MAP["MAPamp","zeta"])
 
 parmstet_broil = c(ra = 0, rh = (5.5^-1), ua = 42^-1, uh = 28835^-1, betaAA = MAP["MAPbroil","betaAA"], 
                    betaAH = 0.00001, betaHH = 0.00001, betaHA = (0.00001), phi = MAP["MAPbroil","phi"], 
-                   theta = MAP["MAPbroil","theta"], alpha = MAP["MAPbroil","alpha"] , tau = 0, 
+                   kappa = MAP["MAPbroil","kappa"], alpha = MAP["MAPbroil","alpha"] , tau = 0, 
                    zeta = MAP["MAPbroil","zeta"])
 
 heatmap <- list()

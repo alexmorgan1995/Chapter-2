@@ -15,9 +15,9 @@ rounding <- function(x) {
 #Model ODEs
 amr <- function(t, y, parms) {
   with(as.list(c(y, parms)), {
-    dSa = ua + ra*(Isa + Ira) + theta*tau*Isa - (betaAA*Isa*Sa) - (betaAH*Ish*Sa) - (1-alpha)*(betaAH*Irh*Sa) - (1-alpha)*(betaAA*Ira*Sa) - ua*Sa -
+    dSa = ua + ra*(Isa + Ira) + kappa*tau*Isa - (betaAA*Isa*Sa) - (betaAH*Ish*Sa) - (1-alpha)*(betaAH*Irh*Sa) - (1-alpha)*(betaAA*Ira*Sa) - ua*Sa -
       zeta*Sa*(1-alpha) - zeta*Sa 
-    dIsa = betaAA*Isa*Sa + betaAH*Ish*Sa + phi*Ira - theta*tau*Isa - tau*Isa - ra*Isa - ua*Isa + zeta*Sa
+    dIsa = betaAA*Isa*Sa + betaAH*Ish*Sa + phi*Ira - kappa*tau*Isa - tau*Isa - ra*Isa - ua*Isa + zeta*Sa
     dIra = (1-alpha)*betaAH*Irh*Sa + (1-alpha)*betaAA*Ira*Sa + tau*Isa - phi*Ira - ra*Ira - ua*Ira + zeta*Sa*(1-alpha)
     
     dSh = uh + rh*(Ish+Irh) - (betaHH*Ish*Sh) - (1-alpha)*(betaHH*Irh*Sh) - (betaHA*Isa*Sh) - (1-alpha)*(betaHA*Ira*Sh) - uh*Sh 
@@ -63,24 +63,24 @@ databroil <- databroil[!databroil$N < 10,]
 #Obtain the MAPs for each dataset
 
 MAPtet <- c("phi" <- mean(data$phi[which(data$group == "data10" & data$fit == "tet")]),
-            "theta" <- mean(data$theta[which(data$group == "data10" & data$fit == "tet")]),
+            "kappa" <- mean(data$kappa[which(data$group == "data10" & data$fit == "tet")]),
             "betaAA" <- mean(data$betaAA[which(data$group == "data10" & data$fit == "tet")]),
             "alpha" <- mean(data$alpha[which(data$group == "data10" & data$fit == "tet")]),
             "zeta" <- mean(data$zeta[which(data$group == "data10" & data$fit == "tet")]))
 
 MAPamp <- c("phi" <- mean(data$phi[which(data$group == "data10" & data$fit == "amp")]),
-            "theta" <- mean(data$theta[which(data$group == "data10" & data$fit == "amp")]),
+            "kappa" <- mean(data$kappa[which(data$group == "data10" & data$fit == "amp")]),
             "betaAA" <- mean(data$betaAA[which(data$group == "data10" & data$fit == "amp")]),
             "alpha" <- mean(data$alpha[which(data$group == "data10" & data$fit == "amp")]),
             "zeta" <- mean(data$zeta[which(data$group == "data10" & data$fit == "amp")]))
 
 MAPbroil <- c("phi" <- mean(data$phi[which(data$group == "data10" & data$fit == "broil")]),
-              "theta" <- mean(data$theta[which(data$group == "data10" & data$fit == "broil")]),
+              "kappa" <- mean(data$kappa[which(data$group == "data10" & data$fit == "broil")]),
               "betaAA" <- mean(data$betaAA[which(data$group == "data10" & data$fit == "broil")]),
               "alpha" <- mean(data$alpha[which(data$group == "data10" & data$fit == "broil")]),
               "zeta" <- mean(data$zeta[which(data$group == "data10" & data$fit == "broil")]))
 
-MAP <- rbind(MAPtet, MAPamp, MAPbroil); colnames(MAP) <- c("phi", "theta", "betaAA", "alpha", "zeta")
+MAP <- rbind(MAPtet, MAPamp, MAPbroil); colnames(MAP) <- c("phi", "kappa", "betaAA", "alpha", "zeta")
 
 # ABC-SMC Posterior -------------------------------------------------------
 
@@ -107,8 +107,8 @@ for(j in 1:length(unique(data$fit))) {
         labs(fill = NULL, title = c("Tetracycline Sales in Fattening Pigs", "Ampicillin Sales in Fattening Pigs", "Tetracycline Sales in Boiler Poultry")[j]) + 
           scale_y_continuous(limits = c(0, max(dens$y)*1.2), expand = c(0, 0), name = " ") 
       }
-      if(colnames(MAP)[i] == "theta") {
-        p1 <- p1 + scale_x_continuous(limits = c(0,2),expand = c(0, 0), name = expression(paste("Efficacy of Antibiotic-Mediated Recovery (", theta, ")"))) +
+      if(colnames(MAP)[i] == "kappa") {
+        p1 <- p1 + scale_x_continuous(limits = c(0,2),expand = c(0, 0), name = expression(paste("Efficacy of Antibiotic-Mediated Recovery (", kappa, ")"))) +
           labs(fill = NULL, title = "") + scale_y_continuous(limits = c(0, 1), expand = c(0, 0), name = " ") 
       }
       if(colnames(MAP)[i] == "betaAA") {
@@ -173,12 +173,12 @@ for(j in 1:nrow(MAP)) {
     
     if(rownames(MAP)[j] == "MAPbroil") {
       parms2 = c(ra = 0, rh =  (5.5^-1), ua = 42^-1, uh = 28835^-1, betaAA = MAP[j,"betaAA"], betaAH = 0.00001, betaHH = 0.00001, 
-                 betaHA = (0.00001), phi = MAP[j,"phi"], theta = MAP[j,"theta"], alpha = MAP[j,"alpha"], tau = parmtau[i],
+                 betaHA = (0.00001), phi = MAP[j,"phi"], kappa = MAP[j,"kappa"], alpha = MAP[j,"alpha"], tau = parmtau[i],
                  zeta = MAP[j,"zeta"])
     } 
     else {
       parms2 = c(ra = 60^-1, rh =  (5.5^-1), ua = 240^-1, uh = 28835^-1, betaAA = MAP[j,"betaAA"], betaAH = 0.00001, betaHH = 0.00001, 
-                 betaHA = (0.00001), phi = MAP[j,"phi"], theta = MAP[j,"theta"], alpha = MAP[j,"alpha"], tau = parmtau[i],
+                 betaHA = (0.00001), phi = MAP[j,"phi"], kappa = MAP[j,"kappa"], alpha = MAP[j,"alpha"], tau = parmtau[i],
                  zeta = MAP[j,"zeta"])
     }
     
@@ -197,12 +197,12 @@ for(j in 1:nrow(MAP)) {
       
       if(rownames(MAP)[j] == "MAPbroil") {
         parms2 = c(ra = 0, rh =  (5.5^-1), ua = 42^-1, uh = 28835^-1, betaAA = ribbondata[z,"betaAA"], betaAH = 0.00001, betaHH = 0.00001, 
-                   betaHA = (0.00001), phi =  ribbondata[z,"phi"], theta = ribbondata[z,"theta"], alpha = ribbondata[z,"alpha"], tau = parmtau[i],
+                   betaHA = (0.00001), phi =  ribbondata[z,"phi"], kappa = ribbondata[z,"kappa"], alpha = ribbondata[z,"alpha"], tau = parmtau[i],
                    zeta = ribbondata[z,"zeta"])
       } 
       else {
         parms2 = c(ra = 60^-1, rh =  (5.5^-1), ua = 240^-1, uh = 28835^-1, betaAA = ribbondata[z,"betaAA"], betaAH = 0.00001, betaHH = 0.00001, 
-                   betaHA = (0.00001), phi = ribbondata[z,"phi"], theta = ribbondata[z,"theta"], alpha = ribbondata[z,"alpha"], tau = parmtau[i],
+                   betaHA = (0.00001), phi = ribbondata[z,"phi"], kappa = ribbondata[z,"kappa"], alpha = ribbondata[z,"alpha"], tau = parmtau[i],
                    zeta = ribbondata[z,"zeta"])
       }
       
@@ -328,6 +328,23 @@ ggsave(icombh, filename = "Icombh.png", dpi = 300, type = "cairo", width = 8, he
 ggsave(icombh, filename = "Icombh_poster.png", dpi = 300, type = "cairo", width = 10, height = 7, units = "in",
        path = "C:/Users/amorg/Documents/PhD/Chapter_2/Figures/Redraft_v1")
 
+# HDI for parameter estimates ---------------------------------------------
+
+#Data is defined at the beginning 
+
+HDI_parms <- list()
+
+for(i in 1:length(unique(data$fit))) {
+  temp_data <- data[data$group == "data10" & data$fit == c("tet", "amp", "broil")[i],]
+  HDI_parms[[i]] <- data.frame("parm" = c("phi", "kappa", "betaAA", "alpha", "zeta"),
+                               "mean_parm" = unlist(lapply(list(temp_data[["phi"]], temp_data[["kappa"]], temp_data[["betaAA"]], 
+                                                                temp_data[["alpha"]], temp_data[["zeta"]]), mean)),
+                               "lowHDI" = sapply(lapply(list(temp_data[["phi"]], temp_data[["kappa"]], temp_data[["betaAA"]], 
+                                                             temp_data[["alpha"]], temp_data[["zeta"]]), hdi), "[[", 2),
+                               "highHDI" = sapply(lapply(list(temp_data[["phi"]], temp_data[["kappa"]], temp_data[["betaAA"]], 
+                                                              temp_data[["alpha"]], temp_data[["zeta"]]), hdi), "[[", 3))
+}; HDI_parms
+
 # Distances for Fits ------------------------------------------------------
 
 summarystatprev <- function(prev) {
@@ -369,16 +386,16 @@ colnames(dataamp)[9] <- "usage"; dataamp$usage <- dataamp$usage/1000
 
 parmstet_pigs = c(ra = 60^-1, rh = (5.5^-1), ua = 240^-1, uh = 28835^-1, betaAA = MAP["MAPtet","betaAA"], 
                   betaAH = 0.00001, betaHH = 0.00001, betaHA = (0.00001), phi = MAP["MAPtet","phi"] , 
-                  theta = MAP["MAPtet","theta"], alpha = MAP["MAPtet","alpha"] , tau = 0, zeta = MAP["MAPtet","zeta"])
+                  kappa = MAP["MAPtet","kappa"], alpha = MAP["MAPtet","alpha"] , tau = 0, zeta = MAP["MAPtet","zeta"])
 
 parmstet_broil = c(ra = 0, rh = (5.5^-1), ua = 42^-1, uh = 28835^-1, betaAA = MAP["MAPbroil","betaAA"], 
                    betaAH = 0.00001, betaHH = 0.00001, betaHA = (0.00001), phi = MAP["MAPbroil","phi"], 
-                   theta = MAP["MAPbroil","theta"], alpha = MAP["MAPbroil","alpha"] , tau = 0, 
+                   kappa = MAP["MAPbroil","kappa"], alpha = MAP["MAPbroil","alpha"] , tau = 0, 
                    zeta = MAP["MAPbroil","zeta"])
 
 parms_amppigs = c(ra = 60^-1, rh = (5.5^-1), ua = 240^-1, uh = 28835^-1, betaAA = MAP["MAPamp","betaAA"], 
                   betaAH = 0.00001, betaHH = 0.00001, betaHA = (0.00001), phi = MAP["MAPamp","phi"], 
-                  theta = MAP["MAPamp","theta"], alpha = MAP["MAPamp","alpha"], tau = 0, zeta = MAP["MAPamp","zeta"])
+                  kappa = MAP["MAPamp","kappa"], alpha = MAP["MAPamp","alpha"], tau = 0, zeta = MAP["MAPamp","zeta"])
 
 for(i in 1:3) {
   casestudy <- list(datatetra, databroil, dataamp)[[i]]
@@ -400,10 +417,11 @@ tauoutput <- matrix(nrow = 0, ncol=4)
 
 averagesales <- c(0.0122887, 0.01156391, 0.006666697)
 
-exploredtau <- c(parmstet_pigs$usage, averagesales[1], 0)
+exploredtau <- c(datatetra$usage, averagesales[1], 0)
 
 init.state = c(Sa=0.98, Isa=0.01, Ira=0.01, Sh=1, Ish=0, Irh=0)
 times = seq(0, 2000, by = 100)
+
 for (i in 1:length(exploredtau)) {
   parms1 <- parmstet_pigs
   parms1[["tau"]] <- exploredtau[[i]]
@@ -421,19 +439,18 @@ colnames(tauoutput) <- c("tau", "ICombH", "ResPropAnim", "ResPropHum")
 
 tauoutput$ICombH[tauoutput$tau == 0]/tauoutput$ICombH[tauoutput$tau == averagesales[1]]
 
-
 # Plotting Prior Distribution ---------------------------------------------
 
 prior.data <- setNames(data.frame(runif(1000, min = 0, max = 0.2), runif(1000, min = 0, max = 0.04), runif(1000, min = 0, max = 2),
                                   "p_alpha" <- rbeta(1000, 1.5, 8.5), runif(1000, min = 0, max = 0.15)), 
-                       c("p_betaAA", "p_phi", "p_theta", "p_alpha", "p_zeta"))
+                       c("p_betaAA", "p_phi", "p_kappa", "p_alpha", "p_zeta"))
 
 prior.plot.list <- list()
 
 for (i in 1:length(colnames(prior.data))) { # Loop over loop.vector
   
   data <- data.frame("data" = prior.data[,colnames(prior.data)[i]])
-  p1 <- ggplot(data, aes(x=data)) + geom_histogram(color="black", fill="lightgrey", bins = 15, size = 0.7, alpha = 0.5) + theme_bw() +
+  p1 <- ggplot(data, aes(x=data)) + geom_histogram(fill="darkgrey", bins = 10, size = 0.7) + theme_bw() +
     theme(legend.text=element_text(size=14), axis.text.x=element_text(size=14),axis.text.y=element_text(size=14),
           axis.title.y=element_text(size=14), axis.title.x= element_text(size=14), plot.margin = unit(c(0.25,0.4,0.15,0.55), "cm"),
           plot.title = element_text(size = 14, vjust = 3, hjust = 0.5, face = "bold"),
@@ -447,8 +464,8 @@ for (i in 1:length(colnames(prior.data))) { # Loop over loop.vector
         labs(fill = NULL, title = "") + 
         scale_y_continuous(limits = c(0,max.y), expand = c(0, 0), name = "Frequency") 
     }
-    if(colnames(prior.data)[i] == "p_theta") {
-      p1 <- p1 + scale_x_continuous(expand = c(0, 0), name = expression(paste("Efficacy of Antibiotic-Mediated Recovery (", theta, ")"))) +
+    if(colnames(prior.data)[i] == "p_kappa") {
+      p1 <- p1 + scale_x_continuous(expand = c(0, 0), name = expression(paste("Efficacy of Antibiotic-Mediated Recovery (", kappa, ")"))) +
         labs(fill = NULL, title = "") + 
         scale_y_continuous(limits = c(0,max.y), expand = c(0, 0), name = "Frequency") 
     }
@@ -473,7 +490,7 @@ comb.prior.plot <- ggarrange(prior.plot.list[[1]],prior.plot.list[[2]],prior.plo
 ggsave(comb.prior.plot, filename = "prior_parms.png", dpi = 300, type = "cairo", width = 8, height = 13, units = "in",
        path = "C:/Users/amorg/Documents/PhD/Chapter_2/Figures/Redraft_v1")
 
-# Supplementary Plots (Theta Responsible for Co-Existence) -----------------------------------------------------
+# Supplementary Plots (kappa Responsible for Co-Existence) -----------------------------------------------------
 
 parmtau <- seq(0,0.035, by = 0.002)
 init <- c(Sa=0.98, Isa=0.01, Ira=0.01, Sh=1, Ish=0, Irh=0)
@@ -485,7 +502,7 @@ for (i in 1:length(parmtau)) {
   temp <- data.frame(matrix(NA, nrow = 1, ncol=7))
   
   parms2 = c(ra = 60^-1, rh =  (5.5^-1), ua = 240^-1, uh = 28835^-1, betaAA = MAP[1,"betaAA"], betaAH = 0.00001, betaHH = 0.00001, 
-             betaHA = (0.00001), phi = MAP[1,"phi"], theta = 0, alpha = 0, tau = parmtau[i],
+             betaHA = (0.00001), phi = MAP[1,"phi"], kappa = 0, alpha = 0, tau = parmtau[i],
              zeta = MAP[1,"zeta"])
   
   out <- ode(y = init, func = amr, times = times, parms = parms2)
@@ -522,5 +539,5 @@ p1 <- ggplot(plotdata, aes(fill = variable, x = tau, y = value)) + theme_bw() +
   labs(x ="Tetracycline Sales in Fattening Pig (g/PCU)", y = "Infected Humans (per 100,000)")  
 
 
-ggsave(p1, filename = "Icombh_notheta.png", dpi = 300, type = "cairo", width = 7, height = 4, units = "in",
+ggsave(p1, filename = "Icombh_nokappa.png", dpi = 300, type = "cairo", width = 7, height = 4, units = "in",
        path = "C:/Users/amorg/Documents/PhD/Chapter_2/Figures/Redraft_v1")

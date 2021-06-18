@@ -15,9 +15,9 @@ amr <- function(t, y, parms) {
   with(as.list(c(y, parms)), {
     
     if(m == 1) {#Model 1 - with Zeta 
-      dSa = ua + ra*(Isa + Ira) + theta*tau*Isa - (betaAA*Isa*Sa) - (betaAH*Ish*Sa) - (1-alpha)*(betaAH*Irh*Sa) - (1-alpha)*(betaAA*Ira*Sa) - ua*Sa -
+      dSa = ua + ra*(Isa + Ira) + kappa*tau*Isa - (betaAA*Isa*Sa) - (betaAH*Ish*Sa) - (1-alpha)*(betaAH*Irh*Sa) - (1-alpha)*(betaAA*Ira*Sa) - ua*Sa -
         zeta*Sa*(1-alpha) - zeta*Sa 
-      dIsa = betaAA*Isa*Sa + betaAH*Ish*Sa + phi*Ira - theta*tau*Isa - tau*Isa - ra*Isa - ua*Isa + zeta*Sa
+      dIsa = betaAA*Isa*Sa + betaAH*Ish*Sa + phi*Ira - kappa*tau*Isa - tau*Isa - ra*Isa - ua*Isa + zeta*Sa
       dIra = (1-alpha)*betaAH*Irh*Sa + (1-alpha)*betaAA*Ira*Sa + tau*Isa - phi*Ira - ra*Ira - ua*Ira + zeta*Sa*(1-alpha)
       
       dSh = uh + rh*(Ish+Irh) - (betaHH*Ish*Sh) - (1-alpha)*(betaHH*Irh*Sh) - (betaHA*Isa*Sh) - (1-alpha)*(betaHA*Ira*Sh) - uh*Sh 
@@ -26,8 +26,8 @@ amr <- function(t, y, parms) {
     }
     
     if(m == 2) {#Model 2 - no Zeta 
-      dSa = ua + ra*(Isa + Ira) + theta*tau*Isa - (betaAA*Isa*Sa) - (betaAH*Ish*Sa) - (1-alpha)*(betaAH*Irh*Sa) - (1-alpha)*(betaAA*Ira*Sa) - ua*Sa 
-      dIsa = betaAA*Isa*Sa + betaAH*Ish*Sa + phi*Ira - theta*tau*Isa - tau*Isa - ra*Isa - ua*Isa 
+      dSa = ua + ra*(Isa + Ira) + kappa*tau*Isa - (betaAA*Isa*Sa) - (betaAH*Ish*Sa) - (1-alpha)*(betaAH*Irh*Sa) - (1-alpha)*(betaAA*Ira*Sa) - ua*Sa 
+      dIsa = betaAA*Isa*Sa + betaAH*Ish*Sa + phi*Ira - kappa*tau*Isa - tau*Isa - ra*Isa - ua*Isa 
       dIra = (1-alpha)*betaAH*Irh*Sa + (1-alpha)*betaAA*Ira*Sa + tau*Isa - phi*Ira - ra*Ira - ua*Ira
       
       dSh = uh + rh*(Ish+Irh) - (betaHH*Ish*Sh) - (1-alpha)*(betaHH*Irh*Sh) - (betaHA*Isa*Sh) - (1-alpha)*(betaHA*Ira*Sh) - uh*Sh 
@@ -74,7 +74,7 @@ computeDistanceABC_ALEX <- function(sum.stats, distanceABC, fitmodel, tau_range,
     temp <- matrix(NA, nrow = 1, ncol = 4)
     parms2 = c(ra = thetaparm[["ra"]], rh =  thetaparm[["rh"]], ua = thetaparm[["ua"]], uh = thetaparm[["uh"]], 
                betaAA = thetaparm[["betaAA"]], betaAH = thetaparm[["betaAH"]], betaHH = thetaparm[["betaHH"]], 
-               betaHA = thetaparm[["betaHA"]], phi = thetaparm[["phi"]], tau = tau_range[i], theta = thetaparm[["theta"]], 
+               betaHA = thetaparm[["betaHA"]], phi = thetaparm[["phi"]], tau = tau_range[i], kappa = thetaparm[["kappa"]], 
                alpha = thetaparm[["alpha"]], zeta = thetaparm[["zeta"]], m = thetaparm[["m"]])
     out <- ode(y = init.state, func = fitmodel, times = times, parms = parms2)
     temp[1,1] <- tau_range[i]
@@ -109,7 +109,7 @@ ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, ini
       if(g==1) {
         d_betaAA <- runif(1, min = 0, max = 0.2)
         d_phi <- runif(1, min = 0, max = 0.04)
-        d_theta <- runif(1, min = 0, max = 2)
+        d_kappa <- runif(1, min = 0, max = 2)
         d_alpha <- rbeta(1, 1.5, 8.5)
         d_zeta <- runif(1, min = 0, max = 0.15)
         d_m <- ceiling(runif(1, min=0, max=2))
@@ -118,21 +118,21 @@ ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, ini
         par <- rtmvnorm(1,mean=res.old[p,], sigma=sigma, lower=lm.low, upper=lm.upp) #Check what this is - the perturbation kernel? 
         d_betaAA <- par[1]
         d_phi <- par[2]
-        d_theta <- par[3]
+        d_kappa <- par[3]
         d_alpha <- par[4]
         d_zeta <- par[5]
         d_m <- round(par[6],0)
       }
       
-      if(prior.non.zero(c(d_betaAA, d_phi, d_theta, d_alpha, d_zeta, d_m))) {
+      if(prior.non.zero(c(d_betaAA, d_phi, d_kappa, d_alpha, d_zeta, d_m))) {
         thetaparm <- c(ra = 0, rh =  (5.5^-1), ua = 42^-1, uh = 28835^-1, betaAA = d_betaAA, betaAH = 0.00001, betaHH = 0.00001, 
-                       betaHA = 0.00001, phi = d_phi, theta = d_theta, alpha = d_alpha, zeta = d_zeta, m = d_m)
+                       betaHA = 0.00001, phi = d_phi, kappa = d_kappa, alpha = d_alpha, zeta = d_zeta, m = d_m)
         
         dist <- computeDistanceABC_ALEX(sum.stats, distanceABC, fitmodel, tau_range, thetaparm, init.state, times, data)
         if((dist[1] <= epsilon_dist[g]) && (dist[2] <= epsilon_food[g]) && (dist[3] <= epsilon_AMR[g]) && (!is.na(dist))) {
           # Store results
           
-          res.new[i,]<-c(d_betaAA, d_phi, d_theta, d_alpha, d_zeta, d_m)  
+          res.new[i,]<-c(d_betaAA, d_phi, d_kappa, d_alpha, d_zeta, d_m)  
           # Calculate weights
           
           if(g == 1) {
@@ -158,7 +158,7 @@ ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, ini
     res.old <- res.new
     print(res.old)
     w.old <- w.new/sum(w.new)
-    colnames(res.new) <- c("betaAA", "phi", "theta", "alpha", "zeta", "m")
+    colnames(res.new) <- c("betaAA", "phi", "kappa", "alpha", "zeta", "m")
 
     write.csv(res.new, file = paste("COMP_results_ABC_SMC_gen_broil_",g,".csv",sep=""), row.names=FALSE)
     ####

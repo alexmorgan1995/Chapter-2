@@ -13,9 +13,9 @@ rounding <- function(x) {
 #Model
 amr <- function(t, y, parms) {
   with(as.list(c(y, parms)), {
-    dSa = ua + ra*(Isa + Ira) + theta*tau*Isa - (betaAA*Isa*Sa) - (betaAH*Ish*Sa) - (1-alpha)*(betaAH*Irh*Sa) - (1-alpha)*(betaAA*Ira*Sa) - ua*Sa -
+    dSa = ua + ra*(Isa + Ira) + kappa*tau*Isa - (betaAA*Isa*Sa) - (betaAH*Ish*Sa) - (1-alpha)*(betaAH*Irh*Sa) - (1-alpha)*(betaAA*Ira*Sa) - ua*Sa -
       zeta*Sa*(1-alpha) - zeta*Sa 
-    dIsa = betaAA*Isa*Sa + betaAH*Ish*Sa + phi*Ira - theta*tau*Isa - tau*Isa - ra*Isa - ua*Isa + zeta*Sa
+    dIsa = betaAA*Isa*Sa + betaAH*Ish*Sa + phi*Ira - kappa*tau*Isa - tau*Isa - ra*Isa - ua*Isa + zeta*Sa
     dIra = (1-alpha)*betaAH*Irh*Sa + (1-alpha)*betaAA*Ira*Sa + tau*Isa - phi*Ira - ra*Ira - ua*Ira + zeta*Sa*(1-alpha)
     
     dSh = uh + rh*(Ish+Irh) - (betaHH*Ish*Sh) - (1-alpha)*(betaHH*Irh*Sh) - (betaHA*Isa*Sh) - (1-alpha)*(betaHA*Ira*Sh) - uh*Sh 
@@ -64,7 +64,7 @@ computeDistanceABC_ALEX <- function(sum.stats, distanceABC, fitmodel, tau_range,
     temp <- matrix(NA, nrow = 1, ncol=4)
     parms2 = c(ra = thetaparm[["ra"]], rh =  thetaparm[["rh"]], ua = thetaparm[["ua"]], uh = thetaparm[["uh"]], 
                betaAA = thetaparm[["betaAA"]], betaAH = thetaparm[["betaAH"]], betaHH = thetaparm[["betaHH"]], 
-               betaHA = thetaparm[["betaHA"]], phi = thetaparm[["phi"]], tau = tau_range[i], theta = thetaparm[["theta"]], 
+               betaHA = thetaparm[["betaHA"]], phi = thetaparm[["phi"]], tau = tau_range[i], kappa = thetaparm[["kappa"]], 
                alpha = thetaparm[["alpha"]], zeta = thetaparm[["zeta"]])
     out <- ode(y = init.state, func = fitmodel, times = times, parms = parms2)
     temp[1,1] <- tau_range[i]
@@ -96,7 +96,7 @@ ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, ini
       if(g==1) {
         d_betaAA <- runif(1, min = 0, max = 0.2)
         d_phi <- runif(1, min = 0, max = 0.04)
-        d_theta <- runif(1, min = 0, max = 2)
+        d_kappa <- runif(1, min = 0, max = 2)
         d_alpha <- rbeta(1, 1.5, 8.5)
         d_zeta <- runif(1, 0, 0.15)
       } else{ 
@@ -104,20 +104,20 @@ ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, ini
         par <- rtmvnorm(1,mean=res.old[p,], sigma=sigma, lower=lm.low, upper=lm.upp)
         d_betaAA<-par[1]
         d_phi<-par[2]
-        d_theta<-par[3]
+        d_kappa<-par[3]
         d_alpha<-par[4]
         d_zeta <-par[5]
       }
-      if(prior.non.zero(c(d_betaAA, d_phi, d_theta, d_alpha, d_zeta))) {
+      if(prior.non.zero(c(d_betaAA, d_phi, d_kappa, d_alpha, d_zeta))) {
         m <- 0
         thetaparm <- c(ra = 60^-1, rh =  (5.5^-1), ua = 240^-1, uh = 28835^-1, betaAA = d_betaAA, betaAH = 0.00001, betaHH = 0.00001, 
-                       betaHA = 0.00001, phi = d_phi, theta = d_theta, alpha = d_alpha, zeta = d_zeta)
+                       betaHA = 0.00001, phi = d_phi, kappa = d_kappa, alpha = d_alpha, zeta = d_zeta)
         
         dist <- computeDistanceABC_ALEX(sum.stats, distanceABC, fitmodel, tau_range, thetaparm, init.state, times, data)
         #print(dist)
         if((dist[1] <= epsilon_dist[g]) && (dist[2] <= epsilon_food[g]) && (dist[3] <= epsilon_AMR[g]) && (!is.na(dist))) {
           # Store results
-          res.new[i,]<-c(d_betaAA, d_phi, d_theta, d_alpha, d_zeta)  
+          res.new[i,]<-c(d_betaAA, d_phi, d_kappa, d_alpha, d_zeta)  
           print(dist)
           # Calculate weights
 
@@ -142,7 +142,7 @@ ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, ini
     res.old <- res.new
     print(res.old)
     w.old <- w.new/sum(w.new)
-    colnames(res.new) <- c("betaAA", "phi", "theta", "alpha", "zeta")
+    colnames(res.new) <- c("betaAA", "phi", "kappa", "alpha", "zeta")
     write.csv(res.new, file = paste("results_ABC_SMC_gen_amp_",g,".csv",sep=""), row.names=FALSE)
     ####
   }
@@ -190,13 +190,13 @@ data9 <- cbind(read.csv("results_ABC_SMC_gen_amp_9.csv", header = TRUE), "group"
 data10 <- cbind(read.csv("results_ABC_SMC_gen_amp_10.csv", header = TRUE), "group" = "data10") 
 
 map_phi <- map_estimate(data10[,"phi"], precision = 20) 
-map_theta <- map_estimate(data10[,"theta"], precision = 20) 
+map_kappa <- map_estimate(data10[,"kappa"], precision = 20) 
 map_betaAA <- map_estimate(data10[,"betaAA"], precision = 20) 
 map_alpha <- map_estimate(data10[,"alpha"], precision = 20) 
 map_zeta <- map_estimate(data10[,"zeta"], precision = 20) 
 
 map_phi <- mean(data10[,"phi"]) 
-map_theta <- mean(data10[,"theta"]) 
+map_kappa <- mean(data10[,"kappa"]) 
 map_betaAA <- mean(data10[,"betaAA"]) 
 map_alpha <- mean(data10[,"alpha"]) 
 map_zeta <- mean(data10[,"zeta"]) 
@@ -204,7 +204,7 @@ map_zeta <- mean(data10[,"zeta"])
 #Plotting the Distributions
 
 testphi <- melt(rbind(data6, data7, data8, data9, data10), id.vars = "group",measure.vars = "phi"); testphi$group <- factor(testphi$group, levels = unique(testphi$group))
-testtheta <- melt(rbind(data6, data7, data8, data9,data10), id.vars = "group",measure.vars = "theta"); testtheta$group <- factor(testtheta$group, levels = unique(testtheta$group))
+testkappa <- melt(rbind(data6, data7, data8, data9,data10), id.vars = "group",measure.vars = "kappa"); testkappa$group <- factor(testkappa$group, levels = unique(testkappa$group))
 testbetaAA <- melt(rbind(data6, data7, data8, data9, data10), id.vars = "group",measure.vars = "betaAA"); testbetaAA$group <- factor(testbetaAA$group, levels = unique(testbetaAA$group))
 testalpha <- melt(rbind(data6, data7, data8, data9, data10), id.vars = "group",measure.vars = "alpha"); testalpha$group <- factor(testalpha$group, levels = unique(testalpha$group))
 testzeta <- melt(rbind(data6, data7, data8, data9, data10), id.vars = "group",measure.vars = "zeta"); testzeta$group <- factor(testzeta$group, levels = unique(testzeta$group))
@@ -216,8 +216,8 @@ p1 <- ggplot(testphi, aes(x=value, fill=group)) + geom_density(alpha=.5) +
   theme(legend.text=element_text(size=14),  axis.text=element_text(size=14),
         axis.title.y=element_text(size=14),axis.title.x= element_text(size=14), plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"))
 
-p2 <- ggplot(testtheta, aes(x=value, fill=group)) + geom_density(alpha=.5)+
-  scale_x_continuous(expand = c(0, 0), name = expression(paste("Efficacy of Antibiotic-Mediated Animal Recovery (", theta, ")"))) + 
+p2 <- ggplot(testkappa, aes(x=value, fill=group)) + geom_density(alpha=.5)+
+  scale_x_continuous(expand = c(0, 0), name = expression(paste("Efficacy of Antibiotic-Mediated Animal Recovery (", kappa, ")"))) + 
   scale_y_continuous(limits = c(0,1), expand = c(0, 0), name = "") +
   labs(fill = NULL) + scale_fill_discrete(labels = c("Generation 6", "Generation 7", "Generation8", "Generation 9", "Generation 10"))+
   theme(legend.text=element_text(size=14),  axis.text=element_text(size=14),
@@ -263,7 +263,7 @@ times <- seq(0, 200000, by = 100)
 for (i in 1:length(parmtau)) {
   temp <- data.frame(matrix(NA, nrow = 1, ncol=7))
   parms2 = c(ra = 60^-1, rh =  (5.5^-1), ua = 240^-1, uh = 28835^-1, betaAA = map_betaAA, betaAH = 0.00001, betaHH = 0.00001, 
-             betaHA = (0.00001), phi = map_phi, theta = map_theta, alpha = map_alpha, tau = parmtau[i], zeta = map_zeta)
+             betaHA = (0.00001), phi = map_phi, kappa = map_kappa, alpha = map_alpha, tau = parmtau[i], zeta = map_zeta)
   out <- ode(y = init, func = amr, times = times, parms = parms2)
   temp[1,1] <- parmtau[i]
   temp[1,2] <- rounding(out[nrow(out),5]) 
@@ -300,7 +300,7 @@ times <- seq(0, 200000, by = 100)
 for (i in 1:length(parmtau)) {
   temp <- data.frame(matrix(NA, nrow = 1, ncol=7))
   parms2 = c(ra = 60^-1, rh =  (5.5^-1), ua = 240^-1, uh = 28835^-1, betaAA = map_betaAA, betaAH = 0.00001, betaHH = 0.00001, 
-             betaHA = (0.00001), phi = map_phi, theta = map_theta, alpha = map_alpha, tau = parmtau[i], zeta = map_zeta)
+             betaHA = (0.00001), phi = map_phi, kappa = map_kappa, alpha = map_alpha, tau = parmtau[i], zeta = map_zeta)
   out <- ode(y = init, func = amr, times = times, parms = parms2)
   temp[1,1] <- parmtau[i]
   temp[1,2] <- rounding(out[nrow(out),5]) 

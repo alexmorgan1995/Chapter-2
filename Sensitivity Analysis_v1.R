@@ -15,9 +15,9 @@ rounding <- function(x) {
 #Model ODEs
 amr <- function(t, y, parms) {
   with(as.list(c(y, parms)), {
-    dSa = ua + ra*(Isa + Ira) + theta*tau*Isa - (betaAA*Isa*Sa) - (betaAH*Ish*Sa) - (1-alpha)*(betaAH*Irh*Sa) - (1-alpha)*(betaAA*Ira*Sa) - ua*Sa -
+    dSa = ua + ra*(Isa + Ira) + kappa*tau*Isa - (betaAA*Isa*Sa) - (betaAH*Ish*Sa) - (1-alpha)*(betaAH*Irh*Sa) - (1-alpha)*(betaAA*Ira*Sa) - ua*Sa -
       zeta*Sa*(1-alpha) - zeta*Sa 
-    dIsa = betaAA*Isa*Sa + betaAH*Ish*Sa + phi*Ira - theta*tau*Isa - tau*Isa - ra*Isa - ua*Isa + zeta*Sa
+    dIsa = betaAA*Isa*Sa + betaAH*Ish*Sa + phi*Ira - kappa*tau*Isa - tau*Isa - ra*Isa - ua*Isa + zeta*Sa
     dIra = (1-alpha)*betaAH*Irh*Sa + (1-alpha)*betaAA*Ira*Sa + tau*Isa - phi*Ira - ra*Ira - ua*Ira + zeta*Sa*(1-alpha)
     
     dSh = uh + rh*(Ish+Irh) - (betaHH*Ish*Sh) - (1-alpha)*(betaHH*Irh*Sh) - (betaHA*Isa*Sh) - (1-alpha)*(betaHA*Ira*Sh) - uh*Sh 
@@ -43,27 +43,27 @@ import <- function(id) {
 data <- do.call(rbind, list(import(tet), import(amp), import(broil)))
 
 MAPtet <- c("phi" <- mean(data$phi[which(data$group == "data5" & data$fit == "tet")]),
-            "theta" <- mean(data$theta[which(data$group == "data5" & data$fit == "tet")]),
+            "kappa" <- mean(data$kappa[which(data$group == "data5" & data$fit == "tet")]),
             "betaAA" <- mean(data$betaAA[which(data$group == "data5" & data$fit == "tet")]),
             "alpha" <- mean(data$alpha[which(data$group == "data5" & data$fit == "tet")]),
             "zeta" <- mean(data$zeta[which(data$group == "data5" & data$fit == "tet")]))
 
 MAPamp <- c("phi" <- mean(data$phi[which(data$group == "data5" & data$fit == "amp")]),
-            "theta" <- mean(data$theta[which(data$group == "data5" & data$fit == "amp")]),
+            "kappa" <- mean(data$kappa[which(data$group == "data5" & data$fit == "amp")]),
             "betaAA" <- mean(data$betaAA[which(data$group == "data5" & data$fit == "amp")]),
             "alpha" <- mean(data$alpha[which(data$group == "data5" & data$fit == "amp")]),
             "zeta" <- mean(data$zeta[which(data$group == "data5" & data$fit == "amp")]))
 
 MAPbroil <- c("phi" <- mean(data$phi[which(data$group == "data5" & data$fit == "broil")]),
-              "theta" <- mean(data$theta[which(data$group == "data5" & data$fit == "broil")]),
+              "kappa" <- mean(data$kappa[which(data$group == "data5" & data$fit == "broil")]),
               "betaAA" <- mean(data$betaAA[which(data$group == "data5" & data$fit == "broil")]),
               "alpha" <- mean(data$alpha[which(data$group == "data5" & data$fit == "broil")]),
               "zeta" <- mean(data$zeta[which(data$group == "data5" & data$fit == "broil")]))
 
-MAP <- rbind(MAPtet, MAPamp, MAPbroil); colnames(MAP) <- c("phi", "theta", "betaAA", "alpha", "zeta")
+MAP <- rbind(MAPtet, MAPamp, MAPbroil); colnames(MAP) <- c("phi", "kappa", "betaAA", "alpha", "zeta")
 
 sensparms <- c("phi" = mean(MAP[1:3]), 
-               "theta" = mean(MAP[4:6]),
+               "kappa" = mean(MAP[4:6]),
                "betaAA" = mean(MAP[7:9]),
                "alpha" = mean(MAP[10:12]),
                "zeta" = mean(MAP[13:15]),
@@ -87,17 +87,17 @@ init <- c(Sa=0.98, Isa=0.01, Ira=0.01, Sh=1, Ish=0, Irh=0)
 #                                    0.1310852 , 11.30831, 1, 0.1, 0.5), 
 #                        factor=13, names = c("ra", "rh" ,"ua", "uh", 
 #                                             "betaAA", "betaAH", "betaHH", "betaHA",
-#                                             "phi", "theta", "alpha", "tau", "zeta"))
+#                                             "phi", "kappa", "alpha", "tau", "zeta"))
 
 parms = fast_parameters(minimum = c(600^-1, 55^-1, 2400^-1, 288350^-1, 
                                     sensparms["betaAA"]/10, 0.000001, 0.000001, 0.000001, 
-                                    sensparms["phi"]/10 , sensparms["theta"]/10, 0, sensparms["tau"]/10, sensparms["zeta"]/10), 
+                                    sensparms["phi"]/10 , sensparms["kappa"]/10, 0, sensparms["tau"]/10, sensparms["zeta"]/10), 
                         maximum = c(6^-1, 0.55^-1, 24^-1, 2883.5^-1, 
                                     sensparms["betaAA"]*10, 0.0001, 0.0001, 0.0001, 
-                                    sensparms["phi"]*10 , sensparms["theta"]*10, 1, sensparms["tau"]*10, sensparms["zeta"]*10), 
+                                    sensparms["phi"]*10 , sensparms["kappa"]*10, 1, sensparms["tau"]*10, sensparms["zeta"]*10), 
                         factor=13, names = c("ra", "rh" ,"ua", "uh", 
                                            "betaAA", "betaAH", "betaHH", "betaHA",
-                                             "phi", "theta", "alpha", "tau", "zeta"))
+                                             "phi", "kappa", "alpha", "tau", "zeta"))
 
 # General Sensitivity Analysis - ICombH and ResRat -------------------------
 
@@ -108,7 +108,7 @@ for (i in 1:nrow(parms)) {
   temp <- numeric(1)
   parms1 = c(ra = parms$ra[i], rh = parms$rh[i], ua = parms$ua[i], uh = parms$uh[i], betaAA = parms$betaAA[i],
              betaAH = parms$betaAH[i], betaHH = parms$betaHH[i], betaHA = parms$betaHA[i], phi=parms$phi[i],
-             tau=parms$tau[i], theta=parms$theta[i], alpha = parms$alpha[i], zeta = parms$zeta[i])
+             tau=parms$tau[i], kappa=parms$kappa[i], alpha = parms$alpha[i], zeta = parms$zeta[i])
   out <- ode(y = init, func = amr, times = times, parms = parms1)
   temp[1] <- rounding(out[nrow(out),6]) + rounding(out[nrow(out),7])
   temp[2] <- rounding(out[nrow(out),7])/(rounding(out[nrow(out),6]) + rounding(out[nrow(out),7]))
@@ -124,10 +124,10 @@ output1 <- output1[!is.infinite(rowSums(output1)),]
 sensit1 <- NULL; df.equilibrium <- NULL
 sensit1 <- output1$ICombH #Creating Variable for the output variable of interest
 sens1 <- sensitivity(x=sensit1, numberf=13, make.plot=T, names = c("ra", "rh" ,"ua", "uh", "betaAA", "betaAH", "betaHH", "betaHA",
-                                                                   "phi", "theta", "alpha", "tau", "zeta"))
+                                                                   "phi", "kappa", "alpha", "tau", "zeta"))
 
 df.equilibrium <- data.frame(parameter=rbind("ra", "rh" ,"ua", "uh", "betaAA", "betaAH", "betaHH", "betaHA",
-                                             "phi", "theta", "alpha", "tau", "zeta"), value=sens1)
+                                             "phi", "kappa", "alpha", "tau", "zeta"), value=sens1)
 
 ggplot(df.equilibrium, aes(x = reorder(parameter, -value), y = value)) + geom_bar(stat="identity", fill="lightgrey", col = "black", width  = 0.8)
 
@@ -135,7 +135,7 @@ ICombH <- ggplot(df.equilibrium, aes(x = reorder(parameter, -value), y = value))
   scale_y_continuous(limits = c(0,  max(df.equilibrium$value)*1.1), expand = c(0, 0), name = "Partial Variance") + 
   scale_x_discrete(expand = c(0, 0.7), name = "Parameter", 
                    labels = c(expression(r[H]), expression(beta[HA]),  expression(alpha),expression(zeta), expression(beta[HH]),
-                              expression(tau), expression(theta), expression(r[A]), expression(beta[AA]), expression(mu[H]),
+                              expression(tau), expression(kappa), expression(r[A]), expression(beta[AA]), expression(mu[H]),
                               expression(mu[A]),  expression(beta[AH]), expression(phi))) +
   labs(fill = NULL, title = bquote(Sensitivity~Analysis~of~"I*"["H"])) + 
   theme(legend.text=element_text(size=14), axis.text=element_text(size=14), plot.title = element_text(size = 15, vjust = 1.5, hjust = 0.5, face = "bold"),
@@ -145,17 +145,17 @@ ICombH <- ggplot(df.equilibrium, aes(x = reorder(parameter, -value), y = value))
 sensit2 <- NULL; df.equilibrium1 <- NULL
 sensit2 <- output1$IResRat #Creating Variable for the output variable of interest
 sens2 <- sensitivity(x=sensit2, numberf=13, make.plot=T, names = c("ra", "rh" ,"ua", "uh", "betaAA", "betaAH", "betaHH", "betaHA",
-                                                                   "phi", "theta", "alpha", "tau", "zeta"))
+                                                                   "phi", "kappa", "alpha", "tau", "zeta"))
 
 df.equilibrium1 <- data.frame(parameter=rbind("ra", "rh" ,"ua", "uh", "betaAA", "betaAH", "betaHH", "betaHA",
-                                              "phi", "theta", "alpha", "tau", "zeta"), value=sens2)
+                                              "phi", "kappa", "alpha", "tau", "zeta"), value=sens2)
 
 ggplot(df.equilibrium1, aes(x = reorder(parameter, -value), y = value)) + geom_bar(stat="identity", fill="lightgrey", col = "black", width  = 0.8)
 
 resprop <- ggplot(df.equilibrium1, aes(x = reorder(parameter, -value), y = value)) + geom_bar(stat="identity", fill="lightgrey", col = "black", width  = 0.8) + theme_bw() + 
   scale_y_continuous(limits = c(0,  max(df.equilibrium1$value)*1.1), expand = c(0, 0), name = "Partial Variance") + 
   scale_x_discrete(expand = c(0, 0.7), name = "Parameter", 
-                   labels = c(expression(alpha), expression(tau), expression(phi), expression(theta), expression(r[A]), expression(mu[A]),
+                   labels = c(expression(alpha), expression(tau), expression(phi), expression(kappa), expression(r[A]), expression(mu[A]),
                               expression(beta[AA]), expression(zeta), expression(mu[H]), expression(beta[AH]),
                               expression(r[H]), expression(beta[HA]), expression(beta[HH]))) +
   labs(fill = NULL, title = bquote(Sensitivity~Analysis~of~"I*"["RHProp"])) + 
@@ -171,13 +171,13 @@ ggsave(sensplot, filename = "Sensitivity_ICombH_ResRat.png", dpi = 300, type = "
 
 parms = fast_parameters(minimum = c(600^-1, 55^-1, 2400^-1, 288350^-1, 
                                     sensparms["betaAA"]/10, 0.000001, 0.000001, 0.000001, 
-                                    sensparms["phi"]/10 , sensparms["theta"]/10, 0, sensparms["zeta"]/10), 
+                                    sensparms["phi"]/10 , sensparms["kappa"]/10, 0, sensparms["zeta"]/10), 
                         maximum = c(6^-1, 0.55^-1, 24^-1, 2883.5^-1, 
                                     sensparms["betaAA"]*10, 0.0001, 0.0001, 0.0001, 
-                                    sensparms["phi"]*10 , sensparms["theta"]*10, 1, sensparms["zeta"]*10), 
+                                    sensparms["phi"]*10 , sensparms["kappa"]*10, 1, sensparms["zeta"]*10), 
                         factor=12, names = c("ra", "rh" ,"ua", "uh", 
                                              "betaAA", "betaAH", "betaHH", "betaHA",
-                                             "phi", "theta", "alpha", "zeta"))
+                                             "phi", "kappa", "alpha", "zeta"))
 
 
 tauoutput <- data.frame(matrix(nrow = 0, ncol = 3))
@@ -188,7 +188,7 @@ for (j in 1:nrow(parms)) {
   for (i in 1:length(tau_range)) {
     parms2 = c(ra = parms$ra[j], rh = parms$rh[j], ua = parms$ua[j], uh = parms$uh[j], betaAA = parms$betaAA[j],
                betaAH = parms$betaAH[j], betaHH = parms$betaHH[j], betaHA = parms$betaHA[j], phi=parms$phi[j],
-               theta=parms$theta[j], alpha = parms$alpha[j], tau = tau_range[i], zeta = parms$zeta[j])
+               kappa=parms$kappa[j], alpha = parms$alpha[j], tau = tau_range[i], zeta = parms$zeta[j])
     out <- ode(y = init, func = amr, times = times, parms = parms2)
     temp[i] <- (rounding(out[nrow(out),6]) + rounding(out[nrow(out),7]))*100000
   }
@@ -222,7 +222,7 @@ tauoutput <- data.frame(matrix(nrow = 0, ncol = 3))
 for (j in 1:nrow(parms)) {
   parms2 = c(ra = parms$ra[j], rh = parms$rh[j], ua = parms$ua[j], uh = parms$uh[j], betaAA = parms$betaAA[j],
              betaAH = parms$betaAH[j], betaHH = parms$betaHH[j], betaHA = parms$betaHA[j], phi=parms$phi[j],
-             theta=parms$theta[j], alpha = parms$alpha[j], tau = 0, zeta = parms$zeta[j])
+             kappa=parms$kappa[j], alpha = parms$alpha[j], tau = 0, zeta = parms$zeta[j])
   out <- ode(y = init, func = amr, times = times, parms = parms2)
   temp <- (rounding(out[nrow(out),6]) + rounding(out[nrow(out),7]))*100000
   tauoutput <- rbind(tauoutput, c(temp ,abs(temp - 3.26)))
@@ -248,16 +248,16 @@ hist(tauanalysis2, xlab = bquote("% Increase above Baseline"~"I*"["H"]~" (3.26 p
 #Increase
 sensit <- tauanalysis 
 sens <- sensitivity(x=sensit, numberf=12, make.plot=T, names = c("ra", "rh" ,"ua", "uh", "betaAA", "betaAH", "betaHH", "betaHA",
-                                                                 "phi", "theta", "alpha", "zeta"))
+                                                                 "phi", "kappa", "alpha", "zeta"))
 df.equilibrium <- NULL; df.equilibrium <- data.frame(parameter=rbind("ra", "rh" ,"ua", "uh", "betaAA", "betaAH", "betaHH", "betaHA",
-                                                                     "phi", "theta", "alpha", "zeta"), value=sens)
+                                                                     "phi", "kappa", "alpha", "zeta"), value=sens)
 
 #Compensation
 sensit1 <- tauanalysis2 #Creating Variable for the output variable of interest
 sens1 <- sensitivity(x=sensit1, numberf=12, make.plot=T, names = c("ra", "rh" ,"ua", "uh", "betaAA", "betaAH", "betaHH", "betaHA",
-                                                                 "phi", "theta", "alpha", "zeta"))
+                                                                 "phi", "kappa", "alpha", "zeta"))
 df.equilibrium1 <- NULL; df.equilibrium1 <- data.frame(parameter=rbind("ra", "rh" ,"ua", "uh", "betaAA", "betaAH", "betaHH", "betaHA",
-                                                                     "phi", "theta", "alpha", "zeta"), value=sens1)
+                                                                     "phi", "kappa", "alpha", "zeta"), value=sens1)
 
 #Plotting
 
@@ -266,7 +266,7 @@ ggplot(df.equilibrium, aes(x = reorder(parameter, -value), y = value)) + geom_ba
 p1 <- ggplot(df.equilibrium, aes(x = reorder(parameter, -value), y = value)) + geom_bar(stat="identity", fill="lightgrey", col = "black", width  = 0.8) + theme_bw() + 
   scale_y_continuous(limits = c(0,  max(df.equilibrium$value)*1.1), expand = c(0, 0), name = "Partial Variance") + 
   scale_x_discrete(expand = c(0, 0.7), name = "Parameter", 
-                   labels = c(expression(zeta), expression(theta), expression(alpha), expression(r[A]), expression(phi), expression(mu[H]),
+                   labels = c(expression(zeta), expression(kappa), expression(alpha), expression(r[A]), expression(phi), expression(mu[H]),
                               expression(mu[A]), expression(beta[AA]),expression(r[H]),
                               expression(beta[AH]) , expression(beta[HH]), expression(beta[HA]))) +
   labs(fill = NULL, title = bquote(bold("Increase in"~ "I*"["H"] ~ "from" ~ tau ~ "=" ~ 0.0102 ~ "to" ~ tau ~ "=" ~  0))) + 
@@ -279,7 +279,7 @@ p2 <- ggplot(df.equilibrium1, aes(x = reorder(parameter, -value), y = value)) + 
   scale_y_continuous(limits = c(0,  max(df.equilibrium1$value)*1.1), expand = c(0, 0), name = "Partial Variance") + 
   scale_x_discrete(expand = c(0, 0.7), name = "Parameter", 
                    labels = c(expression(r[H]), expression(beta[HA]), expression(r[A]), expression(alpha), 
-                              expression(zeta),expression(beta[AA]), expression(theta), expression(beta[AH]),
+                              expression(zeta),expression(beta[AA]), expression(kappa), expression(beta[AH]),
                               expression(mu[A]), expression(beta[HH]), expression(phi),expression(mu[H]))) +
   labs(fill = NULL, title = bquote(bold(.(Mitigating ~ Increases ~ from ~ Baseline ~ "I*"["H"] ~ "=" ~ 3.26~ per ~ "100,000")))) + 
   theme(legend.text=element_text(size=14), axis.text=element_text(size=14), plot.title = element_text(size = 15, vjust = 1.5, hjust = 0.5),
@@ -300,7 +300,7 @@ parmdetails <- rbind(data.frame("Parameter" = "betaAA", "Value" = seq(0, senspar
                      data.frame("Parameter" = "betaHH", "Value" = seq(0, 0.0001, by = 0.0001/100)),
                      data.frame("Parameter" = "betaAH", "Value" = seq(0, 0.0001, by = 0.0001/100)),
                      data.frame("Parameter" = "phi", "Value" = seq(0, sensparms["phi"]*10, by = (sensparms["phi"]*10)/100)),
-                     data.frame("Parameter" = "theta", "Value" = seq(0, sensparms["theta"]*10, by = (sensparms["theta"]*10)/100)),
+                     data.frame("Parameter" = "kappa", "Value" = seq(0, sensparms["kappa"]*10, by = (sensparms["kappa"]*10)/100)),
                      data.frame("Parameter" = "alpha", "Value" = seq(0, 1, by = 1/100)),
                      data.frame("Parameter" = "zeta", "Value" = seq(0, sensparms["zeta"]*10, by = (sensparms["zeta"]*10)/100)),
                      data.frame("Parameter" = "rh", "Value" = seq(0.01, 0.55^-1, by = 0.55^-1/100)),
@@ -313,7 +313,7 @@ init <- c(Sa=0.98, Isa=0.01, Ira=0.01, Sh=1, Ish=0, Irh=0)
 tau_range <- c(0, sensparms[["tau"]])
 
 parms = c(ra = 60^-1, rh =  (5.5^-1), ua = 240^-1, uh = 28835^-1, betaAA = (sensparms[["betaAA"]]), betaAH = 0.00001, betaHH = 0.00001, 
-          betaHA = (0.00001), phi = sensparms[["phi"]], theta = sensparms[["theta"]], alpha = sensparms[["alpha"]], zeta = sensparms[["zeta"]])
+          betaHA = (0.00001), phi = sensparms[["phi"]], kappa = sensparms[["kappa"]], alpha = sensparms[["alpha"]], zeta = sensparms[["zeta"]])
 
 suppplotlist <- list()
 
@@ -351,7 +351,7 @@ for (j in 1:length(unique(parmdetails[,1]))) {
     output <- output[!is.nan(output$PercInc) & !is.nan(output$RelInc) & !is.infinite(output$PercInc),]
 
     plotnames <- c(bquote(beta["AA"]~Parameter), bquote(beta["HA"]~Parameter), bquote(beta["HH"]~Parameter), bquote(beta["AH"]~Parameter), 
-                   bquote(phi~Parameter), bquote(theta~Parameter), bquote(alpha~Parameter), bquote(zeta~Parameter), bquote(r["H"]~Parameter), bquote(r["A"]~Parameter), 
+                   bquote(phi~Parameter), bquote(kappa~Parameter), bquote(alpha~Parameter), bquote(zeta~Parameter), bquote(r["H"]~Parameter), bquote(r["A"]~Parameter), 
                    bquote(mu["H"]~Parameter), bquote(mu["A"]~Parameter))[[j]]
 
     p1 <- ggplot(output, aes(x = as.numeric(ParmValue), y = as.numeric(PercInc))) + theme_bw() + geom_line(lwd = 1.02, col ="darkblue") +
