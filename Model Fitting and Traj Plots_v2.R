@@ -103,12 +103,12 @@ for(j in 1:length(unique(data$fit))) {
               axis.title.y=element_text(size=10), axis.title.x= element_text(size=10), plot.margin = unit(c(0.25,0.4,0.15,0.55), "cm"),
               plot.title = element_text(size = 12, vjust = 3, hjust = 0.5, face = "bold"))
       if(colnames(MAP)[i] == "phi") {
-        p1 <- p1 + scale_x_continuous(limits = c(0,0.04), expand = c(0, 0), name = expression(paste("Rate of Resistance Reversion (", phi, ")"))) +
+        p1 <- p1 + scale_x_continuous(limits = c(0,0.05), expand = c(0, 0), name = expression(paste("Rate of Resistance Reversion (", phi, ")"))) +
         labs(fill = NULL, title = c("Tetracycline Sales in Fattening Pigs", "Ampicillin Sales in Fattening Pigs", "Tetracycline Sales in Boiler Poultry")[j]) + 
           scale_y_continuous(limits = c(0, max(dens$y)*1.2), expand = c(0, 0), name = " ") 
       }
       if(colnames(MAP)[i] == "kappa") {
-        p1 <- p1 + scale_x_continuous(limits = c(0,2),expand = c(0, 0), name = expression(paste("Efficacy of Antibiotic-Mediated Recovery (", kappa, ")"))) +
+        p1 <- p1 + scale_x_continuous(limits = c(0,4),expand = c(0, 0), name = expression(paste("Efficacy of Antibiotic-Mediated Recovery (", kappa, ")"))) +
           labs(fill = NULL, title = "") + scale_y_continuous(limits = c(0, 1), expand = c(0, 0), name = " ") 
       }
       if(colnames(MAP)[i] == "betaAA") {

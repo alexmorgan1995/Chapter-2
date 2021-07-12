@@ -97,8 +97,8 @@ ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, ini
     while(i <= N) {
       if(g==1) {
         d_betaAA <- runif(1, min = 0, max = 0.2)
-        d_phi <- runif(1, min = 0, max = 0.04)
-        d_kappa <- runif(1, min = 0, max = 2)
+        d_phi <- runif(1, min = 0, max = 0.05)
+        d_kappa <- runif(1, min = 0, max = 3)
         d_alpha <- rbeta(1, 1.5, 8.5)
         d_zeta <- runif(1, 0, 0.15)
       } else{ 
@@ -149,7 +149,7 @@ ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, ini
 N <- 1000 #(ACCEPTED PARTICLES PER GENERATION)
 
 lm.low <- c(0, 0, 0, 0, 0)
-lm.upp <- c(0.2, 0.04, 2, 1, 0.15)
+lm.upp <- c(0.2, 0.05, 3, 1, 0.15)
 
 # Empty matrices to store results (5 model parameters)
 res.old<-matrix(ncol=5,nrow=N)
@@ -209,8 +209,8 @@ p1 <- ggplot(testphi, aes(x=value, fill=group)) + geom_density(alpha=.5) +
         axis.title.y=element_text(size=14),axis.title.x= element_text(size=14), plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"))
 
 p2 <- ggplot(testkappa, aes(x=value, fill=group)) + geom_density(alpha=.5)+
-  scale_x_continuous(expand = c(0, 0), name = expression(paste("Efficacy of Antibiotic-Mediated Animal Recovery (", kappa, ")"))) + 
-  scale_y_continuous(limits = c(0,1), expand = c(0, 0), name = "") +
+  scale_x_continuous(limits = c(0,4),expand = c(0, 0), name = expression(paste("Efficacy of Antibiotic-Mediated Animal Recovery (", kappa, ")"))) + 
+  scale_y_continuous(limits = c(0,5), expand = c(0, 0), name = "") +
   labs(fill = NULL) + scale_fill_discrete(labels = c("Generation 6", "Generation 7", "Generation 8", "Generation 9", "Generation 10")) +
   theme(legend.text=element_text(size=14),  axis.text=element_text(size=14),
         axis.title.y=element_text(size=14),axis.title.x= element_text(size=14), plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"))
@@ -315,3 +315,8 @@ ggplot()  + geom_point(data = datatetra, aes(x = pig_tetra_sales, y= ResPropAnim
   scale_x_continuous(expand = c(0, 0), limits = c(0,0.035)) + scale_y_continuous(expand = c(0, 0), limits = c(0,1)) +
   labs(x ="Livestock Antibiotic Usage (g/PCU)", y = "Antibiotic-Resistant Livestock Carriage") + 
   geom_line(data = output2, aes(x = tau, y= IResRatA), col = "darkred", size = 1.02)
+
+# Relative Increase in I*H ------------------------------------------------
+
+#Requires running the previous section 
+

@@ -3,7 +3,7 @@ library("bayestestR"); library("tmvtnorm"); library("ggpubr"); library("sensitiv
 library("grid"); library("gridExtra")
 
 rm(list=ls())
-setwd("C:/Users/amorg/Documents/PhD/Chapter_2/Chapter2_Fit_Data/FinalData")
+setwd("C:/Users/amorg/Documents/PhD/Chapter_2/Chapter2_Fit_Data/FinalData/NewFit")
 
 # Model Functions ----------------------------------------------------------
 
@@ -31,7 +31,7 @@ amr <- function(t, y, parms) {
 #Importing in the Datasets
 import <- function(id) {
   data <- data.frame(matrix(ncol = 6, nrow = 0))
-  for(i in 1:5) {
+  for(i in 1:10) {
     test  <- cbind(read.csv(paste0("results_ABC_SMC_gen_",substitute(id),"_",i,".csv"), 
                             header = TRUE), "group" = paste0("data",i), "fit" = as.character(substitute(id)))
     data <- rbind(data, test)
@@ -43,23 +43,23 @@ import <- function(id) {
 #Import of Posterior Distributions
 data <- do.call(rbind, list(import(tet), import(amp), import(broil)))
 
-MAPtet <- c("phi" <- mean(data$phi[which(data$group == "data5" & data$fit == "tet")]),
-            "kappa" <- mean(data$kappa[which(data$group == "data5" & data$fit == "tet")]),
-            "betaAA" <- mean(data$betaAA[which(data$group == "data5" & data$fit == "tet")]),
-            "alpha" <- mean(data$alpha[which(data$group == "data5" & data$fit == "tet")]),
-            "zeta" <- mean(data$zeta[which(data$group == "data5" & data$fit == "tet")]))
+MAPtet <- c("phi" <- mean(data$phi[which(data$group == "data10" & data$fit == "tet")]),
+            "kappa" <- mean(data$kappa[which(data$group == "data10" & data$fit == "tet")]),
+            "betaAA" <- mean(data$betaAA[which(data$group == "data10" & data$fit == "tet")]),
+            "alpha" <- mean(data$alpha[which(data$group == "data10" & data$fit == "tet")]),
+            "zeta" <- mean(data$zeta[which(data$group == "data10" & data$fit == "tet")]))
 
-MAPamp <- c("phi" <- mean(data$phi[which(data$group == "data5" & data$fit == "amp")]),
-            "kappa" <- mean(data$kappa[which(data$group == "data5" & data$fit == "amp")]),
-            "betaAA" <- mean(data$betaAA[which(data$group == "data5" & data$fit == "amp")]),
-            "alpha" <- mean(data$alpha[which(data$group == "data5" & data$fit == "amp")]),
-            "zeta" <- mean(data$zeta[which(data$group == "data5" & data$fit == "amp")]))
+MAPamp <- c("phi" <- mean(data$phi[which(data$group == "data10" & data$fit == "amp")]),
+            "kappa" <- mean(data$kappa[which(data$group == "data10" & data$fit == "amp")]),
+            "betaAA" <- mean(data$betaAA[which(data$group == "data10" & data$fit == "amp")]),
+            "alpha" <- mean(data$alpha[which(data$group == "data10" & data$fit == "amp")]),
+            "zeta" <- mean(data$zeta[which(data$group == "data10" & data$fit == "amp")]))
 
-MAPbroil <- c("phi" <- mean(data$phi[which(data$group == "data5" & data$fit == "broil")]),
-              "kappa" <- mean(data$kappa[which(data$group == "data5" & data$fit == "broil")]),
-              "betaAA" <- mean(data$betaAA[which(data$group == "data5" & data$fit == "broil")]),
-              "alpha" <- mean(data$alpha[which(data$group == "data5" & data$fit == "broil")]),
-              "zeta" <- mean(data$zeta[which(data$group == "data5" & data$fit == "broil")]))
+MAPbroil <- c("phi" <- mean(data$phi[which(data$group == "data10" & data$fit == "broil")]),
+              "kappa" <- mean(data$kappa[which(data$group == "data10" & data$fit == "broil")]),
+              "betaAA" <- mean(data$betaAA[which(data$group == "data10" & data$fit == "broil")]),
+              "alpha" <- mean(data$alpha[which(data$group == "data10" & data$fit == "broil")]),
+              "zeta" <- mean(data$zeta[which(data$group == "data10" & data$fit == "broil")]))
 
 MAP <- rbind(MAPtet, MAPamp, MAPbroil); colnames(MAP) <- c("phi", "kappa", "betaAA", "alpha", "zeta")
 
@@ -275,7 +275,6 @@ combplot_solo <- ggarrange(plot1, plot2, plot3, ncol = 1, nrow = 3, common.legen
 
 ggsave(combplot_solo, filename = "HeatMapcomb_solo.png", dpi = 300, type = "cairo", width = 8, height = 10, units = "in",
        path = "C:/Users/amorg/Documents/PhD/Chapter_2/Figures/Redraft_v1")
-
 
 
 # Collating the Plots -----------------------------------------------------
