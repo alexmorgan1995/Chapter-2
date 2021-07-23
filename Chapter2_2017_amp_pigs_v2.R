@@ -252,6 +252,22 @@ plot <- ggarrange(p1, p2, p3, p4,p5, nrow = 3, ncol =2,
 
 ggsave(plot, filename = "ABCSMC_salm_amp_pigs.png", dpi = 300, type = "cairo", width = 13, height = 11, units = "in")
 
+# Pairs Plot --------------------------------------------------------------
+
+pairs_data <- data10[data10$group == "data10",1:4]
+
+my_fn <- function(data, mapping, ...){
+  p <- ggplot(data = data, mapping = mapping) + scale_x_continuous(expand = c(0,0))  + scale_y_continuous(expand = c(0,0)) + 
+    stat_density2d(aes(fill=..density..), geom="tile", contour = FALSE) +
+    scale_fill_gradientn(colours=viridis::viridis(100))
+  p
+}
+
+pairs_amp <- GGally::ggpairs(pairs_data, lower=list(continuous=my_fn)) + theme_bw()
+
+ggsave(pairs_amp, filename = "pairs_plot_amp.png", dpi = 300, type = "cairo", width = 8, height = 8, units = "in",
+       path = "C:/Users/amorg/Documents/PhD/Chapter_2/Figures/Redraft_v1")
+
 #### Testing the Model #### 
 
 parmtau <- c(seq(0,0.035,by=0.001), 0.01156391)
