@@ -2,7 +2,8 @@ library("deSolve"); library("ggplot2"); library("plotly"); library("reshape2")
 library("bayestestR"); library("tmvtnorm"); library("ggpubr")
 
 rm(list=ls())
-setwd("C:/Users/amorg/Documents/PhD/Chapter_2/Chapter2_Fit_Data/FinalData/NewFit")
+#setwd("C:/Users/amorg/Documents/PhD/Chapter_2/Chapter2_Fit_Data/FinalData/NewFit")
+setwd("//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Chapter2_Fit_Data/Final_Data")
 
 #Function to remove negative prevalence values and round large DP numbers
 rounding <- function(x) {
@@ -97,10 +98,10 @@ ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, ini
     while(i <= N) {
       if(g==1) {
         d_betaAA <- runif(1, min = 0, max = 0.2)
-        d_phi <- runif(1, min = 0, max = 0.05)
-        d_kappa <- runif(1, min = 0, max = 3)
+        d_phi <- runif(1, min = 0, max = 0.5)
+        d_kappa <- runif(1, min = 0, max = 20)
         d_alpha <- rbeta(1, 1.5, 8.5)
-        d_zeta <- runif(1, 0, 0.15)
+        d_zeta <- runif(1, 0, 0.25)
       } else{ 
         p <- sample(seq(1,N),1,prob= w.old) # check w.old here
         par <- rtmvnorm(1,mean=res.old[p,], sigma=sigma, lower=lm.low, upper=lm.upp)
@@ -149,7 +150,7 @@ ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, ini
 N <- 1000 #(ACCEPTED PARTICLES PER GENERATION)
 
 lm.low <- c(0, 0, 0, 0, 0)
-lm.upp <- c(0.2, 0.05, 3, 1, 0.15)
+lm.upp <- c(0.2, 0.5, 20, 1, 0.25)
 
 # Empty matrices to store results (5 model parameters)
 res.old<-matrix(ncol=5,nrow=N)
@@ -170,7 +171,7 @@ ABC_algorithm(N = 1000,
               fitmodel = amr, 
               tau_range = datatetra$pig_tetra_sales, 
               init.state = c(Sa=0.98, Isa=0.01, Ira=0.01, Sh=1, Ish=0, Irh=0), 
-              times = seq(0, 2000, by = 100), 
+              times = seq(0, 2000, by = 50), 
               data = datatetra)
 
 end_time <- Sys.time(); end_time - start_time
@@ -186,6 +187,8 @@ data7 <- cbind(read.csv("results_ABC_SMC_gen_tet_7.csv", header = TRUE), "group"
 data8 <- cbind(read.csv("results_ABC_SMC_gen_tet_8.csv", header = TRUE), "group" = "data8")
 data9 <- cbind(read.csv("results_ABC_SMC_gen_tet_9.csv", header = TRUE), "group" = "data9") 
 data10 <- cbind(read.csv("results_ABC_SMC_gen_tet_10.csv", header = TRUE), "group" = "data10") 
+
+plot(density(data1$phi))
 
 map_phi <- mean(data10[,"phi"]) 
 map_kappa <- mean(data10[,"kappa"]) 
@@ -203,14 +206,14 @@ testzeta <- melt(rbind(data6, data7, data8, data9, data10), id.vars = "group", m
 
 p1 <- ggplot(testphi, aes(x=value, fill=group)) + geom_density(alpha=.5) + 
   scale_x_continuous(expand = c(0, 0), name = expression(paste("Rate of Antibiotic-Resistant to Antibiotic-Sensitive Reversion (", phi, ")"))) + 
-  scale_y_continuous(limits = c(0,100), expand = c(0, 0), name = "") +
+  scale_y_continuous(expand = c(0, 0), name = "") +
   labs(fill = NULL) + scale_fill_discrete(labels = c("Generation 6", "Generation 7", "Generation 8", "Generation 9", "Generation 10"))+
   theme(legend.text=element_text(size=14),  axis.text=element_text(size=14),
         axis.title.y=element_text(size=14),axis.title.x= element_text(size=14), plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"))
 
 p2 <- ggplot(testkappa, aes(x=value, fill=group)) + geom_density(alpha=.5)+
-  scale_x_continuous(limits = c(0,4),expand = c(0, 0), name = expression(paste("Efficacy of Antibiotic-Mediated Animal Recovery (", kappa, ")"))) + 
-  scale_y_continuous(limits = c(0,5), expand = c(0, 0), name = "") +
+  scale_x_continuous(limits = c(0,15),expand = c(0, 0), name = expression(paste("Efficacy of Antibiotic-Mediated Animal Recovery (", kappa, ")"))) + 
+  scale_y_continuous(expand = c(0, 0), name = "") +
   labs(fill = NULL) + scale_fill_discrete(labels = c("Generation 6", "Generation 7", "Generation 8", "Generation 9", "Generation 10")) +
   theme(legend.text=element_text(size=14),  axis.text=element_text(size=14),
         axis.title.y=element_text(size=14),axis.title.x= element_text(size=14), plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"))
