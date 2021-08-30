@@ -3,6 +3,7 @@ library("bayestestR"); library("tmvtnorm"); library("ggpubr")
 
 rm(list=ls())
 setwd("C:/Users/amorg/Documents/PhD/Chapter_2/Chapter2_Fit_Data/FinalData/NewFit")
+#setwd("//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Chapter2_Fit_Data/Final_Data")
 
 #Function to remove negative prevalence values and round large DP numbers
 rounding <- function(x) {
@@ -92,13 +93,19 @@ prior.non.zero<-function(par){
 ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, init.state, times, data) {
   for(g in 1:G) {
     i <- 1
+    dist_data <- data.frame(matrix(nrow = 1000, ncol = 3))
+    N_ITER <- 1
+    
     while(i <= N) {
+      
+      N_ITER <- N_ITER + 1
+      
       if(g==1) {
         d_betaAA <- runif(1, min = 0, max = 0.2)
-        d_phi <- runif(1, min = 0, max = 0.05)
-        d_kappa <- runif(1, min = 0, max = 3)
+        d_phi <- runif(1, min = 0, max = 0.5)
+        d_kappa <- runif(1, min = 0, max = 50)
         d_alpha <- rbeta(1, 1.5, 8.5)
-        d_zeta <- runif(1, 0, 0.15)
+        d_zeta <- runif(1, 0, 0.25)
       } else{ 
         p <- sample(seq(1,N),1,prob= w.old) # check w.old here
         par <- rtmvnorm(1,mean=res.old[p,], sigma=sigma, lower=lm.low, upper=lm.upp)
@@ -118,6 +125,7 @@ ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, ini
         if((dist[1] <= epsilon_dist[g]) && (dist[2] <= epsilon_food[g]) && (dist[3] <= epsilon_AMR[g]) && (!is.na(dist))) {
           # Store results
           res.new[i,]<-c(d_betaAA, d_phi, d_kappa, d_alpha, d_zeta)  
+          dist_data[i,] <- dist
           print(dist)
           # Calculate weights
 
@@ -138,6 +146,8 @@ ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, ini
         }
       }
     }#
+    N_ITER_list[[g]] <- list(N_ITER, dist_data)
+    
     sigma <- cov(res.new) 
     res.old <- res.new
     print(res.old)
@@ -146,12 +156,14 @@ ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, ini
     write.csv(res.new, file = paste("results_ABC_SMC_gen_amp_",g,".csv",sep=""), row.names=FALSE)
     ####
   }
+  return(N_ITER_list)
 }
+
 
 N <- 1000 #(ACCEPTED PARTICLES PER GENERATION)
 
 lm.low <- c(0, 0, 0, 0, 0)
-lm.upp <- c(0.2, 0.05, 3, 1, 0.15)
+lm.upp <- c(0.2, 0.5, 50, 1, 0.25)
 
 # Empty matrices to store results (5 model parameters)
 res.old<-matrix(ncol=5,nrow=N)
@@ -165,17 +177,19 @@ epsilon_dist <- c(2.5, 2, 1.5, 1.25, 1, 0.9, 0.8, 0.7, 0.6, 0.55)
 epsilon_food <- c(3.26*0.25, 3.26*0.2, 3.26*0.15, 3.26*0.125, 3.26*0.1, 3.26*0.075, 3.26*0.05, 3.26*0.03, 3.26*0.01, 3.26*0.005)
 epsilon_AMR <- c(0.3108*0.25, 0.3108*0.2, 0.3108*0.15, 0.3108*0.125, 0.3108*0.1, 0.3108*0.075, 0.3108*0.05, 0.3108*0.03, 0.3108*0.01, 0.3108*0.005)
 
-ABC_algorithm(N = 1000, 
+dist_save <- ABC_algorithm(N = 1000, 
               G = 10,
               sum.stats = summarystatprev, 
               distanceABC = sum_square_diff_dist, 
               fitmodel = amr, 
               tau_range = dataamp$pig_amp_sales, 
               init.state = c(Sa=0.98, Isa=0.01, Ira=0.01, Sh=1, Ish=0, Irh=0), 
-              times = seq(0, 2000, by = 100), 
+              times = seq(0, 2000, by = 50), 
               data = dataamp)
 
 end_time <- Sys.time(); end_time - start_time
+
+saveRDS(dist_save, file = "dist_amppigs_list.rds")
  
 #### Test Data ####
 data1 <- cbind(read.csv("results_ABC_SMC_gen_amp_1.csv", header = TRUE), "group" = "data1")
