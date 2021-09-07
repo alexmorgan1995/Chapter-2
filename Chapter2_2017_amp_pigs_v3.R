@@ -104,9 +104,9 @@ ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, ini
       if(g==1) {
         d_betaAA <- runif(1, min = 0, max = 0.2)
         d_phi <- runif(1, min = 0, max = 0.5)
-        d_kappa <- runif(1, min = 0, max = 50)
+        d_kappa <- runif(1, min = 0, max = 100)
         d_alpha <- rbeta(1, 1.5, 8.5)
-        d_zeta <- runif(1, 0, 0.25)
+        d_zeta <- runif(1, 0, 0.5)
       } else{ 
         p <- sample(seq(1,N),1,prob= w.old) # check w.old here
         par <- rtmvnorm(1,mean=res.old[p,], sigma=sigma, lower=lm.low, upper=lm.upp)
@@ -164,7 +164,7 @@ ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, ini
 N <- 1000 #(ACCEPTED PARTICLES PER GENERATION)
 
 lm.low <- c(0, 0, 0, 0, 0)
-lm.upp <- c(0.2, 0.5, 50, 1, 0.25)
+lm.upp <- c(0.2, 0.5, 100, 1, 0.5)
 
 # Empty matrices to store results (5 model parameters)
 res.old<-matrix(ncol=5,nrow=N)
