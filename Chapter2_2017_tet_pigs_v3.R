@@ -105,11 +105,11 @@ ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, ini
       N_ITER <- N_ITER + 1
       
       if(g==1) {
-        d_betaAA <- runif(1, min = 0, max = 0.2)
+        d_betaAA <- runif(1, min = 0, max = 0.5)
         d_phi <- runif(1, min = 0, max = 0.5)
-        d_kappa <- runif(1, min = 0, max = 20)
+        d_kappa <- runif(1, min = 0, max = 100)
         d_alpha <- rbeta(1, 1.5, 8.5)
-        d_zeta <- runif(1, 0, 0.25)
+        d_zeta <- runif(1, 0, 0.5)
       } else{ 
         p <- sample(seq(1,N),1,prob= w.old) # check w.old here
         par <- rtmvnorm(1,mean=res.old[p,], sigma=sigma, lower=lm.low, upper=lm.upp)
@@ -163,7 +163,7 @@ ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, ini
 N <- 1000 #(ACCEPTED PARTICLES PER GENERATION)
 
 lm.low <- c(0, 0, 0, 0, 0)
-lm.upp <- c(0.2, 0.5, 20, 1, 0.25)
+lm.upp <- c(0.5, 0.5, 100, 1, 0.5)
 
 # Empty matrices to store results (5 model parameters)
 res.old<-matrix(ncol=5,nrow=N)
@@ -189,7 +189,7 @@ dist_save <- ABC_algorithm(N = 1000,
 
 end_time <- Sys.time(); end_time - start_time
 
-saveRDS(dist_save, file = "dist_amppigs_list.rds")
+saveRDS(dist_save, file = "dist_tetpigs_list.rds")
 
 #### Test Data ####
 data1 <- cbind(read.csv("results_ABC_SMC_gen_tet_1.csv", header = TRUE), "group" = "data1")
@@ -227,7 +227,7 @@ p1 <- ggplot(testphi, aes(x=value, fill=group)) + geom_density(alpha=.5) +
         axis.title.y=element_text(size=14),axis.title.x= element_text(size=14), plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"))
 
 p2 <- ggplot(testkappa, aes(x=value, fill=group)) + geom_density(alpha=.5)+
-  scale_x_continuous(limits = c(0,15),expand = c(0, 0), name = expression(paste("Efficacy of Antibiotic-Mediated Animal Recovery (", kappa, ")"))) + 
+  scale_x_continuous(limits = c(0,100),expand = c(0, 0), name = expression(paste("Efficacy of Antibiotic-Mediated Animal Recovery (", kappa, ")"))) + 
   scale_y_continuous(expand = c(0, 0), name = "") +
   labs(fill = NULL) + scale_fill_discrete(labels = c("Generation 6", "Generation 7", "Generation 8", "Generation 9", "Generation 10")) +
   theme(legend.text=element_text(size=14),  axis.text=element_text(size=14),
