@@ -4,6 +4,7 @@ library("bayestestR"); library("tmvtnorm"); library("ggpubr")
 rm(list=ls())
 #setwd("C:/Users/amorg/Documents/PhD/Chapter_2/Chapter2_Fit_Data/FinalData/NewFit")
 setwd("//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Chapter2_Fit_Data/Final_Data")
+setwd("C:/Users/amorg/Documents/PhD/Chapter_2/Chapter2_Fit_Data/FinalData/NewFit")
 
 #Function to remove negative prevalence values and round large DP numbers
 rounding <- function(x) {
@@ -91,7 +92,7 @@ prior.non.zero<-function(par){
 }
 
 ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, init.state, times, data) {
-  N_ITER_LIST <- list()
+  N_ITER_list <- list()
   for(g in 1:G) {
     i <- 1
     dist_data <- data.frame(matrix(nrow = 1000, ncol = 3))
@@ -103,10 +104,10 @@ ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, ini
       
       if(g==1) {
         d_betaAA <- runif(1, min = 0, max = 0.2)
-        d_phi <- runif(1, min = 0, max = 0.5)
-        d_kappa <- runif(1, min = 0, max = 100)
+        d_phi <- runif(1, min = 0, max = 0.05)
+        d_kappa <- runif(1, min = 0, max = 50)
         d_alpha <- rbeta(1, 1.5, 8.5)
-        d_zeta <- runif(1, 0, 0.5)
+        d_zeta <- runif(1, 0, 0.15)
       } else{ 
         p <- sample(seq(1,N),1,prob= w.old) # check w.old here
         par <- rtmvnorm(1,mean=res.old[p,], sigma=sigma, lower=lm.low, upper=lm.upp)
@@ -164,7 +165,7 @@ ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, ini
 N <- 1000 #(ACCEPTED PARTICLES PER GENERATION)
 
 lm.low <- c(0, 0, 0, 0, 0)
-lm.upp <- c(0.2, 0.5, 100, 1, 0.5)
+lm.upp <- c(0.2, 0.05, 50, 1, 0.15)
 
 # Empty matrices to store results (5 model parameters)
 res.old<-matrix(ncol=5,nrow=N)
@@ -238,7 +239,7 @@ p2 <- ggplot(testkappa, aes(x=value, fill=group)) + geom_density(alpha=.5)+
   theme(legend.text=element_text(size=14),  axis.text=element_text(size=14),
         axis.title.y=element_text(size=14),axis.title.x= element_text(size=14), plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"))
 
-p3<- ggplot(testbetaAA, aes(x=value, fill=group)) + geom_density(alpha=.5)+
+p3 <- ggplot(testbetaAA, aes(x=value, fill=group)) + geom_density(alpha=.5)+
   scale_x_continuous(expand = c(0, 0), name = expression(paste("Rate of Animal-to-Animal Transmission (", beta[AA], ")"))) + 
   scale_y_continuous(limits = c(0,60),expand = c(0, 0), name = "") +
   labs(fill = NULL) + scale_fill_discrete(labels = c("Generation 6", "Generation 7", "Generation8", "Generation 9", "Generation 10"))+
@@ -258,7 +259,6 @@ p5 <- ggplot(testzeta, aes(x=value, fill=group)) + geom_density(alpha=.5)+
   labs(fill = NULL) + scale_fill_discrete(labels = c("Generation 6", "Generation 7", "Generation8", "Generation 9", "Generation 10"))+
   theme(legend.text=element_text(size=14),  axis.text=element_text(size=14),
         axis.title.y=element_text(size=14),axis.title.x= element_text(size=14), plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"))
-
 
 #### Plotting ####
 
