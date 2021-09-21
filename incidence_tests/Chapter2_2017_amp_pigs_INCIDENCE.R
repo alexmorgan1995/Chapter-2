@@ -73,7 +73,7 @@ computeDistanceABC_ALEX <- function(sum.stats, distanceABC, fitmodel, tau_range,
                alpha = thetaparm[["alpha"]], zeta = thetaparm[["zeta"]])
     out <- ode(y = init.state, func = fitmodel, times = times, parms = parms2)
     temp[1,1] <- tau_range[i]
-    temp[1,2] <- (tail(diff(as.matrix(out[,"CumS"])), 1) + tail(diff(as.matrix(out[,"CumR"])), 1))*100000
+    temp[1,2] <- ((tail(diff(as.matrix(out[,"CumS"])), 1) + tail(diff(as.matrix(out[,"CumR"])), 1))*(446000000))/100000
     temp[1,3] <- (rounding(out[nrow(out),4]) / (rounding(out[nrow(out),3]) + rounding(out[nrow(out),4])))
     temp[1,4] <- (rounding(out[nrow(out),7]) / (rounding(out[nrow(out),6]) + rounding(out[nrow(out),7])))
     tauoutput <- rbind(tauoutput, temp)
@@ -106,11 +106,11 @@ ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, ini
       N_ITER <- N_ITER + 1
       
       if(g==1) {
-        d_betaAA <- runif(1, min = 0, max = 0.05)
-        d_phi <- runif(1, min = 0, max = 0.1)
+        d_betaAA <- runif(1, min = 0, max = 0.1)
+        d_phi <- runif(1, min = 0, max = 0.25)
         d_kappa <- runif(1, min = 0, max = 50)
         d_alpha <- rbeta(1, 1.5, 8.5)
-        d_zeta <- runif(1, 0, 0.005)
+        d_zeta <- runif(1, 0, 0.25)
       } else{ 
         p <- sample(seq(1,N),1,prob= w.old) # check w.old here
         par <- rtmvnorm(1,mean=res.old[p,], sigma=sigma, lower=lm.low, upper=lm.upp)
@@ -173,7 +173,7 @@ ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, ini
 N <- 1000 #(ACCEPTED PARTICLES PER GENERATION)
 
 lm.low <- c(0, 0, 0, 0, 0)
-lm.upp <- c(0.05, 0.1, 50, 1, 0.005)
+lm.upp <- c(0.1, 0.25, 50, 1, 0.25)
 
 # Empty matrices to store results (5 model parameters)
 res.old<-matrix(ncol=5,nrow=N)
@@ -183,9 +183,9 @@ res.new<-matrix(ncol=5,nrow=N)
 w.old<-matrix(ncol=1,nrow=N)
 w.new<-matrix(ncol=1,nrow=N)
 
-epsilon_dist <- c(2.5, 2, 1.5, 1.25, 1, 0.9, 0.8, 0.7, 0.6, 0.55)
-epsilon_food <- c(0.593*1, 0.593*0.5, 0.593*0.25, 0.593*0.15, 0.593*0.1, 0.593*0.075, 0.593*0.05, 0.593*0.03, 0.593*0.01, 0.593*0.005)
-epsilon_AMR <- c(0.3108*1, 0.3108*0.5, 0.3108*0.25, 0.3108*0.15, 0.3108*0.1, 0.3108*0.075, 0.3108*0.05, 0.3108*0.03, 0.3108*0.01, 0.3108*0.005)
+epsilon_dist <- c(2.5, 2, 1.5, 1.25, 1, 0.9, 0.8, 0.75, 0.7, 0.65)
+epsilon_food <- c(0.593*1, 0.593*0.5, 0.593*0.25, 0.593*0.15, 0.593*0.1, 0.593*0.075, 0.593*0.05, 0.593*0.03, 0.593*0.02, 0.593*0.01)
+epsilon_AMR <- c(0.3108*1, 0.3108*0.5, 0.3108*0.25, 0.3108*0.15, 0.3108*0.1, 0.3108*0.075, 0.3108*0.05, 0.3108*0.03, 0.3108*0.02, 0.3108*0.01)
 
 dist_save <- ABC_algorithm(N = 1000, 
               G = 10,
@@ -211,6 +211,8 @@ data5 <- cbind(read.csv("INC_RESULTS_5.csv", header = TRUE), "group" = "data5")
 data6 <- cbind(read.csv("INC_RESULTS_6.csv", header = TRUE), "group" = "data6")
 data7 <- cbind(read.csv("INC_RESULTS_7.csv", header = TRUE), "group" = "data7")
 data8 <- cbind(read.csv("INC_RESULTS_8.csv", header = TRUE), "group" = "data8")
+data9 <- cbind(read.csv("INC_RESULTS_9.csv", header = TRUE), "group" = "data9")
+data10 <- cbind(read.csv("INC_RESULTS_10.csv", header = TRUE), "group" = "data10")
 
 map_phi <- map_estimate(data10[,"phi"], precision = 20) 
 map_kappa <- map_estimate(data10[,"kappa"], precision = 20) 
@@ -218,19 +220,13 @@ map_betaAA <- map_estimate(data10[,"betaAA"], precision = 20)
 map_alpha <- map_estimate(data10[,"alpha"], precision = 20) 
 map_zeta <- map_estimate(data10[,"zeta"], precision = 20) 
 
-map_phi <- mean(data10[,"phi"]) 
-map_kappa <- mean(data10[,"kappa"]) 
-map_betaAA <- mean(data10[,"betaAA"]) 
-map_alpha <- mean(data10[,"alpha"]) 
-map_zeta <- mean(data10[,"zeta"]) 
-
 #Plotting the Distributions
 
-testphi <- melt(rbind(data1, data2, data3, data4, data5), id.vars = "group",measure.vars = "phi"); testphi$group <- factor(testphi$group, levels = unique(testphi$group))
-testkappa <- melt(rbind(data1, data2, data3, data4, data5), id.vars = "group",measure.vars = "kappa"); testkappa$group <- factor(testkappa$group, levels = unique(testkappa$group))
-testbetaAA <- melt(rbind(data1, data2, data3, data4, data5), id.vars = "group",measure.vars = "betaAA"); testbetaAA$group <- factor(testbetaAA$group, levels = unique(testbetaAA$group))
-testalpha <- melt(rbind(data1, data2, data3, data4, data5), id.vars = "group",measure.vars = "alpha"); testalpha$group <- factor(testalpha$group, levels = unique(testalpha$group))
-testzeta <- melt(rbind(data1, data2, data3, data4, data5), id.vars = "group",measure.vars = "zeta"); testzeta$group <- factor(testzeta$group, levels = unique(testzeta$group))
+testphi <- melt(rbind(data6, data7, data8, data9, data10), id.vars = "group",measure.vars = "phi"); testphi$group <- factor(testphi$group, levels = unique(testphi$group))
+testkappa <- melt(rbind(data6, data7, data8, data9, data10), id.vars = "group",measure.vars = "kappa"); testkappa$group <- factor(testkappa$group, levels = unique(testkappa$group))
+testbetaAA <- melt(rbind(data6, data7, data8, data9, data10), id.vars = "group",measure.vars = "betaAA"); testbetaAA$group <- factor(testbetaAA$group, levels = unique(testbetaAA$group))
+testalpha <- melt(rbind(data6, data7, data8, data9, data10), id.vars = "group",measure.vars = "alpha"); testalpha$group <- factor(testalpha$group, levels = unique(testalpha$group))
+testzeta <- melt(rbind(data6, data7, data8, data9, data10), id.vars = "group",measure.vars = "zeta"); testzeta$group <- factor(testzeta$group, levels = unique(testzeta$group))
 
 p1 <- ggplot(testphi, aes(x=value, fill=group)) + geom_density(alpha=.5) + 
   scale_x_continuous(expand = c(0, 0), name = expression(paste("Rate of Antibiotic-Resistant to Antibiotic-Sensitive Reversion (", phi, ")"))) + 
@@ -241,7 +237,7 @@ p1 <- ggplot(testphi, aes(x=value, fill=group)) + geom_density(alpha=.5) +
 
 p2 <- ggplot(testkappa, aes(x=value, fill=group)) + geom_density(alpha=.5)+
   scale_x_continuous(expand = c(0, 0), name = expression(paste("Efficacy of Antibiotic-Mediated Animal Recovery (", kappa, ")"))) + 
-  scale_y_continuous(limits = c(0,0.1), expand = c(0, 0), name = "") +
+  scale_y_continuous(limits = c(0,0.5), expand = c(0, 0), name = "") +
   labs(fill = NULL) + scale_fill_discrete(labels = c("Generation 6", "Generation 7", "Generation8", "Generation 9", "Generation 10"))+
   theme(legend.text=element_text(size=14),  axis.text=element_text(size=14),
         axis.title.y=element_text(size=14),axis.title.x= element_text(size=14), plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"))
@@ -262,7 +258,7 @@ p4 <- ggplot(testalpha, aes(x=value, fill=group)) + geom_density(alpha=.5)+
 
 p5 <- ggplot(testzeta, aes(x=value, fill=group)) + geom_density(alpha=.5)+
   scale_x_continuous(expand = c(0, 0), name = expression(paste("Background Infection Rate (", zeta, ")"))) + 
-  scale_y_continuous(limits = c(0,1000),expand = c(0, 0), name = "") +
+  scale_y_continuous(limits = c(0,300),expand = c(0, 0), name = "") +
   labs(fill = NULL) + scale_fill_discrete(labels = c("Generation 6", "Generation 7", "Generation8", "Generation 9", "Generation 10"))+
   theme(legend.text=element_text(size=14),  axis.text=element_text(size=14),
         axis.title.y=element_text(size=14),axis.title.x= element_text(size=14), plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"))

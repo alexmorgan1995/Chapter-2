@@ -111,7 +111,7 @@ ggplot(data = databroil, aes(x = tetra_sales, y= ResPropAnim))  + geom_point() +
 thetaparm_post_tetra <- read.csv(paste0("C:/Users/amorg/Documents/PhD/Chapter_2/Chapter2_Fit_Data/FinalData/NewFit/Remote_Fit/",
                              list.files("C:/Users/amorg/Documents/PhD/Chapter_2/Chapter2_Fit_Data/FinalData/NewFit/Remote_Fit", pattern = "tet_10")))
 thetaparm_post_amp <- read.csv(paste0("C:/Users/amorg/Documents/PhD/Chapter_2/Chapter2_Fit_Data/FinalData/NewFit/Remote_Fit/",
-                                  list.files("C:/Users/amorg/Documents/PhD/Chapter_2/Chapter2_Fit_Data/FinalData/NewFit/Remote_Fit", pattern = "amp_10")))
+                                  list.files("C:/Users/amorg/Documents/PhD/Chapter_2/Chapter2_Fit_Data/FinalData/NewFit/Remote_Fit", pattern = "amp_9")))
 thetaparm_post_broil <- read.csv(paste0("C:/Users/amorg/Documents/PhD/Chapter_2/Chapter2_Fit_Data/FinalData/NewFit/Remote_Fit/",
                                   list.files("C:/Users/amorg/Documents/PhD/Chapter_2/Chapter2_Fit_Data/FinalData/NewFit/Remote_Fit", pattern = "broil_10")))
 #Functions
