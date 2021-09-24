@@ -4,7 +4,7 @@ library("bayestestR"); library("tmvtnorm"); library("ggpubr")
 rm(list=ls())
 #setwd("C:/Users/amorg/Documents/PhD/Chapter_2/Chapter2_Fit_Data/FinalData/NewFit")
 setwd("//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Chapter2_Fit_Data/Final_Data")
-setwd("C:/Users/amorg/Documents/PhD/Chapter_2/Chapter2_Fit_Data/FinalData/NewFit")
+#setwd("C:/Users/amorg/Documents/PhD/Chapter_2/Chapter2_Fit_Data/FinalData/NewFit")
 
 #Function to remove negative prevalence values and round large DP numbers
 rounding <- function(x) {

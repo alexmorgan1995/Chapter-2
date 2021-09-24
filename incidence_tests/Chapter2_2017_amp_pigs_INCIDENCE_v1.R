@@ -4,6 +4,9 @@ library("bayestestR"); library("tmvtnorm"); library("ggpubr")
 rm(list=ls())
 setwd("//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Chapter2_Fit_Data/Final_Data")
 
+# Model Functions ---------------------------------------------------------
+
+
 #Function to remove negative prevalence values and round large DP numbers
 rounding <- function(x) {
   if(as.numeric(x) < 1e-10) {x <- 0
@@ -22,10 +25,10 @@ amr <- function(t, y, parms) {
     dIsh = betaHH*Ish*Sh + betaHA*Isa*Sh - rh*Ish - uh*Ish 
     dIrh = (1-alpha)*(betaHH*Irh*Sh) + (1-alpha)*(betaHA*Ira*Sh) - rh*Irh - uh*Irh 
     
-    dCumS = betaHH*Ish*Sh + betaHA*Isa*Sh
-    dCumR = (1-alpha)*(betaHH*Irh*Sh) + (1-alpha)*(betaHA*Ira*Sh)
+    CumS = betaHH*Ish*Sh + betaHA*Isa*Sh
+    CumR = (1-alpha)*(betaHH*Irh*Sh) + (1-alpha)*(betaHA*Ira*Sh)
     
-    return(list(c(dSa,dIsa,dIra,dSh,dIsh,dIrh,dCumS,dCumR)))
+    return(list(c(dSa,dIsa,dIra,dSh,dIsh,dIrh), CumS, CumR))
   })
 }
 
@@ -61,24 +64,23 @@ sum_square_diff_dist <- function(sum.stats, data.obs, model.obs) {
   return(sum(sumsquare))
 }
 
-computeDistanceABC_ALEX <- function(sum.stats, distanceABC, fitmodel, tau_range, thetaparm, init.state, times, data) {
-  tauoutput <- matrix(nrow = 0, ncol=4)
+computeDistanceABC_ALEX <- function(sum.stats, distanceABC, fitmodel, tau_range, thetaparm, init.state, data) {
   tau_range <- append(tau_range, 0.01156391)
+  tauoutput <- data.frame(matrix(nrow = length(tau_range), ncol=4))
+  
   for (i in 1:length(tau_range)) {
     temp <- matrix(NA, nrow = 1, ncol=4)
-    parms2 = c(ra = thetaparm[["ra"]], rh =  thetaparm[["rh"]], ua = thetaparm[["ua"]], uh = thetaparm[["uh"]], 
-               betaAA = thetaparm[["betaAA"]], betaAH = thetaparm[["betaAH"]], betaHH = thetaparm[["betaHH"]], 
-               betaHA = thetaparm[["betaHA"]], phi = thetaparm[["phi"]], tau = tau_range[i], kappa = thetaparm[["kappa"]], 
-               alpha = thetaparm[["alpha"]], zeta = thetaparm[["zeta"]])
-    out <- ode(y = init.state, func = fitmodel, times = times, parms = parms2)
-    temp[1,1] <- tau_range[i]
-    temp[1,2] <- ((tail(diff(as.matrix(out[,"CumS"])), 1) + tail(diff(as.matrix(out[,"CumR"])), 1))*(446000000))/100000
-    temp[1,3] <- (rounding(out[nrow(out),4]) / (rounding(out[nrow(out),3]) + rounding(out[nrow(out),4])))
-    temp[1,4] <- (rounding(out[nrow(out),7]) / (rounding(out[nrow(out),6]) + rounding(out[nrow(out),7])))
-    tauoutput <- rbind(tauoutput, temp)
+    parms2 = thetaparm
+    parms2["tau"] = tau_range[i]
+    
+    out <- runsteady(y = init.state, func = fitmodel, times = c(0, Inf), parms = parms2)
+    tauoutput[i,] <- c(tau_range[i],
+                       ((out[[2]] + out[[3]])*(446000000))/100000,
+                       out[[1]][["Ira"]] / (out[[1]][["Isa"]] + out[[1]][["Ira"]]),
+                       out[[1]][["Irh"]] / (out[[1]][["Ish"]] + out[[1]][["Irh"]]))
   }
-  tauoutput <- data.frame(tauoutput)
-  colnames(tauoutput) <- c("tau", "IncH", "ResPropAnim", "ResPropHum")  
+  colnames(tauoutput) <- c("tau", "IncH", "ResPropAnim", "ResPropHum") 
+  
   return(c(distanceABC(list(sum.stats), data, tauoutput[!tauoutput$tau == 0.01156391,]),
            abs(tauoutput$IncH[tauoutput$tau == 0.01156391] - 0.593),
            abs(tauoutput$ResPropHum[tauoutput$tau == 0.01156391] - 0.3108)))
@@ -93,8 +95,13 @@ prior.non.zero<-function(par){
   prod(sapply(1:5, function(a) as.numeric((par[a]-lm.low[a]) > 0) * as.numeric((lm.upp[a]-par[a]) > 0)))
 }
 
-ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, init.state, times, data) {
+ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, init.state, data) {
   N_ITER_list <- list()
+  
+  fit_parms <- c("betaAA", "phi", "kappa", "alpha", "zeta")
+  thetaparm <- c(ra = 60^-1, rh =  (5.5^-1), ua = 240^-1, uh = 28835^-1, betaAH = 0.00001, betaHH = 0.00001, 
+                 betaHA = 0.00001)
+  
   for(g in 1:G) {
     i <- 1
     dist_data <- data.frame(matrix(nrow = 1000, ncol = 3))
@@ -121,23 +128,20 @@ ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, ini
       }
       if(prior.non.zero(c(d_betaAA, d_phi, d_kappa, d_alpha, d_zeta))) {
         m <- 0
-        thetaparm <- c(ra = 60^-1, rh =  (5.5^-1), ua = 240^-1, uh = 28835^-1, betaAA = d_betaAA, betaAH = 0.00001, betaHH = 0.00001, 
-                       betaHA = 0.00001, phi = d_phi, kappa = d_kappa, alpha = d_alpha, zeta = d_zeta)
+        thetaparm[fit_parms] <- c(d_betaAA, d_phi, d_kappa, d_alpha, d_zeta)
         
-        dist <- computeDistanceABC_ALEX(sum.stats, distanceABC, fitmodel, tau_range, thetaparm, init.state, times, data)
-
-        
-        #print(dist)
+        dist <- computeDistanceABC_ALEX(sum.stats, distanceABC, fitmodel, tau_range, thetaparm, init.state, data)
+        print(dist)
         if((dist[1] <= epsilon_dist[g]) && (dist[2] <= epsilon_food[g]) && (dist[3] <= epsilon_AMR[g]) && (!is.na(dist))) {
           # Store results
           
-          print(dist)
+
           
           res.new[i,]<-c(d_betaAA, d_phi, d_kappa, d_alpha, d_zeta)  
           dist_data[i,] <- dist
-
+          
           # Calculate weights
-
+          
           if(g==1){
             
             w.new[i] <- 1
@@ -162,7 +166,7 @@ ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, ini
     print(res.old)
     w.old <- w.new/sum(w.new)
     colnames(res.new) <- c("betaAA", "phi", "kappa", "alpha", "zeta")
-    write.csv(res.new, file = paste("INC_RESULTS_",g,".csv",sep=""), row.names=FALSE)
+    write.csv(res.new, file = paste("TEST_INC_RESULTS_",g,".csv",sep=""), row.names=FALSE)
     ####
   }
   return(N_ITER_list)
@@ -187,19 +191,18 @@ epsilon_food <- c(0.593*1, 0.593*0.5, 0.593*0.25, 0.593*0.15, 0.593*0.1, 0.593*0
 epsilon_AMR <- c(0.3108*1, 0.3108*0.5, 0.3108*0.25, 0.3108*0.15, 0.3108*0.1, 0.3108*0.075, 0.3108*0.05, 0.3108*0.03, 0.3108*0.02, 0.3108*0.01)
 
 dist_save <- ABC_algorithm(N = 1000, 
-              G = 10,
-              sum.stats = summarystatprev, 
-              distanceABC = sum_square_diff_dist, 
-              fitmodel = amr, 
-              tau_range = dataamp$pig_amp_sales, 
-              init.state = c(Sa=0.98, Isa=0.01, Ira=0.01, Sh=1, Ish=0, Irh=0, CumS = 0, CumR = 0), 
-              times = seq(0, 2000, by = 50), 
-              data = dataamp)
+                           G = 10,
+                           sum.stats = summarystatprev, 
+                           distanceABC = sum_square_diff_dist, 
+                           fitmodel = amr, 
+                           tau_range = dataamp$pig_amp_sales, 
+                           init.state = c(Sa=0.98, Isa=0.01, Ira=0.01, Sh=1, Ish=0, Irh=0), 
+                           data = dataamp)
 
 end_time <- Sys.time(); end_time - start_time
 
-saveRDS(dist_save, file = "INC_dist_amppigs_list.rds")
- 
+saveRDS(dist_save, file = "TEST_INC_dist_amppigs_list.rds")
+
 
 #### Test Data ####
 data1 <- cbind(read.csv("INC_RESULTS_1.csv", header = TRUE), "group" = "data1")
