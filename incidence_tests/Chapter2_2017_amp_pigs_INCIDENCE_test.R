@@ -22,11 +22,13 @@ amr <- function(t, y, parms) {
     dIsh = betaHH*Ish*Sh + betaHA*Isa*Sh - rh*Ish - uh*Ish 
     dIrh = (1-alpha)*(betaHH*Irh*Sh) + (1-alpha)*(betaHA*Ira*Sh) - rh*Irh - uh*Irh 
 
-        
+    dCumS = betaHH*Ish*Sh + betaHA*Isa*Sh
+    dCumR = (1-alpha)*(betaHH*Irh*Sh) + (1-alpha)*(betaHA*Ira*Sh)
+    
     tCumS = betaHH*Ish*Sh + betaHA*Isa*Sh
     tCumR = (1-alpha)*(betaHH*Irh*Sh) + (1-alpha)*(betaHA*Ira*Sh)
     
-    return(list(c(dSa,dIsa,dIra,dSh,dIsh,dIrh), tCumS = tCumS, tCumR = tCumR))
+    return(list(c(dSa,dIsa,dIra,dSh,dIsh,dIrh, dCumS, dCumR), tCumS = tCumS, tCumR = tCumR))
   })
 }
 
@@ -72,13 +74,27 @@ map_zeta <- map_estimate(data9[,"zeta"], precision = 20)
 
 parmtau <- c(seq(0,0.035,by=0.001), 0.01156391)
 
-init <- c(Sa=0.98, Isa=0.01, Ira=0.01, Sh=1, Ish=0, Irh=0)
+init <- c(Sa=0.98, Isa=0.01, Ira=0.01, Sh=1, Ish=0, Irh=0, CumS = 0, CumR = 0)
 output1 <- data.frame()
 times <- seq(0, 200000, by = 100)
 
 parms2 = c(ra = 60^-1, rh =  (5.5^-1), ua = 240^-1, uh = 28835^-1, betaAA = map_betaAA, betaAH = 0.00001, betaHH = 0.00001, 
            betaHA = (0.00001), phi = map_phi, kappa = map_kappa, alpha = map_alpha, tau = 0.01156391, zeta = map_zeta)
+
 out <- runsteady(y = init, func = amr, parms = parms2, times = c(0, Inf))
+
+((out[[2]] + out[[3]])*(446000000))/100000
+
+out_other <- ode(y = init, func = amr, parms = parms2, times = seq(0, 10000))
+
+((tail(diff(as.matrix(out_other[,"CumS"])), 1) + tail(diff(as.matrix(out_other[,"CumR"])), 1))*(446000000))/100000
+
+
+
+
+
+
+
 
 
 
