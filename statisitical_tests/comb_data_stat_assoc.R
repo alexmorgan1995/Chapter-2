@@ -3,7 +3,7 @@ rm(list=ls())
 
 # Import and Clean Data - Broilers (Ampicillin and Tetracycline) -----------
 # Ampicillin Resistance
-amp_broil <- read.csv("//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Chapter2_Fit_Data/Final_Data/Amp_Broil_Years.csv")
+amp_broil <- read.csv("//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Models/Chapter-2/NewFits_041021/data/puredata/Amp_Broil_Years.csv")
 amp_broil[,(2+4):(5+4)][amp_broil[,2:5] < 10] <- NA # replace anything under a sample size of 10 with
 amp_broil[,2:5][amp_broil[,2:5] < 10] <- NA # replace anything under a sample size of 10 with
 amp_broil <- amp_broil[!(is.na(amp_broil$N_2014) & is.na(amp_broil$N_2016) & is.na(amp_broil$N_2017) & 
@@ -12,7 +12,7 @@ amp_broil <- amp_broil[!(is.na(amp_broil$N_2014) & is.na(amp_broil$N_2016) & is.
 colnames(amp_broil)[10:13] <- as.character(c(2014, 2016, 2017, 2018))
 
 # Tetracycline Resistance
-tet_broil <- read.csv("//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Chapter2_Fit_Data/Final_Data/Tet_Broil_Years.csv")
+tet_broil <- read.csv("//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Models/Chapter-2/NewFits_041021/data/puredata/Tet_Broil_Years.csv")
 tet_broil[,(2+4):(5+4)][tet_broil[,2:5] < 10] <- NA # replace anything under a sample size of 10 with
 tet_broil[,2:5][tet_broil[,2:5] < 10] <- NA # replace anything under a sample size of 10 with
 tet_broil <- tet_broil[!(is.na(tet_broil$N_2014) & is.na(tet_broil$N_2016) & is.na(tet_broil$N_2017) & 
@@ -24,12 +24,12 @@ colnames(tet_broil)[10:13] <- as.character(c(2014, 2016, 2017, 2018))
 tet_broil$Country %in% amp_broil$Country
 
 #Broiler Usage
-usage_broil <- read.csv("//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Chapter2_Fit_Data/Final_Data/broil_usage_years.csv")
+usage_broil <- read.csv("//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Models/Chapter-2/NewFits_041021/data/puredata/broil_usage_years.csv")
 usage_broil <- usage_broil[usage_broil$Country %in% intersect(usage_broil$Country, amp_broil$Country),]
 
 # Import and Clean Data - Fattening Pigs (Ampicillin and Tetracycline) -----------
 # Ampicillin Resistance
-amp_pigs <- read.csv("//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Chapter2_Fit_Data/Final_Data/Amp_FatPigs_Years.csv")
+amp_pigs <- read.csv("//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Models/Chapter-2/NewFits_041021/data/puredata/Amp_FatPigs_Years.csv")
 amp_pigs[,(2+5):(6+5)][amp_pigs[,2:6] < 10] <- NA # replace anything under a sample size of 10 with
 amp_pigs[,(2+10):(6+10)][amp_pigs[,2:6] < 10] <- NA # replace anything under a sample size of 10 with
 amp_pigs[,2:6][amp_pigs[,2:6] < 10] <- NA # replace anything under a sample size of 10 with
@@ -39,7 +39,7 @@ amp_pigs <- amp_pigs[!(is.na(amp_pigs$N_2015) & is.na(amp_pigs$N_2016) & is.na(a
 colnames(amp_pigs)[12:16] <- as.character(seq(2015, 2019))
 
 # Tetracycline Resistance
-tet_pigs <- read.csv("//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Chapter2_Fit_Data/Final_Data/Tet_FatPigs_Years.csv")
+tet_pigs <- read.csv("//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Models/Chapter-2/NewFits_041021/data/puredata/Tet_FatPigs_Years.csv")
 tet_pigs[,(2+5):(6+5)][tet_pigs[,2:6] < 10] <- NA # replace anything under a sample size of 10 with
 tet_pigs[,(2+10):(6+10)][tet_pigs[,2:6] < 10] <- NA # replace anything under a sample size of 10 with
 tet_pigs[,2:6][tet_pigs[,2:6] < 10] <- NA # replace anything under a sample size of 10 with
@@ -53,7 +53,7 @@ colnames(tet_pigs)[12:16] <- as.character(seq(2015, 2019))
 tet_pigs$Country %in% amp_pigs$Country
 
 #Broiler Usage
-usage_pigs <- read.csv("//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Chapter2_Fit_Data/Final_Data/pig_usage_years.csv")
+usage_pigs <- read.csv("//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Models/Chapter-2/NewFits_041021/data/puredata/pig_usage_years.csv")
 usage_pigs <- usage_pigs[usage_pigs$Country %in% intersect(usage_pigs$Country, tet_pigs$Country),]
 
 # Stat Testing BROILERS -------------------------------------------------------------
@@ -66,6 +66,7 @@ broil_rel <- data.frame("country" = usage_broil$Country,
                         "N" = rowSums(amp_broil[,2:5], na.rm = TRUE),
                         "isolpos_amp" = rowSums(amp_broil[,6:9], na.rm = TRUE),
                         "isolpos_tet" = rowSums(tet_broil[,6:9], na.rm = TRUE))
+
 
 broil_rel$propres_amp <- broil_rel$isolpos_amp /  broil_rel$N
 broil_rel$propres_tet <- broil_rel$isolpos_tet /  broil_rel$N

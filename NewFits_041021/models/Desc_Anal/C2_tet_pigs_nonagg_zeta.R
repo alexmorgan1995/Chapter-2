@@ -38,32 +38,43 @@ dataamp_pigs <- dataamp_pigs[!(is.na(dataamp_pigs$N_2015) & is.na(dataamp_pigs$N
                          is.na(dataamp_pigs$N_2018) & is.na(dataamp_pigs$N_2019)),]
 pig_yrs <- sub("N_", "", grep("N_20",colnames(dataamp_pigs), value = TRUE)) #Find the number of years included 
 
+# NON-AGGREGATED - AMP PIGS  -------------------------------------------------------------
+colnames(dataamp_pigs)[12:16] <- as.character(2015:2019)
+
+melt_amp_pigs <- melt(dataamp_pigs, id.vars = "Country", measure.vars = c("2015", "2016", "2017", "2018", "2019"))
+melt_amp_pigs$usage <- melt(dataamp_pigs, id.vars = "Country", measure.vars = c("scale_ampusage_2015", "scale_ampusage_2016", 
+                                                                              "scale_ampusage_2017", "scale_ampusage_2018", "scale_ampusage_2019"))[,3]
+melt_amp_pigs$N <- melt(dataamp_pigs, id.vars = "Country", measure.vars = c("N_2015", "N_2016", 
+                                                                        "N_2017", "N_2018", "N_2019"))[,3]
+melt_amp_pigs$IsolPos <- melt(dataamp_pigs, id.vars = "Country", measure.vars = c("PosIsol_2015", "PosIsol_2016", 
+                                                                              "PosIsol_2017", "PosIsol_2018", "PosIsol_2019"))[,3]
+colnames(melt_amp_pigs)[c(2,3)] <- c("Year", "Resistance")
+
 #Cleaning Data - Humans
 dataamp_hum <- dataamp_hum[dataamp_hum$Country %in% intersect(dataamp_hum$Country, dataamp_pigs$Country),]
-dataamp_hum <- dataamp_hum[,c(1,grep(paste(pig_yrs,collapse="|"), colnames(dataamp_hum)))]
-dataamp_hum <- dataamp_hum[,-grep("TET", colnames(dataamp_hum))] # Remove AMP from dataframe
+colnames(dataamp_hum)[26:31] <- as.character(2014:2019)
+dataamp_hum_melt <- melt(dataamp_hum, id.vars = "Country", measure.vars = as.character(2015:2019))
+colnames(dataamp_hum_melt)[c(2,3)] <- c("Year", "Resistance")
 
-#Combine the Data 
 
-data_pig_fit <- data.frame("Country" = dataamp_hum$Country,
-                           "N" = rowSums(dataamp_pigs[,2:6], na.rm = TRUE),
-                           "N_PosIsol" = rowSums(dataamp_pigs[,7:11], na.rm = TRUE),
-                           "Usage" = rowMeans(dataamp_pigs[,grep("usage_20", colnames(dataamp_pigs))], na.rm = TRUE)/1000,
-                           "ResPropHum" = rowSums(dataamp_hum[,7:11], na.rm = TRUE)/
-                            rowSums(dataamp_hum[,2:6], na.rm = TRUE),
-                           "ResPropAnim" = rowSums(dataamp_pigs[,7:11], na.rm = TRUE)/
-                             rowSums(dataamp_pigs[,2:6], na.rm = TRUE)) 
+# Combine -----------------------------------------------------------------
+melt_amp_pigs$ResPropHum <- dataamp_hum_melt[,3]
 
-data_pig_fit$lower <- unlist(lapply(1:nrow(data_pig_fit), function(i) prop.test(data_pig_fit$N_PosIsol[i], data_pig_fit$N[i])[[6]][[1]]))
-data_pig_fit$upper <- unlist(lapply(1:nrow(data_pig_fit), function(i) prop.test(data_pig_fit$N_PosIsol[i], data_pig_fit$N[i])[[6]][[2]]))
+melt_amp_pigs <- melt_amp_pigs[!is.na(melt_amp_pigs$Resistance),]
+melt_amp_pigs <- melt_amp_pigs[!is.na(melt_amp_pigs$usage),]
 
-ggplot(data_pig_fit, aes(x = Usage, y= ResPropAnim)) + geom_point() +
-  geom_text(aes(x = Usage, y= ResPropAnim, label = Country), vjust = -0.5, hjust = - 0.05, inherit.aes = TRUE) +
+melt_amp_pigs$lower_amp <- unlist(lapply(1:nrow(melt_amp_pigs), function(i) prop.test(melt_amp_pigs$IsolPos[i],melt_amp_pigs$N[i])[[6]][[1]]))
+melt_amp_pigs$upper_amp <- unlist(lapply(1:nrow(melt_amp_pigs), function(i) prop.test(melt_amp_pigs$IsolPos[i],melt_amp_pigs$N[i])[[6]][[2]]))
+
+colnames(melt_amp_pigs) <- c("Country", "Year", "ResPropAnim", "Usage", "N", "IsolPos", "ResPropHum", "Lower_Amp", "Upper_Amp")
+melt_amp_pigs$Usage <- melt_amp_pigs$Usage/1000
+
+ggplot(melt_amp_pigs, aes(x = Usage, y= ResPropAnim, color = Country)) + geom_point() +
   scale_x_continuous(expand = c(0, 0), limits = c(0,0.055)) + scale_y_continuous(expand = c(0, 0), limits = c(0,1)) +
   labs(x ="Livestock Antibiotic Usage (g/PCU)", y = "Antibiotic-Resistant Livestock Carriage")
 
-avg_EU_usage <- mean(data_pig_fit$Usage)
-avg_hum_res <- mean(data_pig_fit$ResPropHum, na.rm = TRUE)
+avg_EU_usage <- mean(melt_amp_pigs$Usage)
+avg_hum_res <- mean(melt_amp_pigs$ResPropHum, na.rm = TRUE)
 
 #### Approximate Bayesian Computation - Rejection Algorithm ####
 
@@ -126,11 +137,11 @@ ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, ini
       
       if(g==1) {
         d_betaAA <- runif(1, min = 0, max = 1)
-        d_phi <- runif(1, min = 0, max = 1)
+        d_phi <- runif(1, min = 0, max = 1.5)
         d_kappa <- runif(1, min = 0, max = 200)
         d_alpha <- rbeta(1, 1.5, 8.5)
         d_zeta <- runif(1, 0, 1)
-        d_betaHA <- runif(1, 0, 0.0015)
+        d_betaHA <- runif(1, 0, 0.002)
         
       } else{ 
         p <- sample(seq(1,N),1,prob= w.old) # check w.old here
@@ -180,7 +191,7 @@ ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, ini
     print(res.old)
     w.old <- w.new/sum(w.new)
     colnames(res.new) <- c("betaAA", "phi", "kappa", "alpha", "zeta", "betaHA")
-    write.csv(res.new, file = paste("results_ABC_SMC_gen_amppigs_",g,".csv",sep=""), row.names=FALSE)
+    write.csv(res.new, file = paste("results_ABC_SMC_gen_tetpigs_zeta_",g,".csv",sep=""), row.names=FALSE)
   }
   return(N_ITER_list)
 }
@@ -188,7 +199,7 @@ ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, ini
 N <- 1000 #(ACCEPTED PARTICLES PER GENERATION)
 
 lm.low <- c(0, 0, 0, 0, 0, 0)
-lm.upp <- c(1, 1, 200, 1, 1, 0.0015)
+lm.upp <- c(1, 1.5, 200, 1, 1, 0.002)
 
 # Empty matrices to store results (6 model parameters)
 res.old<-matrix(ncol=6,nrow=N)
@@ -207,27 +218,35 @@ dist_save <- ABC_algorithm(N = 1000,
               sum.stats = summarystatprev, 
               distanceABC = sum_square_diff_dist, 
               fitmodel = amr, 
-              tau_range = data_pig_fit$Usage, 
+              tau_range = melt_amp_pigs$Usage, 
               init.state = c(Sa=0.98, Isa=0.01, Ira=0.01, Sh=1, Ish=0, Irh=0), 
-              data = data_pig_fit)
+              data = melt_amp_pigs)
 
 end_time <- Sys.time(); end_time - start_time
 
-saveRDS(dist_save, file = "dist_amppigs_list.rds")
-
+saveRDS(dist_save, file = "dist_tetpigs_zeta_list.rds")
 
 
 #### Test Data ####
-data1 <- cbind(read.csv("results_ABC_SMC_gen_amppigs_1.csv", header = TRUE), "group" = "data1")
-data2 <- cbind(read.csv("results_ABC_SMC_gen_amppigs_2.csv", header = TRUE), "group" = "data2")
-data3 <- cbind(read.csv("results_ABC_SMC_gen_amppigs_3.csv", header = TRUE), "group" = "data3")
-data4 <- cbind(read.csv("results_ABC_SMC_gen_amppigs_4.csv", header = TRUE), "group" = "data4") 
-data5 <- cbind(read.csv("results_ABC_SMC_gen_amppigs_5.csv", header = TRUE), "group" = "data5") 
-data6 <- cbind(read.csv("results_ABC_SMC_gen_amppigs_6.csv", header = TRUE), "group" = "data6")
-data7 <- cbind(read.csv("results_ABC_SMC_gen_amppigs_7.csv", header = TRUE), "group" = "data7")
-data8 <- cbind(read.csv("results_ABC_SMC_gen_amppigs_8.csv", header = TRUE), "group" = "data8")
-data9 <- cbind(read.csv("results_ABC_SMC_gen_amppigs_9.csv", header = TRUE), "group" = "data9") 
-data10 <- cbind(read.csv("results_ABC_SMC_gen_amppigs_10.csv", header = TRUE), "group" = "data10") 
+data1 <- cbind(read.csv("results_ABC_SMC_gen_tetpigs_zeta_1.csv", header = TRUE), "group" = "data1")
+
+plot(density(data1$betaAA))
+plot(density(data1$phi))
+plot(density(data1$kappa))
+plot(density(data1$alpha))
+plot(density(data1$zeta))
+plot(density(data1$betaHA))
+
+
+data2 <- cbind(read.csv("results_ABC_SMC_gen_tet_2.csv", header = TRUE), "group" = "data2")
+data3 <- cbind(read.csv("results_ABC_SMC_gen_tet_3.csv", header = TRUE), "group" = "data3")
+data4 <- cbind(read.csv("results_ABC_SMC_gen_tet_4.csv", header = TRUE), "group" = "data4") 
+data5 <- cbind(read.csv("results_ABC_SMC_gen_tet_5.csv", header = TRUE), "group" = "data5") 
+data6 <- cbind(read.csv("results_ABC_SMC_gen_tet_6.csv", header = TRUE), "group" = "data6")
+data7 <- cbind(read.csv("results_ABC_SMC_gen_tet_7.csv", header = TRUE), "group" = "data7")
+data8 <- cbind(read.csv("results_ABC_SMC_gen_tet_8.csv", header = TRUE), "group" = "data8")
+data9 <- cbind(read.csv("results_ABC_SMC_gen_tet_9.csv", header = TRUE), "group" = "data9") 
+data10 <- cbind(read.csv("results_ABC_SMC_gen_tet_10.csv", header = TRUE), "group" = "data10") 
 
 plot(density(data1$phi))
 
@@ -236,64 +255,58 @@ map_kappa <- mean(data10[,"kappa"])
 map_betaAA <- mean(data10[,"betaAA"]) 
 map_alpha <- mean(data10[,"alpha"]) 
 map_zeta <- mean(data10[,"zeta"]) 
-map_ <- mean(data10[,"zeta"]) 
 
 #Plotting the Distributions
 
-testphi <- melt(rbind(data2, data3, data4, data5, data6), id.vars = "group", measure.vars = "phi"); testphi$group <- factor(testphi$group, levels = unique(testphi$group))
-testkappa <- melt(rbind(data2, data3, data4, data5, data6), id.vars = "group", measure.vars = "kappa"); testkappa$group <- factor(testkappa$group, levels = unique(testkappa$group))
-testbetaAA <- melt(rbind(data2, data3, data4, data5, data6), id.vars = "group", measure.vars = "betaAA"); testbetaAA$group <- factor(testbetaAA$group, levels = unique(testbetaAA$group))
-testalpha <- melt(rbind(data2, data3, data4, data5, data6), id.vars = "group", measure.vars = "alpha"); testalpha$group <- factor(testalpha$group, levels = unique(testalpha$group))
-testzeta <- melt(rbind(data2, data3, data4, data5, data6), id.vars = "group", measure.vars = "zeta"); testzeta$group <- factor(testzeta$group, levels = unique(testzeta$group))
-testbetaHA <- melt(rbind(data2, data3, data4, data5, data6), id.vars = "group", measure.vars = "betaHA"); testbetaHA$group <- factor(testbetaHA$group, levels = unique(testbetaHA$group))
+testphi <- melt(rbind(data6, data7, data8, data9, data10), id.vars = "group", measure.vars = "phi"); testphi$group <- factor(testphi$group, levels = unique(testphi$group))
+testkappa <- melt(rbind(data6, data7, data8, data9, data10), id.vars = "group", measure.vars = "kappa"); testkappa$group <- factor(testkappa$group, levels = unique(testkappa$group))
+testbetaAA <- melt(rbind(data6, data7, data8, data9, data10), id.vars = "group", measure.vars = "betaAA"); testbetaAA$group <- factor(testbetaAA$group, levels = unique(testbetaAA$group))
+testalpha <- melt(rbind(data6, data7, data8, data9, data10), id.vars = "group", measure.vars = "alpha"); testalpha$group <- factor(testalpha$group, levels = unique(testalpha$group))
+testzeta <- melt(rbind(data6, data7, data8, data9, data10), id.vars = "group", measure.vars = "zeta"); testzeta$group <- factor(testzeta$group, levels = unique(testzeta$group))
 
 p1 <- ggplot(testphi, aes(x=value, fill=group)) + geom_density(alpha=.5) + 
   scale_x_continuous(expand = c(0, 0), name = expression(paste("Rate of Antibiotic-Resistant to Antibiotic-Sensitive Reversion (", phi, ")"))) + 
   scale_y_continuous(expand = c(0, 0), name = "") +
-  labs(fill = NULL) + scale_fill_discrete(labels = c("Generation 4", "Generation 5", "Generation 6", "Generation 7", "Generation 8"))+
+  labs(fill = NULL) + scale_fill_discrete(labels = c("Generation 6", "Generation 7", "Generation 8", "Generation 9", "Generation 10"))+
   theme(legend.text=element_text(size=14),  axis.text=element_text(size=14),
         axis.title.y=element_text(size=14),axis.title.x= element_text(size=14), plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"))
 
 p2 <- ggplot(testkappa, aes(x=value, fill=group)) + geom_density(alpha=.5)+
-  scale_x_continuous(expand = c(0, 0), name = expression(paste("Efficacy of Antibiotic-Mediated Animal Recovery (", kappa, ")"))) + 
+  scale_x_continuous(limits = c(0,100),expand = c(0, 0), name = expression(paste("Efficacy of Antibiotic-Mediated Animal Recovery (", kappa, ")"))) + 
   scale_y_continuous(expand = c(0, 0), name = "") +
-  labs(fill = NULL) + scale_fill_discrete(labels = c("Generation 4", "Generation 5", "Generation 6", "Generation 7", "Generation 8")) +
+  labs(fill = NULL) + scale_fill_discrete(labels = c("Generation 6", "Generation 7", "Generation 8", "Generation 9", "Generation 10")) +
   theme(legend.text=element_text(size=14),  axis.text=element_text(size=14),
         axis.title.y=element_text(size=14),axis.title.x= element_text(size=14), plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"))
 
 p3<- ggplot(testbetaAA, aes(x=value, fill=group)) + geom_density(alpha=.5)+
   scale_x_continuous(expand = c(0, 0), name = expression(paste("Rate of Animal-to-Animal Transmission (", beta[AA], ")"))) + 
-  scale_y_continuous(expand = c(0, 0), name = "") +
-  labs(fill = NULL) + scale_fill_discrete(labels = c("Generation 4", "Generation 5", "Generation 6", "Generation 7", "Generation 8")) +
+  scale_y_continuous(limits = c(0,40),expand = c(0, 0), name = "") +
+  labs(fill = NULL) + scale_fill_discrete(labels =  c("Generation 6", "Generation 7", "Generation 8", "Generation 9", "Generation 10")) +
   theme(legend.text=element_text(size=14),  axis.text=element_text(size=14),
         axis.title.y=element_text(size=14),axis.title.x= element_text(size=14), plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"))
 
 p4 <- ggplot(testalpha, aes(x=value, fill=group)) + geom_density(alpha=.5)+
   scale_x_continuous(expand = c(0, 0), name = expression(paste("Transmission-related Antibiotic Resistant Fitness Cost (", alpha, ")"))) + 
-  scale_y_continuous(expand = c(0, 0), name = "") +
-  labs(fill = NULL) + scale_fill_discrete(labels =  c("Generation 4", "Generation 5", "Generation 6", "Generation 7", "Generation 8")) +
+  scale_y_continuous(limits = c(0,12),expand = c(0, 0), name = "") +
+  labs(fill = NULL) + scale_fill_discrete(labels =  c("Generation 6", "Generation 7", "Generation 8", "Generation 9", "Generation 10")) +
   theme(legend.text=element_text(size=14),  axis.text=element_text(size=14),
         axis.title.y=element_text(size=14),axis.title.x= element_text(size=14), plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"))
 
 p5 <- ggplot(testzeta, aes(x=value, fill=group)) + geom_density(alpha=.5)+
   scale_x_continuous(expand = c(0, 0), name = expression(paste("Background Infection Rate (", zeta, ")"))) + 
   scale_y_continuous(expand = c(0, 0), name = "") +
-  labs(fill = NULL) + scale_fill_discrete(labels =c("Generation 4", "Generation 5", "Generation 6", "Generation 7", "Generation 8")) +
-  theme(legend.text=element_text(size=14),  axis.text=element_text(size=14),
-        axis.title.y=element_text(size=14),axis.title.x= element_text(size=14), plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"))
-
-p6<- ggplot(testbetaHA, aes(x=value, fill=group)) + geom_density(alpha=.5)+
-  scale_x_continuous(expand = c(0, 0), name = expression(paste("Rate of Animal-to-Human Transmission (", beta[HA], ")"))) + 
-  scale_y_continuous(expand = c(0, 0), name = "") +
-  labs(fill = NULL) + scale_fill_discrete(labels = c("Generation 4", "Generation 5", "Generation 6", "Generation 7", "Generation 8")) +
+  labs(fill = NULL) + scale_fill_discrete(labels = c("Generation 6", "Generation 7", "Generation 8", "Generation 9", "Generation 10")) +
   theme(legend.text=element_text(size=14),  axis.text=element_text(size=14),
         axis.title.y=element_text(size=14),axis.title.x= element_text(size=14), plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"))
 
 
 #### Plotting ####
 
-plot <- ggarrange(p1, p2, p3, p4, p5, p6, nrow = 3, ncol =2, 
-                  labels = c("A","B","C","D","E", "F"), font.label = c(size = 20), common.legend = TRUE, legend = "bottom")
+plot <- ggarrange(p1, p2, p3, p4,p5, nrow = 3, ncol =2, 
+                  labels = c("A","B","C","D","E"), font.label = c(size = 20), common.legend = TRUE, legend = "bottom")
+
+ggsave(plot, filename = "ABCSMC_salm_pigs.png", dpi = 300, type = "cairo", width = 13, height = 15, units = "in")
+
 
 # Pairs Plot --------------------------------------------------------------
 
