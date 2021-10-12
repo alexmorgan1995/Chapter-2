@@ -35,46 +35,35 @@ dataamp_pigs[,(2+5):(6+5)][dataamp_pigs[,2:6] < 10] <- NA # replace anything und
 dataamp_pigs[,(2+10):(6+10)][dataamp_pigs[,2:6] < 10] <- NA # replace anything under a sample size of 10 with
 dataamp_pigs[,2:6][dataamp_pigs[,2:6] < 10] <- NA # replace anything under a sample size of 10 with
 dataamp_pigs <- dataamp_pigs[!(is.na(dataamp_pigs$N_2015) & is.na(dataamp_pigs$N_2016) & is.na(dataamp_pigs$N_2017) & 
-                         is.na(dataamp_pigs$N_2018) & is.na(dataamp_pigs$N_2019)),]
+                                 is.na(dataamp_pigs$N_2018) & is.na(dataamp_pigs$N_2019)),]
 pig_yrs <- sub("N_", "", grep("N_20",colnames(dataamp_pigs), value = TRUE)) #Find the number of years included 
-
-# NON-AGGREGATED - AMP PIGS  -------------------------------------------------------------
-colnames(dataamp_pigs)[12:16] <- as.character(2015:2019)
-
-melt_amp_pigs <- melt(dataamp_pigs, id.vars = "Country", measure.vars = c("2015", "2016", "2017", "2018", "2019"))
-melt_amp_pigs$usage <- melt(dataamp_pigs, id.vars = "Country", measure.vars = c("scale_ampusage_2015", "scale_ampusage_2016", 
-                                                                              "scale_ampusage_2017", "scale_ampusage_2018", "scale_ampusage_2019"))[,3]
-melt_amp_pigs$N <- melt(dataamp_pigs, id.vars = "Country", measure.vars = c("N_2015", "N_2016", 
-                                                                        "N_2017", "N_2018", "N_2019"))[,3]
-melt_amp_pigs$IsolPos <- melt(dataamp_pigs, id.vars = "Country", measure.vars = c("PosIsol_2015", "PosIsol_2016", 
-                                                                              "PosIsol_2017", "PosIsol_2018", "PosIsol_2019"))[,3]
-colnames(melt_amp_pigs)[c(2,3)] <- c("Year", "Resistance")
 
 #Cleaning Data - Humans
 dataamp_hum <- dataamp_hum[dataamp_hum$Country %in% intersect(dataamp_hum$Country, dataamp_pigs$Country),]
-colnames(dataamp_hum)[26:31] <- as.character(2014:2019)
-dataamp_hum_melt <- melt(dataamp_hum, id.vars = "Country", measure.vars = as.character(2015:2019))
-colnames(dataamp_hum_melt)[c(2,3)] <- c("Year", "Resistance")
+dataamp_hum <- dataamp_hum[,c(1,grep(paste(pig_yrs,collapse="|"), colnames(dataamp_hum)))]
+dataamp_hum <- dataamp_hum[,-grep("TET", colnames(dataamp_hum))] # Remove AMP from dataframe
 
+#Combine the Data 
 
-# Combine -----------------------------------------------------------------
-melt_amp_pigs$ResPropHum <- dataamp_hum_melt[,3]
+data_pig_fit <- data.frame("Country" = dataamp_hum$Country,
+                           "N" = rowSums(dataamp_pigs[,2:6], na.rm = TRUE),
+                           "N_PosIsol" = rowSums(dataamp_pigs[,7:11], na.rm = TRUE),
+                           "Usage" = rowMeans(dataamp_pigs[,grep("usage_20", colnames(dataamp_pigs))], na.rm = TRUE)/1000,
+                           "ResPropHum" = rowSums(dataamp_hum[,7:11], na.rm = TRUE)/
+                             rowSums(dataamp_hum[,2:6], na.rm = TRUE),
+                           "ResPropAnim" = rowSums(dataamp_pigs[,7:11], na.rm = TRUE)/
+                             rowSums(dataamp_pigs[,2:6], na.rm = TRUE)) 
 
-melt_amp_pigs <- melt_amp_pigs[!is.na(melt_amp_pigs$Resistance),]
-melt_amp_pigs <- melt_amp_pigs[!is.na(melt_amp_pigs$usage),]
+data_pig_fit$lower <- unlist(lapply(1:nrow(data_pig_fit), function(i) prop.test(data_pig_fit$N_PosIsol[i], data_pig_fit$N[i])[[6]][[1]]))
+data_pig_fit$upper <- unlist(lapply(1:nrow(data_pig_fit), function(i) prop.test(data_pig_fit$N_PosIsol[i], data_pig_fit$N[i])[[6]][[2]]))
 
-melt_amp_pigs$lower_amp <- unlist(lapply(1:nrow(melt_amp_pigs), function(i) prop.test(melt_amp_pigs$IsolPos[i],melt_amp_pigs$N[i])[[6]][[1]]))
-melt_amp_pigs$upper_amp <- unlist(lapply(1:nrow(melt_amp_pigs), function(i) prop.test(melt_amp_pigs$IsolPos[i],melt_amp_pigs$N[i])[[6]][[2]]))
-
-colnames(melt_amp_pigs) <- c("Country", "Year", "ResPropAnim", "Usage", "N", "IsolPos", "ResPropHum", "Lower_Amp", "Upper_Amp")
-melt_amp_pigs$Usage <- melt_amp_pigs$Usage/1000
-
-ggplot(melt_amp_pigs, aes(x = Usage, y= ResPropAnim, color = Country)) + geom_point() +
+ggplot(data_pig_fit, aes(x = Usage, y= ResPropAnim)) + geom_point() +
+  geom_text(aes(x = Usage, y= ResPropAnim, label = Country), vjust = -0.5, hjust = - 0.05, inherit.aes = TRUE) +
   scale_x_continuous(expand = c(0, 0), limits = c(0,0.055)) + scale_y_continuous(expand = c(0, 0), limits = c(0,1)) +
   labs(x ="Livestock Antibiotic Usage (g/PCU)", y = "Antibiotic-Resistant Livestock Carriage")
 
-avg_EU_usage <- mean(melt_amp_pigs$Usage)
-avg_hum_res <- mean(melt_amp_pigs$ResPropHum, na.rm = TRUE)
+avg_EU_usage <- mean(data_pig_fit$Usage)
+avg_hum_res <- mean(data_pig_fit$ResPropHum, na.rm = TRUE)
 
 #### Approximate Bayesian Computation - Rejection Algorithm ####
 
@@ -189,7 +178,7 @@ ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, ini
     print(res.old)
     w.old <- w.new/sum(w.new)
     colnames(res.new) <- c("betaAA", "phi", "kappa", "alpha", "betaHA")
-    write.csv(res.new, file = paste("results_ABC_SMC_gen_tetpigs_nozeta_",g,".csv",sep=""), row.names=FALSE)
+    write.csv(res.new, file = paste("results_ABC_SMC_gen_tetpigs_nozetaagg_",g,".csv",sep=""), row.names=FALSE)
   }
   return(N_ITER_list)
 }
@@ -207,7 +196,7 @@ res.new<-matrix(ncol=5,nrow=N)
 w.old<-matrix(ncol=1,nrow=N)
 w.new<-matrix(ncol=1,nrow=N)
 
-epsilon_dist <- c(5, 4.5, 4.25, 4, 3.75, 3.5, 3.25, 3.1, 3, 2.8)
+epsilon_dist <- c(5, 4.5, 4, 3.5, 3, 2, 1.8, 1.6, 1.5, 1.45)
 epsilon_food <- c(0.593*1, 0.593*0.75, 0.593*0.5, 0.593*0.25, 0.593*0.2, 0.593*0.15, 0.593*0.1, 0.593*0.075, 0.593*0.065, 0.593*0.05)
 epsilon_AMR <- c(avg_hum_res*1, avg_hum_res*0.75, avg_hum_res*0.5, avg_hum_res*0.25, avg_hum_res*0.2, avg_hum_res*0.15, avg_hum_res*0.1, avg_hum_res*0.075, avg_hum_res*0.065, avg_hum_res*0.05)
 
@@ -216,13 +205,13 @@ dist_save <- ABC_algorithm(N = 1000,
               sum.stats = summarystatprev, 
               distanceABC = sum_square_diff_dist, 
               fitmodel = amr, 
-              tau_range = melt_amp_pigs$Usage, 
+              tau_range = data_pig_fit$Usage, 
               init.state = c(Sa=0.98, Isa=0.01, Ira=0.01, Sh=1, Ish=0, Irh=0), 
-              data = melt_amp_pigs)
+              data = data_pig_fit)
 
 end_time <- Sys.time(); end_time - start_time
 
-saveRDS(dist_save, file = "dist_tetpigs_nozeta_list.rds")
+saveRDS(dist_save, file = "dist_tetpigs_nozeta_agglist.rds")
 
 
 #### Test Data ####

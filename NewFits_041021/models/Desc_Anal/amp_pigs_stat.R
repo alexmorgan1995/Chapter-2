@@ -47,7 +47,9 @@ stat_amp_pigs <- lm(Resistance ~ usage, melt_amp_pigs); summary(stat_amp_pigs)
 
 ss_data_amppigs_nonaggre <- data.frame("model_pred" = predict(stat_amp_pigs, melt_amp_pigs),
                                        "data" = melt_amp_pigs$Resistance)
+
 ss_data_amppigs_nonaggre <- ss_data_amppigs_nonaggre[!is.na(ss_data_amppigs_nonaggre$model_pred),]
+
 ss_amppigs_nonaggre <- sum_square_diff_dist(ss_data_amppigs_nonaggre$model_pred, ss_data_amppigs_nonaggre$data)
 
 p_amp_pigs <- ggplot(melt_amp_pigs, aes(usage, Resistance, color = Country)) + geom_point() + 

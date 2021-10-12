@@ -35,27 +35,35 @@ dataamp_pigs[,(2+5):(6+5)][dataamp_pigs[,2:6] < 10] <- NA # replace anything und
 dataamp_pigs[,(2+10):(6+10)][dataamp_pigs[,2:6] < 10] <- NA # replace anything under a sample size of 10 with
 dataamp_pigs[,2:6][dataamp_pigs[,2:6] < 10] <- NA # replace anything under a sample size of 10 with
 dataamp_pigs <- dataamp_pigs[!(is.na(dataamp_pigs$N_2015) & is.na(dataamp_pigs$N_2016) & is.na(dataamp_pigs$N_2017) & 
-                         is.na(dataamp_pigs$N_2018) & is.na(dataamp_pigs$N_2019)),]
+                                 is.na(dataamp_pigs$N_2018) & is.na(dataamp_pigs$N_2019)),]
 pig_yrs <- sub("N_", "", grep("N_20",colnames(dataamp_pigs), value = TRUE)) #Find the number of years included 
-
-# NON-AGGREGATED - AMP PIGS  -------------------------------------------------------------
-colnames(dataamp_pigs)[12:16] <- as.character(2015:2019)
-
-melt_amp_pigs <- melt(dataamp_pigs, id.vars = "Country", measure.vars = c("2015", "2016", "2017", "2018", "2019"))
-melt_amp_pigs$usage <- melt(dataamp_pigs, id.vars = "Country", measure.vars = c("scale_ampusage_2015", "scale_ampusage_2016", 
-                                                                              "scale_ampusage_2017", "scale_ampusage_2018", "scale_ampusage_2019"))[,3]
-melt_amp_pigs$N <- melt(dataamp_pigs, id.vars = "Country", measure.vars = c("N_2015", "N_2016", 
-                                                                        "N_2017", "N_2018", "N_2019"))[,3]
-melt_amp_pigs$IsolPos <- melt(dataamp_pigs, id.vars = "Country", measure.vars = c("PosIsol_2015", "PosIsol_2016", 
-                                                                              "PosIsol_2017", "PosIsol_2018", "PosIsol_2019"))[,3]
-colnames(melt_amp_pigs)[c(2,3)] <- c("Year", "Resistance")
 
 #Cleaning Data - Humans
 dataamp_hum <- dataamp_hum[dataamp_hum$Country %in% intersect(dataamp_hum$Country, dataamp_pigs$Country),]
-colnames(dataamp_hum)[26:31] <- as.character(2014:2019)
-dataamp_hum_melt <- melt(dataamp_hum, id.vars = "Country", measure.vars = as.character(2015:2019))
-colnames(dataamp_hum_melt)[c(2,3)] <- c("Year", "Resistance")
+dataamp_hum <- dataamp_hum[,c(1,grep(paste(pig_yrs,collapse="|"), colnames(dataamp_hum)))]
+dataamp_hum <- dataamp_hum[,-grep("TET", colnames(dataamp_hum))] # Remove AMP from dataframe
 
+#Combine the Data 
+data_pig_fit <- data.frame("Country" = dataamp_hum$Country,
+                           "N" = rowSums(dataamp_pigs[,2:6], na.rm = TRUE),
+                           "N_PosIsol" = rowSums(dataamp_pigs[,7:11], na.rm = TRUE),
+                           "Usage" = rowMeans(dataamp_pigs[,grep("usage_20", colnames(dataamp_pigs))], na.rm = TRUE)/1000,
+                           "ResPropHum" = rowSums(dataamp_hum[,7:11], na.rm = TRUE)/
+                             rowSums(dataamp_hum[,2:6], na.rm = TRUE),
+                           "ResPropAnim" = rowSums(dataamp_pigs[,7:11], na.rm = TRUE)/
+                             rowSums(dataamp_pigs[,2:6], na.rm = TRUE)) 
+
+#Create confidence intervals
+data_pig_fit$lower <- unlist(lapply(1:nrow(data_pig_fit), function(i) prop.test(data_pig_fit$N_PosIsol[i], data_pig_fit$N[i])[[6]][[1]]))
+data_pig_fit$upper <- unlist(lapply(1:nrow(data_pig_fit), function(i) prop.test(data_pig_fit$N_PosIsol[i], data_pig_fit$N[i])[[6]][[2]]))
+
+ggplot(data_pig_fit, aes(x = Usage, y= ResPropAnim)) + geom_point() +
+  geom_text(aes(x = Usage, y= ResPropAnim, label = Country), vjust = -0.5, hjust = - 0.05, inherit.aes = TRUE) +
+  scale_x_continuous(expand = c(0, 0), limits = c(0,0.055)) + scale_y_continuous(expand = c(0, 0), limits = c(0,1)) +
+  labs(x ="Livestock Antibiotic Usage (g/PCU)", y = "Antibiotic-Resistant Livestock Carriage")
+
+avg_EU_usage <- mean(data_pig_fit$Usage)
+avg_hum_res <- mean(data_pig_fit$ResPropHum, na.rm = TRUE)
 
 # Combine -----------------------------------------------------------------
 melt_amp_pigs$ResPropHum <- dataamp_hum_melt[,3]
@@ -118,13 +126,13 @@ start_time <- Sys.time()
 
 #Where G is the number of generations
 prior.non.zero<-function(par){
-  prod(sapply(1:5, function(a) as.numeric((par[a]-lm.low[a]) > 0) * as.numeric((lm.upp[a]-par[a]) > 0)))
+  prod(sapply(1:6, function(a) as.numeric((par[a]-lm.low[a]) > 0) * as.numeric((lm.upp[a]-par[a]) > 0)))
 }
 
 ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, init.state, data)  {
   N_ITER_list <- list()
-  fit_parms <- c("betaAA", "phi", "kappa", "alpha", "betaHA")
-  thetaparm <- c(ra = 60^-1, rh =  (5.5^-1), ua = 240^-1, uh = 28835^-1, betaAH = 0.00001, betaHH = 0.00001, zeta = 0)
+  fit_parms <- c("betaAA", "phi", "kappa", "alpha", "zeta", "betaHA")
+  thetaparm <- c(ra = 60^-1, rh =  (5.5^-1), ua = 240^-1, uh = 28835^-1, betaAH = 0.00001, betaHH = 0.00001)
   
   for(g in 1:G) {
     i <- 1
@@ -140,7 +148,8 @@ ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, ini
         d_phi <- runif(1, min = 0, max = 1.5)
         d_kappa <- runif(1, min = 0, max = 200)
         d_alpha <- rbeta(1, 1.5, 8.5)
-        d_betaHA <- runif(1, 0, 0.01)
+        d_zeta <- runif(1, 0, 1)
+        d_betaHA <- runif(1, 0, 0.002)
         
       } else{ 
         p <- sample(seq(1,N),1,prob= w.old) # check w.old here
@@ -149,12 +158,13 @@ ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, ini
         d_phi<-par[2]
         d_kappa<-par[3]
         d_alpha<-par[4]
-        d_betaHA <-par[5]
+        d_zeta <- par[5]
+        d_betaHA <-par[6]
       }
-      if(prior.non.zero(c(d_betaAA, d_phi, d_kappa, d_alpha, d_betaHA))) {
+      if(prior.non.zero(c(d_betaAA, d_phi, d_kappa, d_alpha, d_zeta, d_betaHA))) {
         m <- 0
         thetaparm <- c(ra = 60^-1, rh = (5.5^-1), ua = 240^-1, uh = 28835^-1, betaAA = d_betaAA, betaAH = 0.00001, betaHH = 0.00001, 
-                       betaHA = d_betaHA, phi = d_phi, kappa = d_kappa, alpha = d_alpha, zeta = 0)
+                       betaHA = d_betaHA, phi = d_phi, kappa = d_kappa, alpha = d_alpha, zeta = d_zeta)
         
         dist <- computeDistanceABC_ALEX(sum.stats, distanceABC, fitmodel, tau_range, thetaparm, init.state, data)
         print(dist)
@@ -162,7 +172,7 @@ ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, ini
         if((dist[1] <= epsilon_dist[g]) && (dist[2] <= epsilon_food[g]) && (dist[3] <= epsilon_AMR[g]) && (!is.na(dist))) {
           # Store results
           
-          res.new[i,]<-c(d_betaAA, d_phi, d_kappa, d_alpha, d_betaHA)  
+          res.new[i,]<-c(d_betaAA, d_phi, d_kappa, d_alpha, d_zeta, d_betaHA)  
           dist_data[i,] <- dist
           # Calculate weights
           if(g==1){
@@ -170,7 +180,7 @@ ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, ini
             w.new[i] <- 1
             
           } else {
-            w1<-prod(c(sapply(c(1:3,5), function(b) dunif(res.new[i,b], min=lm.low[b], max=lm.upp[b])),
+            w1<-prod(c(sapply(c(1:3,5:6), function(b) dunif(res.new[i,b], min=lm.low[b], max=lm.upp[b])),
                        dbeta(res.new[i,4], 1.5, 8.5))) 
             w2<-sum(sapply(1:N, function(a) w.old[a]* dtmvnorm(res.new[i,], mean=res.old[a,], sigma=sigma, lower=lm.low, upper=lm.upp)))
             w.new[i] <- w1/w2
@@ -188,26 +198,26 @@ ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, ini
     res.old <- res.new
     print(res.old)
     w.old <- w.new/sum(w.new)
-    colnames(res.new) <- c("betaAA", "phi", "kappa", "alpha", "betaHA")
-    write.csv(res.new, file = paste("results_ABC_SMC_gen_tetpigs_nozeta_",g,".csv",sep=""), row.names=FALSE)
+    colnames(res.new) <- c("betaAA", "phi", "kappa", "alpha", "zeta", "betaHA")
+    write.csv(res.new, file = paste("results_ABC_SMC_gen_tetpigs_zetaagg_",g,".csv",sep=""), row.names=FALSE)
   }
   return(N_ITER_list)
 }
 
 N <- 1000 #(ACCEPTED PARTICLES PER GENERATION)
 
-lm.low <- c(0, 0, 0, 0, 0)
-lm.upp <- c(1, 1.5, 200, 1,  0.01)
+lm.low <- c(0, 0, 0, 0, 0, 0)
+lm.upp <- c(1, 1.5, 200, 1, 1, 0.002)
 
 # Empty matrices to store results (6 model parameters)
-res.old<-matrix(ncol=5,nrow=N)
-res.new<-matrix(ncol=5,nrow=N)
+res.old<-matrix(ncol=6,nrow=N)
+res.new<-matrix(ncol=6,nrow=N)
 
 # Empty vectors to store weights
 w.old<-matrix(ncol=1,nrow=N)
 w.new<-matrix(ncol=1,nrow=N)
 
-epsilon_dist <- c(5, 4.5, 4.25, 4, 3.75, 3.5, 3.25, 3.1, 3, 2.8)
+epsilon_dist <- c(4, 3.5, 3, 2.5, 2, 1.75, 1.5, 1.25, 1, 0.9)
 epsilon_food <- c(0.593*1, 0.593*0.75, 0.593*0.5, 0.593*0.25, 0.593*0.2, 0.593*0.15, 0.593*0.1, 0.593*0.075, 0.593*0.065, 0.593*0.05)
 epsilon_AMR <- c(avg_hum_res*1, avg_hum_res*0.75, avg_hum_res*0.5, avg_hum_res*0.25, avg_hum_res*0.2, avg_hum_res*0.15, avg_hum_res*0.1, avg_hum_res*0.075, avg_hum_res*0.065, avg_hum_res*0.05)
 
@@ -216,23 +226,24 @@ dist_save <- ABC_algorithm(N = 1000,
               sum.stats = summarystatprev, 
               distanceABC = sum_square_diff_dist, 
               fitmodel = amr, 
-              tau_range = melt_amp_pigs$Usage, 
+              tau_range = data_pig_fit$Usage, 
               init.state = c(Sa=0.98, Isa=0.01, Ira=0.01, Sh=1, Ish=0, Irh=0), 
-              data = melt_amp_pigs)
+              data = data_pig_fit)
 
 end_time <- Sys.time(); end_time - start_time
 
-saveRDS(dist_save, file = "dist_tetpigs_nozeta_list.rds")
-
+saveRDS(dist_save, file = "dist_tetpigs_zetaagg_list.rds")
 
 #### Test Data ####
-data1 <- cbind(read.csv("results_ABC_SMC_gen_tetpigs_nozeta_1.csv", header = TRUE), "group" = "data1")
+data1 <- cbind(read.csv("results_ABC_SMC_gen_tetpigs_zeta_1.csv", header = TRUE), "group" = "data1")
 
 plot(density(data1$betaAA))
 plot(density(data1$phi))
 plot(density(data1$kappa))
 plot(density(data1$alpha))
+plot(density(data1$zeta))
 plot(density(data1$betaHA))
+
 
 data2 <- cbind(read.csv("results_ABC_SMC_gen_tet_2.csv", header = TRUE), "group" = "data2")
 data3 <- cbind(read.csv("results_ABC_SMC_gen_tet_3.csv", header = TRUE), "group" = "data3")
