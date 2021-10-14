@@ -9,9 +9,9 @@ setwd("//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Model
 amr <- function(t, y, parms) {
   with(as.list(c(y, parms)), {
     dSa = ua + ra*(Isa + Ira) + kappa*tau*Isa - (betaAA*Isa*Sa) - (betaAH*Ish*Sa) - (1-alpha)*(betaAH*Irh*Sa) - (1-alpha)*(betaAA*Ira*Sa) - ua*Sa -
-      zeta*Sa*(1-alpha) - zeta*Sa 
-    dIsa = betaAA*Isa*Sa + betaAH*Ish*Sa + phi*Ira - kappa*tau*Isa - tau*Isa - ra*Isa - ua*Isa + zeta*Sa
-    dIra = (1-alpha)*betaAH*Irh*Sa + (1-alpha)*betaAA*Ira*Sa + tau*Isa - phi*Ira - ra*Ira - ua*Ira + zeta*Sa*(1-alpha)
+      (0.5*zeta)*Sa*(1-alpha) - (0.5*zeta)*Sa 
+    dIsa = betaAA*Isa*Sa + betaAH*Ish*Sa + phi*Ira - kappa*tau*Isa - tau*Isa - ra*Isa - ua*Isa + (0.5*zeta)*Sa
+    dIra = (1-alpha)*betaAH*Irh*Sa + (1-alpha)*betaAA*Ira*Sa + tau*Isa - phi*Ira - ra*Ira - ua*Ira + (0.5*zeta)*Sa*(1-alpha)
     
     dSh = uh + rh*(Ish+Irh) - (betaHH*Ish*Sh) - (1-alpha)*(betaHH*Irh*Sh) - (betaHA*Isa*Sh) - (1-alpha)*(betaHA*Ira*Sh) - uh*Sh 
     dIsh = betaHH*Ish*Sh + betaHA*Isa*Sh - rh*Ish - uh*Ish 
@@ -101,7 +101,6 @@ computeDistanceABC_ALEX <- function(sum.stats, distanceABC, fitmodel, tau_range,
   tau_range <- append(tau_range, avg_EU_usage)
   
   for (i in 1:length(tau_range)) {
-    temp <- matrix(NA, nrow = 1, ncol = 4)
     parms2 = thetaparm
     parms2["tau"] = tau_range[i]
     
@@ -142,11 +141,11 @@ ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, ini
       N_ITER <- N_ITER + 1
       
       if(g==1) {
-        d_betaAA <- runif(1, min = 0, max = 1)
-        d_phi <- runif(1, min = 0, max = 2)
-        d_kappa <- runif(1, min = 0, max = 300)
+        d_betaAA <- runif(1, min = 0, max = 1.5)
+        d_phi <- runif(1, min = 0, max = 3)
+        d_kappa <- runif(1, min = 0, max = 500)
         d_alpha <- rbeta(1, 1.5, 8.5)
-        d_zeta <- runif(1, 0, 1)
+        d_zeta <- runif(1, 0, 1.5)
         d_betaHA <- runif(1, 0, 0.002)
         
       } else{ 
@@ -207,7 +206,7 @@ ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, ini
 N <- 1000 #(ACCEPTED PARTICLES PER GENERATION)
 
 lm.low <- c(0, 0, 0, 0, 0, 0)
-lm.upp <- c(1, 2, 300, 1, 1, 0.002) #Upper and lower bounds for the priors - for the multivariate normal dist pert kernel
+lm.upp <- c(1.5, 3, 500, 1, 1.5, 0.002) #Upper and lower bounds for the priors - for the multivariate normal dist pert kernel
 
 # Empty matrices to store results (6 model parameters)
 res.old<-matrix(ncol=6,nrow=N)
@@ -219,8 +218,8 @@ w.new<-matrix(ncol=1,nrow=N)
 
 #Thresholds 
 epsilon_dist <- c(4, 3.5, 3, 2.5, 2, 1.8, 1.7, 1.6, 1.55, 1.525)
-epsilon_food <- c(0.593*1, 0.593*0.75, 0.593*0.5, 0.593*0.25, 0.593*0.2, 0.593*0.15, 0.593*0.1, 0.593*0.075, 0.593*0.065, 0.593*0.05)
-epsilon_AMR <- c(avg_hum_res*1, avg_hum_res*0.75, avg_hum_res*0.5, avg_hum_res*0.25, avg_hum_res*0.2, avg_hum_res*0.15, avg_hum_res*0.1, avg_hum_res*0.075, avg_hum_res*0.065, avg_hum_res*0.05)
+epsilon_food <- c(0.593*1, 0.593*0.8, 0.593*0.6, 0.593*0.5, 0.593*0.4, 0.593*0.3, 0.593*0.2, 0.593*0.15, 0.593*0.125, 0.593*0.1)
+epsilon_AMR <- c(avg_hum_res*1, avg_hum_res*0.8, avg_hum_res*0.6, avg_hum_res*0.5, avg_hum_res*0.4, avg_hum_res*0.3, avg_hum_res*0.2, avg_hum_res*0.15, avg_hum_res*0.125, avg_hum_res*0.1)
 
 #Run the model 
 start_time <- Sys.time()
@@ -241,7 +240,7 @@ saveRDS(dist_save, file = "dist_amppigs_list.rds")
 
 # Examining Posteriors ----------------------------------------------------
 
-post_dist_names <- grep("amppigs_zeta_",
+post_dist_names <- grep("ABC_post_amppigs_",
                       list.files("//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Models/Chapter-2/NewFits_041021/data"), value = TRUE)
 post_dist <- lapply(post_dist_names, read.csv)
 

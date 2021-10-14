@@ -75,7 +75,7 @@ melt_amp_pigs$upper_amp <- unlist(lapply(1:nrow(melt_amp_pigs), function(i) prop
 
 p_amp_pigs <- ggplot(melt_amp_pigs, aes(usage, Resistance, color = Country)) + geom_point() + 
   geom_errorbar(aes(ymin=lower_amp, ymax=upper_amp), size=0.5, width = 0) + theme_bw()  + theme(legend.position =  "bottom") +
-  labs(title = "Ampicillin Usage in Fattening Pigs: 2015-2019", x = "Ampicillin Usage", y = "Proportion Fattening Pigs Resistant")
+  labs(title = "Ampicillin Usage in Fattening Pigs: 2015-2018", x = "Ampicillin Livestock Sales (mg/PCU)", y = "Proportion Fattening Pigs Resistant")
 
 #Create the Combined Dataset - Tet Fattening Pigs 
 
@@ -94,7 +94,7 @@ melt_tet_pigs$upper_tet <- unlist(lapply(1:nrow(melt_tet_pigs), function(i) prop
 
 p_tet_pigs <- ggplot(melt_tet_pigs, aes(usage, Resistance, color = Country)) + geom_point() + 
   geom_errorbar(aes(ymin=lower_tet, ymax=upper_tet), size=0.5, width = 0) + theme_bw()  + theme(legend.position =  "bottom") +
-  labs(title = "Tetracycline Usage in Fattening Pigs: 2015-2019", x = "Tetracycline Usage", y = "Proportion Fattening Pigs Resistant")
+  labs(title = "Tetracycline Usage in Fattening Pigs: 2015-2018", x = "Tetracycline Livestock Sales (mg/PCU)", y = "Proportion Fattening Pigs Resistant")
 
 #Create the Combined Dataset - Amp Broilers 
 
@@ -112,7 +112,7 @@ melt_amp_broil$upper_amp <- unlist(lapply(1:nrow(melt_amp_broil), function(i) pr
 
 p_amp_broil <- ggplot(melt_amp_broil, aes(usage, Resistance, color = Country)) + geom_point() + 
   geom_errorbar(aes(ymin=lower_amp, ymax=upper_amp), size=0.5, width = 0) + theme_bw() + theme(legend.position =  "bottom") +
-  labs(title = "Ampicillin Usage in Broilers: 2014-2018", x = "Ampicillin Usage", y = "Proportion Broilers Resistant")
+  labs(title = "Ampicillin Usage in Broilers: 2014-2018", x = "Ampicillin Livestock Sales (mg/PCU)", y = "Proportion Broilers Resistant")
 
 #Create the Combined Dataset - Tet Broilers  
 
@@ -130,7 +130,7 @@ melt_tet_broil$upper_tet <- unlist(lapply(1:nrow(melt_tet_broil), function(i) pr
 
 p_tet_broil <- ggplot(melt_tet_broil, aes(usage, Resistance, color = Country)) + geom_point() + 
   geom_errorbar(aes(ymin=lower_tet, ymax=upper_tet), size=0.5, width = 0) + theme_bw()  + theme(legend.position =  "bottom") +
-  labs(title = "Tetracycline Usage in Broilers: 2014-2018", x = "Tetracycline Usage", y = "Proportion Broilers Resistant")
+  labs(title = "Tetracycline Usage in Broilers: 2014-2018", x = "Tetracycline Livestock Sales (mg/PCU)", y = "Proportion Broilers Resistant")
 
 # Statistically Testing the non-agrgegated Data  -----------------------------------------
 
@@ -161,9 +161,10 @@ p_tet_broil <- p_tet_broil + geom_line(aes(y = predict(stat_tet_broil, melt_tet_
            x = max(melt_tet_broil$usage, na.rm = TRUE)*0.75, size = 5)
 
 
-comb_nonaggre_plot <- ggarrange(p_tet_pigs, p_amp_pigs, p_tet_broil, p_amp_broil, ncol = 2,  nrow = 2)
+comb_nonaggre_plot <- ggarrange(p_tet_pigs, p_amp_pigs, p_tet_broil, p_amp_broil, ncol = 2,  nrow = 2, common.legend = TRUE,
+                                legend = "bottom")
 
-ggsave(comb_nonaggre_plot, filename = "nonaggreg_stat.png", dpi = 300, type = "cairo", width = 14, height = 9, units = "in",
+ggsave(comb_nonaggre_plot, filename = "nonaggreg_stat.png", dpi = 300, type = "cairo", width = 11, height = 11, units = "in",
        path = "//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Figures/comb_data")
 
 # Create aggregated data  -------------------------------------------------
