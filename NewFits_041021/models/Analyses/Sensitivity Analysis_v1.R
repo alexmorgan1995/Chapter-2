@@ -38,29 +38,22 @@ import <- function(id) {
   return(data)
 }
 
+
+# Import the Dataset ------------------------------------------------------
+
+
+
 # Identify the MAP averages for the Parameter Sets ---------------------------------
 #Import of Posterior Distributions
 data <- do.call(rbind, list(import(tet), import(amp), import(broil)))
 
-MAPtet <- c("phi" <- mean(data$phi[which(data$group == "data10" & data$fit == "tet")]),
-            "kappa" <- mean(data$kappa[which(data$group == "data10" & data$fit == "tet")]),
-            "betaAA" <- mean(data$betaAA[which(data$group == "data10" & data$fit == "tet")]),
-            "alpha" <- mean(data$alpha[which(data$group == "data10" & data$fit == "tet")]),
-            "zeta" <- mean(data$zeta[which(data$group == "data10" & data$fit == "tet")]))
+MAP <- rbind(c(colMeans(data[[1]][which(data[[1]]$group == tail(unique(data[[1]]$group),1)),][,1:6])),
+             c(colMeans(data[[2]][which(data[[2]]$group == tail(unique(data[[2]]$group),1)),][,1:6])),
+             c(colMeans(data[[3]][which(data[[3]]$group == tail(unique(data[[3]]$group),1)),][,1:6])),
+             c(colMeans(data[[4]][which(data[[4]]$group == tail(unique(data[[4]]$group),1)),][,1:6])))
 
-MAPamp <- c("phi" <- mean(data$phi[which(data$group == "data10" & data$fit == "amp")]),
-            "kappa" <- mean(data$kappa[which(data$group == "data10" & data$fit == "amp")]),
-            "betaAA" <- mean(data$betaAA[which(data$group == "data10" & data$fit == "amp")]),
-            "alpha" <- mean(data$alpha[which(data$group == "data10" & data$fit == "amp")]),
-            "zeta" <- mean(data$zeta[which(data$group == "data10" & data$fit == "amp")]))
-
-MAPbroil <- c("phi" <- mean(data$phi[which(data$group == "data10" & data$fit == "broil")]),
-              "kappa" <- mean(data$kappa[which(data$group == "data10" & data$fit == "broil")]),
-              "betaAA" <- mean(data$betaAA[which(data$group == "data10" & data$fit == "broil")]),
-              "alpha" <- mean(data$alpha[which(data$group == "data10" & data$fit == "broil")]),
-              "zeta" <- mean(data$zeta[which(data$group == "data10" & data$fit == "broil")]))
-
-MAP <- rbind(MAPtet, MAPamp, MAPbroil); colnames(MAP) <- c("phi", "kappa", "betaAA", "alpha", "zeta")
+colnames(MAP) <- c("betaAA", "phi", "kappa", "alpha", "zeta", "betaHA")
+rownames(MAP) <- c("ampbroil", "tetbroil","amppigs", "tetpigs")
 
 sensparms <- c("phi" = mean(MAP[1:3]), 
                "kappa" = mean(MAP[4:6]),

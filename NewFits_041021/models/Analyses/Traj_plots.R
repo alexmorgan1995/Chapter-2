@@ -6,12 +6,6 @@ setwd("//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Model
 
 # Model Functions ----------------------------------------------------------
 
-#Function to remove negative prevalence values and round large DP numbers
-rounding <- function(x) {
-  if(as.numeric(x) < 1e-10) {x <- 0
-  } else{signif(as.numeric(x), digits = 6)}
-}
-
 #Model ODEs
 amr <- function(t, y, parms) {
   with(as.list(c(y, parms)), {
@@ -155,6 +149,14 @@ MAP <- rbind(c(map_estimate(data[[1]][which(data[[1]]$group == tail(unique(data[
              c(map_estimate(data[[2]][which(data[[2]]$group == tail(unique(data[[2]]$group),1)),][,1:6])[,2]),
              c(map_estimate(data[[3]][which(data[[3]]$group == tail(unique(data[[3]]$group),1)),][,1:6])[,2]),
              c(map_estimate(data[[4]][which(data[[4]]$group == tail(unique(data[[4]]$group),1)),][,1:6])[,2]))
+
+colnames(MAP) <- c("betaAA", "phi", "kappa", "alpha", "zeta", "betaHA")
+rownames(MAP) <- c("ampbroil", "tetbroil","amppigs", "tetpigs")
+
+MAP <- rbind(c(colMeans(data[[1]][which(data[[1]]$group == tail(unique(data[[1]]$group),1)),][,1:6])),
+             c(colMeans(data[[2]][which(data[[2]]$group == tail(unique(data[[2]]$group),1)),][,1:6])),
+             c(colMeans(data[[3]][which(data[[3]]$group == tail(unique(data[[3]]$group),1)),][,1:6])),
+             c(colMeans(data[[4]][which(data[[4]]$group == tail(unique(data[[4]]$group),1)),][,1:6])))
 
 colnames(MAP) <- c("betaAA", "phi", "kappa", "alpha", "zeta", "betaHA")
 rownames(MAP) <- c("ampbroil", "tetbroil","amppigs", "tetpigs")
@@ -393,7 +395,7 @@ icombhlist <- list()
 
 #amp_broil, tet_broil, amp_pigs, tet_pigs
 
-averagesales <- sapply(list(melt_amp_broil$usage, melt_tet_broil$usage, melt_amp_pigs$usage,melt_tet_pigs$usage), mean)/1000
+averagesales <- sapply(list(melt_amp_broil$usage, melt_tet_broil$usage, melt_amp_pigs$usage, melt_tet_pigs$usage), mean)/1000
 
 for(i in 1:4){
   icombhlist[[i]] <- local({
@@ -403,8 +405,8 @@ for(i in 1:4){
     
     p1 <- ggplot(plotdata, aes(fill = variable, x = tau, y = value)) + theme_bw() + 
       geom_vline(xintercept = averagesales[i], alpha = 0.3, size = 2) + 
-      geom_col(color = "black",position= "stack", width  = 0.004) + scale_x_continuous(expand = c(0, 0.0005)) + 
-      scale_y_continuous(limits = c(0,2.5), expand = c(0, 0))  + 
+      geom_col(color = "black",position= "stack", width  = 0.002) + scale_x_continuous(expand = c(0, 0.0005)) + 
+      scale_y_continuous(limits = c(0, 2.5), expand = c(0, 0))  + 
       geom_text(label= c(round(icombhdata$IResRat[icombhdata$group == unique(icombhdata$group)[i]],digits = 2),rep("",length(parmtau))),vjust=-0.5, hjust = 0.05,
                 position = "stack", angle = 45) +
       theme(legend.position=c(0.75, 0.875), legend.text=element_text(size=12), legend.title = element_blank(), axis.text=element_text(size=12), 
@@ -432,13 +434,38 @@ for(i in 1:4){
   })
 }
 
+
+
+
+plotdata <- melt(icombhdata[icombhdata$group == unique(icombhdata$group)[2],],
+                 id.vars = c("tau"), measure.vars = c("ResInfHumans","InfHumans")) 
+
+ggplot(plotdata, aes(fill = variable, x = tau, y = value)) + theme_bw() + 
+  geom_vline(xintercept = averagesales[i], alpha = 0.3, size = 2) + 
+  geom_col(color = "black",position= "stack", width  = 0.002) + scale_x_continuous(expand = c(0, 0.0005)) + 
+  scale_y_continuous(limits = c(0, 5), expand = c(0, 0))  + 
+  geom_text(label= c(round(icombhdata$IResRat[icombhdata$group == unique(icombhdata$group)[i]],digits = 2),rep("",length(parmtau))),vjust=-0.5, hjust = 0.05,
+            position = "stack", angle = 45) +
+  theme(legend.position=c(0.75, 0.875), legend.text=element_text(size=12), legend.title = element_blank(), axis.text=element_text(size=12), 
+        axis.title.y=element_text(size=12), axis.title.x= element_text(size=12), plot.margin = unit(c(0.35,1,0.35,1), "cm"),
+        legend.spacing.x = unit(0.3, 'cm')) + 
+  scale_fill_manual(labels = c("Antibiotic-Resistant Infection", "Antibiotic-Sensitive Infection"), values = c("#F8766D", "#619CFF")) 
+
+
+
+
+
+
+
+
+
 icombh <- ggarrange(icombhlist[[1]], icombhlist[[2]], 
                     icombhlist[[3]], icombhlist[[4]], 
                     nrow = 2, ncol = 2, align = "v", labels = c("A","B", "C", "D"), font.label = c(size = 20),
                   common.legend = TRUE, legend = "bottom") 
 
 ggsave(icombh, filename = "Icombh.png", dpi = 300, type = "cairo", width = 8, height = 11, units = "in",
-       path = "C:/Users/amorg/Documents/PhD/Chapter_2/Figures/Redraft_v1")
+       path = "//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Models/Chapter-2/NewFits_041021/data")
 
 ggsave(icombh, filename = "Icombh_poster.png", dpi = 300, type = "cairo", width = 10, height = 7, units = "in",
        path = "C:/Users/amorg/Documents/PhD/Chapter_2/Figures/Redraft_v1")
@@ -450,14 +477,16 @@ ggsave(icombh, filename = "Icombh_poster.png", dpi = 300, type = "cairo", width 
 HDI_parms <- list()
 
 for(i in 1:length(unique(data$fit))) {
-  temp_data <- data[data$group == "data10" & data$fit == c("tet", "amp", "broil")[i],]
-  HDI_parms[[i]] <- data.frame("parm" = c("phi", "kappa", "betaAA", "alpha", "zeta"),
-                               "mean_parm" = unlist(lapply(list(temp_data[["phi"]], temp_data[["kappa"]], temp_data[["betaAA"]], 
-                                                                temp_data[["alpha"]], temp_data[["zeta"]]), mean)),
-                               "lowHDI" = sapply(lapply(list(temp_data[["phi"]], temp_data[["kappa"]], temp_data[["betaAA"]], 
-                                                             temp_data[["alpha"]], temp_data[["zeta"]]), hdi), "[[", 2),
-                               "highHDI" = sapply(lapply(list(temp_data[["phi"]], temp_data[["kappa"]], temp_data[["betaAA"]], 
-                                                              temp_data[["alpha"]], temp_data[["zeta"]]), hdi), "[[", 3))
+  last_dat <- tail(grep(unique(data$fit)[i], list.files()),1)
+  
+  temp_data <- data[data$group == last_dat & data$fit == c("ampbroil", "tetbroil", "amppigs", "tetpigs")[i],]
+  HDI_parms[[i]] <- data.frame("parm" = c("betaAA", "phi", "kappa", "alpha", "zeta", "betaHA"),
+                               "mean_parm" = unlist(lapply(list(temp_data[["betaAA"]], temp_data[["phi"]], temp_data[["kappa"]], 
+                                                                temp_data[["alpha"]], temp_data[["zeta"]], temp_data[["betaHA"]]), mean)),
+                               "lowHDI" = sapply(lapply(list(temp_data[["betaAA"]], temp_data[["phi"]], temp_data[["kappa"]],  
+                                                             temp_data[["alpha"]], temp_data[["zeta"]], temp_data[["betaHA"]]), hdi), "[[", 2),
+                               "highHDI" = sapply(lapply(list(temp_data[["betaAA"]], temp_data[["phi"]], temp_data[["kappa"]],  
+                                                              temp_data[["alpha"]], temp_data[["zeta"]], temp_data[["betaHA"]]), hdi), "[[", 3))
 }; HDI_parms
 
 # Distances for Fits ------------------------------------------------------
@@ -473,64 +502,70 @@ sum_square_diff_dist <- function(sum.stats, data.obs, model.obs) {
   return(sum(sumsquare))
 }
 
-computeDistanceABC_ALEX <- function(sum.stats, distanceABC, fitmodel, tau_range, parms, init.state, times, data) {
-  tauoutput <- matrix(nrow = 0, ncol=4)
+computeDistanceABC_ALEX <- function(sum.stats, distanceABC, fitmodel, tau_range, thetaparm, init.state, data) {
+  tauoutput <-data.frame(matrix(nrow = length(tau_range), ncol=4))
+  tau_range <- append(tau_range, avg_EU_usage)
   for (i in 1:length(tau_range)) {
-    parms1 <- parms
-    parms1[["tau"]] <- tau_range[[i]]
-    temp <- matrix(NA, nrow = 1, ncol=4)
-    out <- ode(y = init.state, func = fitmodel, times = times, parms = parms1)
-    temp[1,1] <- tau_range[i]
-    temp[1,2] <- (rounding(out[nrow(out),6]) + rounding(out[nrow(out),7]))*100000
-    temp[1,3] <- (rounding(out[nrow(out),4]) / (rounding(out[nrow(out),3]) + rounding(out[nrow(out),4])))
-    temp[1,4] <- (rounding(out[nrow(out),7]) / (rounding(out[nrow(out),6]) + rounding(out[nrow(out),7])))
-    tauoutput <- rbind(tauoutput, temp)
+    parms2 = thetaparm
+    parms2["tau"] = tau_range[i]
+    out <- runsteady(y = init.state, func = fitmodel, times = c(0, Inf), parms = parms2)
+    tauoutput[i,] <- c(tau_range[i],
+                       ((out[[2]] + out[[3]])*(446000000))/100000,
+                       out[[1]][["Ira"]] / (out[[1]][["Isa"]] + out[[1]][["Ira"]]),
+                       out[[1]][["Irh"]] / (out[[1]][["Ish"]] + out[[1]][["Irh"]]))
   }
   tauoutput <- data.frame(tauoutput)
-  colnames(tauoutput) <- c("tau", "ICombH", "ResPropAnim", "ResPropHum")  
-  return(c(distanceABC(list(sum.stats), data, tauoutput)))
+  colnames(tauoutput) <- c("tau", "IncH", "ResPropAnim", "ResPropHum") 
+  return(c(distanceABC(list(sum.stats), data, tauoutput[!tauoutput$tau == avg_EU_usage,]),
+           abs(tauoutput$IncH[tauoutput$tau == avg_EU_usage] - 0.593),
+           abs(tauoutput$ResPropHum[tauoutput$tau == avg_EU_usage] - avg_hum_res)))
 }
 
+#Parameters
 
-datatetra <- read.csv("resistanceprofAnim_v1.csv"); datatetra <- datatetra[!datatetra$N < 10,]
-colnames(datatetra)[12] <- "usage"; datatetra$usage <- datatetra$usage/1000 
-databroil <- read.csv("salm_broilers_2018.csv"); databroil <- databroil[!databroil$N < 10,]
-colnames(databroil)[9] <- "usage"; databroil$usage <- databroil$usage/1000 
-dataamp <- read.csv("resistanceprofAnim_amp.csv"); dataamp <- dataamp[!dataamp$N < 10,]
-colnames(dataamp)[9] <- "usage"; dataamp$usage <- dataamp$usage/1000 
+sapply(list(melt_amp_broil$usage, melt_tet_broil$usage, melt_amp_pigs$usage,melt_tet_pigs$usage), mean)/1000
 
-parmstet_pigs = c(ra = 60^-1, rh = (5.5^-1), ua = 240^-1, uh = 28835^-1, betaAA = MAP["MAPtet","betaAA"], 
-                  betaAH = 0.00001, betaHH = 0.00001, betaHA = (0.00001), phi = MAP["MAPtet","phi"] , 
-                  kappa = MAP["MAPtet","kappa"], alpha = MAP["MAPtet","alpha"] , tau = 0, zeta = MAP["MAPtet","zeta"])
+melt_amp_broil$usage <- melt_amp_broil$usage/1000
+melt_tet_broil$usage <- melt_tet_broil$usage/1000
+melt_amp_pigs$usage <- melt_amp_pigs$usage/1000
+melt_tet_pigs$usage <- melt_tet_pigs$usage/1000
 
-parmstet_broil = c(ra = 0, rh = (5.5^-1), ua = 42^-1, uh = 28835^-1, betaAA = MAP["MAPbroil","betaAA"], 
-                   betaAH = 0.00001, betaHH = 0.00001, betaHA = (0.00001), phi = MAP["MAPbroil","phi"], 
-                   kappa = MAP["MAPbroil","kappa"], alpha = MAP["MAPbroil","alpha"] , tau = 0, 
-                   zeta = MAP["MAPbroil","zeta"])
+parms_ampbroil = c(ra = 0^-1, rh = (5.5^-1), ua = 42^-1, uh = 28835^-1, betaAA = MAP["ampbroil","betaAA"], 
+                  betaAH = 0.00001, betaHH = 0.00001, betaHA = MAP["ampbroil","betaHA"], phi = MAP["ampbroil","phi"] , 
+                  kappa = MAP["ampbroil","kappa"], alpha = MAP["ampbroil","alpha"] , tau = 0, zeta = MAP["ampbroil","zeta"])
 
-parms_amppigs = c(ra = 60^-1, rh = (5.5^-1), ua = 240^-1, uh = 28835^-1, betaAA = MAP["MAPamp","betaAA"], 
-                  betaAH = 0.00001, betaHH = 0.00001, betaHA = (0.00001), phi = MAP["MAPamp","phi"], 
-                  kappa = MAP["MAPamp","kappa"], alpha = MAP["MAPamp","alpha"], tau = 0, zeta = MAP["MAPamp","zeta"])
+parms_tetbroil = c(ra = 0, rh = (5.5^-1), ua = 42^-1, uh = 28835^-1, betaAA = MAP["tetbroil","betaAA"], 
+                   betaAH = 0.00001, betaHH = 0.00001, betaHA = MAP["tetbroil","betaHA"], phi = MAP["tetbroil","phi"], 
+                   kappa = MAP["tetbroil","kappa"], alpha = MAP["tetbroil","alpha"] , tau = 0, 
+                   zeta = MAP["tetbroil","zeta"])
 
-for(i in 1:3) {
-  casestudy <- list(datatetra, databroil, dataamp)[[i]]
-  parms <- list(parmstet_pigs, parmstet_broil, parms_amppigs)[[i]]
+parms_amppigs = c(ra = 60^-1, rh = (5.5^-1), ua = 240^-1, uh = 28835^-1, betaAA = MAP["amppigs","betaAA"], 
+                  betaAH = 0.00001, betaHH = 0.00001, betaHA = MAP["amppigs","betaHA"], phi = MAP["amppigs","phi"], 
+                  kappa = MAP["amppigs","kappa"], alpha = MAP["amppigs","alpha"], tau = 0, zeta = MAP["amppigs","zeta"])
+
+parms_tetpigs = c(ra = 60^-1, rh = (5.5^-1), ua = 240^-1, uh = 28835^-1, betaAA = MAP["tetpigs","betaAA"], 
+                  betaAH = 0.00001, betaHH = 0.00001, betaHA = MAP["tetpigs","betaHA"], phi = MAP["tetpigs","phi"], 
+                  kappa = MAP["tetpigs","kappa"], alpha = MAP["tetpigs","alpha"], tau = 0, zeta = MAP["tetpigs","zeta"])
+
+for(i in 1:4) {
+  casestudy <- list(melt_amp_broil, melt_tet_broil, melt_amp_pigs, melt_tet_pigs)[[i]]
+  parms <- list(parms_ampbroil, parms_tetbroil, parms_amppigs, parms_tetpigs)[[i]]
   #print(parms)
-  test<- computeDistanceABC_ALEX(sum.stats = summarystatprev, 
+  test <- computeDistanceABC_ALEX(sum.stats = summarystatprev, 
                           distanceABC = sum_square_diff_dist, 
                           fitmodel = amr, 
                           tau_range = casestudy$usage, 
                           parms = parms,
                           init.state = c(Sa=0.98, Isa=0.01, Ira=0.01, Sh=1, Ish=0, Irh=0), 
-                          times = seq(0, 2000, by = 100), 
                           data = casestudy)
   print(test)
 }
 
-#Identify the Exact Values of the Fit
+#Identify the Exact Values of the Fit - Relative increase in incidence
+
 tauoutput <- matrix(nrow = 0, ncol=4)
 
-averagesales <- c(0.0122887, 0.01156391, 0.006666697)
+averagesales <- sapply(list(melt_amp_broil$usage, melt_tet_broil$usage, melt_amp_pigs$usage,melt_tet_pigs$usage), mean)/1000
 
 exploredtau <- c(datatetra$usage, averagesales[1], 0)
 
@@ -541,7 +576,7 @@ for (i in 1:length(exploredtau)) {
   parms1 <- parmstet_pigs
   parms1[["tau"]] <- exploredtau[[i]]
   temp <- matrix(NA, nrow = 1, ncol=4)
-  out <- ode(y = init.state, func = amr, times = times, parms = parms1)
+  out <- runsteady(y = init.state, func = amr, times = c(0, Inf), parms = parms1)
   temp[1,1] <- exploredtau[i]
   temp[1,2] <- (rounding(out[nrow(out),6]) + rounding(out[nrow(out),7]))*100000
   temp[1,3] <- (rounding(out[nrow(out),4]) / (rounding(out[nrow(out),3]) + rounding(out[nrow(out),4])))
@@ -558,7 +593,7 @@ tauoutput$ICombH[tauoutput$tau == 0]/tauoutput$ICombH[tauoutput$tau == averagesa
 
 prior.data <- setNames(data.frame(runif(1000, min = 0, max = 0.2), runif(1000, min = 0, max = 0.04), runif(1000, min = 0, max = 2),
                                   "p_alpha" <- rbeta(1000, 1.5, 8.5), runif(1000, min = 0, max = 0.15)), 
-                       c("p_betaAA", "p_phi", "p_kappa", "p_alpha", "p_zeta"))
+                       c("p_betaAA", "p_phi", "p_kappa", "p_alpha", "p_zeta", "p_betaHA"))
 
 prior.plot.list <- list()
 
@@ -573,7 +608,6 @@ for (i in 1:length(colnames(prior.data))) { # Loop over loop.vector
   
   max.y <- max(ggplot_build(p1)$data[[1]][1])*1.2
   
-    
   if(colnames(prior.data)[i] == "p_phi") {
       p1 <- p1 + scale_x_continuous(expand = c(0, 0), name = expression(paste("Rate of Resistance Reversion (", phi, ")"))) +
         labs(fill = NULL, title = "") + 
@@ -611,7 +645,6 @@ parmtau <- seq(0,0.035, by = 0.002)
 init <- c(Sa=0.98, Isa=0.01, Ira=0.01, Sh=1, Ish=0, Irh=0)
 output1 <- data.frame(matrix(ncol = 8, nrow = 0))
 times <- seq(0, 200000, by = 100)
-
 
 for (i in 1:length(parmtau)) {
   temp <- data.frame(matrix(NA, nrow = 1, ncol=7))
