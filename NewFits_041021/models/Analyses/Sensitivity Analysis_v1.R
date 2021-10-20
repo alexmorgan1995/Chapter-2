@@ -1,51 +1,49 @@
-library("deSolve"); library("ggplot2"); library("plotly"); library("reshape2")
-library("bayestestR"); library("tmvtnorm"); library("ggpubr"); library("sensitivity"); library("fast");
-library("cowplot")
+library("deSolve"); library("ggplot2"); library("reshape2")
+library("bayestestR"); library("tmvtnorm"); library("ggpubr"); library("sensitivity"); library("metR"); 
+library("grid"); library("gridExtra"); library("rootSolve"); library("fast"); library("cowplot")
 
 rm(list=ls())
-setwd("C:/Users/amorg/Documents/PhD/Chapter_2/Chapter2_Fit_Data/FinalData/NewFit")
+setwd("//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Models/Chapter-2/NewFits_041021/data")
 
 # Model Functions ----------------------------------------------------------
-#Function to remove negative prevalence values and round large DP numbers
-rounding <- function(x) {
-  if(as.numeric(x) < 1e-10) {x <- 0
-  } else{signif(as.numeric(x), digits = 6)}
-}
 
 #Model ODEs
 amr <- function(t, y, parms) {
   with(as.list(c(y, parms)), {
     dSa = ua + ra*(Isa + Ira) + kappa*tau*Isa - (betaAA*Isa*Sa) - (betaAH*Ish*Sa) - (1-alpha)*(betaAH*Irh*Sa) - (1-alpha)*(betaAA*Ira*Sa) - ua*Sa -
-      zeta*Sa*(1-alpha) - zeta*Sa 
-    dIsa = betaAA*Isa*Sa + betaAH*Ish*Sa + phi*Ira - kappa*tau*Isa - tau*Isa - ra*Isa - ua*Isa + zeta*Sa
-    dIra = (1-alpha)*betaAH*Irh*Sa + (1-alpha)*betaAA*Ira*Sa + tau*Isa - phi*Ira - ra*Ira - ua*Ira + zeta*Sa*(1-alpha)
+      (0.5*zeta)*Sa*(1-alpha) - (0.5*zeta)*Sa 
+    dIsa = betaAA*Isa*Sa + betaAH*Ish*Sa + phi*Ira - kappa*tau*Isa - tau*Isa - ra*Isa - ua*Isa + (0.5*zeta)*Sa
+    dIra = (1-alpha)*betaAH*Irh*Sa + (1-alpha)*betaAA*Ira*Sa + tau*Isa - phi*Ira - ra*Ira - ua*Ira + (0.5*zeta)*Sa*(1-alpha)
     
     dSh = uh + rh*(Ish+Irh) - (betaHH*Ish*Sh) - (1-alpha)*(betaHH*Irh*Sh) - (betaHA*Isa*Sh) - (1-alpha)*(betaHA*Ira*Sh) - uh*Sh 
     dIsh = betaHH*Ish*Sh + betaHA*Isa*Sh - rh*Ish - uh*Ish 
     dIrh = (1-alpha)*(betaHH*Irh*Sh) + (1-alpha)*(betaHA*Ira*Sh) - rh*Irh - uh*Irh 
-    return(list(c(dSa,dIsa,dIra,dSh,dIsh,dIrh)))
+    
+    CumS = betaHH*Ish*Sh + betaHA*Isa*Sh
+    CumR = (1-alpha)*(betaHH*Irh*Sh) + (1-alpha)*(betaHA*Ira*Sh)
+    
+    return(list(c(dSa,dIsa,dIra,dSh,dIsh,dIrh), CumS, CumR))
   })
 }
 
 #Importing in the Datasets
 import <- function(id) {
   data <- data.frame(matrix(ncol = 6, nrow = 0))
-  for(i in 1:10) {
-    test  <- cbind(read.csv(paste0("results_ABC_SMC_gen_",substitute(id),"_",i,".csv"), 
+  for(i in 1:length(grep(id, list.files(), value = TRUE))) {
+    test  <- cbind(read.csv(paste0("ABC_post_",substitute(id),"_",i,".csv"), 
                             header = TRUE), "group" = paste0("data",i), "fit" = as.character(substitute(id)))
     data <- rbind(data, test)
   }
   return(data)
 }
 
-
-# Import the Dataset ------------------------------------------------------
-
-
-
-# Identify the MAP averages for the Parameter Sets ---------------------------------
+# Identify the MAP for the Parameter Sets ---------------------------------
 #Import of Posterior Distributions
-data <- do.call(rbind, list(import(tet), import(amp), import(broil)))
+
+data <- list(import("tetbroil"), import("ampbroil"), import("tetpigs"), import("amppigs"))
+lapply(1:4, function(x) data[[x]]$group = factor(data[[x]]$group, levels = unique(data[[x]]$group)))
+
+#Obtain the MAPs for each dataset
 
 MAP <- rbind(c(colMeans(data[[1]][which(data[[1]]$group == tail(unique(data[[1]]$group),1)),][,1:6])),
              c(colMeans(data[[2]][which(data[[2]]$group == tail(unique(data[[2]]$group),1)),][,1:6])),
@@ -55,12 +53,15 @@ MAP <- rbind(c(colMeans(data[[1]][which(data[[1]]$group == tail(unique(data[[1]]
 colnames(MAP) <- c("betaAA", "phi", "kappa", "alpha", "zeta", "betaHA")
 rownames(MAP) <- c("ampbroil", "tetbroil","amppigs", "tetpigs")
 
-sensparms <- c("phi" = mean(MAP[1:3]), 
-               "kappa" = mean(MAP[4:6]),
-               "betaAA" = mean(MAP[7:9]),
-               "alpha" = mean(MAP[10:12]),
-               "zeta" = mean(MAP[13:15]),
-               "tau" = mean(c(0.0122887,0.01156391,0.006666697)))
+sensparms <- c("betaAA" = mean(MAP[1:4]), 
+               "phi" = mean(MAP[5:8]),
+               "kappa" = mean(MAP[9:12]),
+               "alpha" = mean(MAP[13:16]),
+               "zeta" = mean(MAP[17:20]),
+               "betaHA" = mean(MAP[21:24]),
+               "tau" = mean(c(0.01305462,0.004913664,0.006861898, 0.0125423)))
+
+mean_ua <- (42^-1 + 240^-1)/2
 
 # Sensitivity Analysis ---------------------------------------------------
 # Joint Parameters
@@ -68,25 +69,13 @@ sensparms <- c("phi" = mean(MAP[1:3]),
 #We do this for Tetracycline for the Parameter Bounds
 #All other parameters will be included in the ranges
 
-times <- seq(0,30000, by = 100) 
 init <- c(Sa=0.98, Isa=0.01, Ira=0.01, Sh=1, Ish=0, Irh=0)
 
-#These Parameters Are Based on MAP from Model Fitting
-#parms = fast_parameters(minimum = c(600^-1, 55^-1, 2400^-1, 288350^-1, 
-#                                    0, 0.000001, 0.000001, 0.000001, 
-#                                    0, 0, 0, 0, 0), 
-#                        maximum = c(6^-1, 0.55^-1, 24^-1, 2883.5^-1, 
-#                                    0.5, 0.0001, 0.0001, 0.0001, 
-#                                    0.1310852 , 11.30831, 1, 0.1, 0.5), 
-#                        factor=13, names = c("ra", "rh" ,"ua", "uh", 
-#                                             "betaAA", "betaAH", "betaHH", "betaHA",
-#                                             "phi", "kappa", "alpha", "tau", "zeta"))
-
-parms = fast_parameters(minimum = c(600^-1, 55^-1, 2400^-1, 288350^-1, 
-                                    sensparms["betaAA"]/10, 0.000001, 0.000001, 0.000001, 
+parms = fast_parameters(minimum = c(0, 55^-1, mean_ua/10, 288350^-1, 
+                                    sensparms["betaAA"]/10, 0.000001, 0.000001, sensparms["betaHA"]/10, 
                                     sensparms["phi"]/10 , sensparms["kappa"]/10, 0, sensparms["tau"]/10, sensparms["zeta"]/10), 
-                        maximum = c(6^-1, 0.55^-1, 24^-1, 2883.5^-1, 
-                                    sensparms["betaAA"]*10, 0.0001, 0.0001, 0.0001, 
+                        maximum = c(6^-1, 0.55^-1, mean_ua*10, 2883.5^-1, 
+                                    sensparms["betaAA"]*10, 0.0001, 0.0001, sensparms["betaHA"]*10, 
                                     sensparms["phi"]*10 , sensparms["kappa"]*10, 1, sensparms["tau"]*10, sensparms["zeta"]*10), 
                         factor=13, names = c("ra", "rh" ,"ua", "uh", 
                                            "betaAA", "betaAH", "betaHH", "betaHA",
@@ -95,16 +84,18 @@ parms = fast_parameters(minimum = c(600^-1, 55^-1, 2400^-1, 288350^-1,
 # General Sensitivity Analysis - ICombH and ResRat -------------------------
 
 output <- data.frame(matrix(ncol = 2, nrow = nrow(parms)))
-colnames(output) <- c("ICombH", "IResRat")
+colnames(output) <- c("IncH", "IResRat")
 
 for (i in 1:nrow(parms)) {
   temp <- numeric(1)
   parms1 = c(ra = parms$ra[i], rh = parms$rh[i], ua = parms$ua[i], uh = parms$uh[i], betaAA = parms$betaAA[i],
              betaAH = parms$betaAH[i], betaHH = parms$betaHH[i], betaHA = parms$betaHA[i], phi=parms$phi[i],
              tau=parms$tau[i], kappa=parms$kappa[i], alpha = parms$alpha[i], zeta = parms$zeta[i])
-  out <- ode(y = init, func = amr, times = times, parms = parms1)
-  temp[1] <- rounding(out[nrow(out),6]) + rounding(out[nrow(out),7])
-  temp[2] <- rounding(out[nrow(out),7])/(rounding(out[nrow(out),6]) + rounding(out[nrow(out),7]))
+  
+  out <- runsteady(y = init, func = amr, times = c(0, Inf), parms = parms1)
+  
+  temp[1] <- ((out[[2]] + out[[3]])*(446000000))/100000
+  temp[2] <- out[[1]][["Irh"]] / (out[[1]][["Ish"]] + out[[1]][["Irh"]])
   print(paste0("Progress: ",signif(i/nrow(parms))*100, digits = 3, "%"))
   output[i,] <- temp
 }
@@ -115,7 +106,7 @@ output1 <- output1[!is.infinite(rowSums(output1)),]
 
 #ICombH
 sensit1 <- NULL; df.equilibrium <- NULL
-sensit1 <- output1$ICombH #Creating Variable for the output variable of interest
+sensit1 <- output1$IncH #Creating Variable for the output variable of interest
 sens1 <- sensitivity(x=sensit1, numberf=13, make.plot=T, names = c("ra", "rh" ,"ua", "uh", "betaAA", "betaAH", "betaHH", "betaHA",
                                                                    "phi", "kappa", "alpha", "tau", "zeta"))
 
@@ -127,9 +118,10 @@ ggplot(df.equilibrium, aes(x = reorder(parameter, -value), y = value)) + geom_ba
 ICombH <- ggplot(df.equilibrium, aes(x = reorder(parameter, -value), y = value)) + geom_bar(stat="identity", fill="lightgrey", col = "black", width  = 0.8) + theme_bw() + 
   scale_y_continuous(limits = c(0,  max(df.equilibrium$value)*1.1), expand = c(0, 0), name = "Partial Variance") + 
   scale_x_discrete(expand = c(0, 0.7), name = "Parameter", 
-                   labels = c(expression(r[H]), expression(beta[HA]),  expression(alpha),expression(zeta), expression(beta[HH]),
-                              expression(tau), expression(kappa), expression(r[A]), expression(beta[AA]), expression(mu[H]),
-                              expression(mu[A]),  expression(beta[AH]), expression(phi))) +
+                   labels = c(expression(beta[HA]), expression(alpha), expression(tau),  expression(kappa), 
+                              expression(zeta), expression(beta[AA]), expression(phi), expression(beta[HH]),
+                              expression(mu[H]), expression(r[A]), 
+                              expression(mu[A]), expression(r[H]),  expression(beta[AH]))) +
   labs(fill = NULL, title = bquote(Sensitivity~Analysis~of~"I*"["H"])) + 
   theme(legend.text=element_text(size=14), axis.text=element_text(size=14), plot.title = element_text(size = 15, vjust = 1.5, hjust = 0.5, face = "bold"),
         axis.title.y=element_text(size=14), axis.title.x= element_text(size=14), plot.margin = unit(c(0.4,0.4,0.4,0.55), "cm"))
@@ -148,9 +140,10 @@ ggplot(df.equilibrium1, aes(x = reorder(parameter, -value), y = value)) + geom_b
 resprop <- ggplot(df.equilibrium1, aes(x = reorder(parameter, -value), y = value)) + geom_bar(stat="identity", fill="lightgrey", col = "black", width  = 0.8) + theme_bw() + 
   scale_y_continuous(limits = c(0,  max(df.equilibrium1$value)*1.1), expand = c(0, 0), name = "Partial Variance") + 
   scale_x_discrete(expand = c(0, 0.7), name = "Parameter", 
-                   labels = c(expression(alpha), expression(tau), expression(phi), expression(kappa), expression(r[A]), expression(mu[A]),
-                              expression(beta[AA]), expression(zeta), expression(mu[H]), expression(beta[AH]),
-                              expression(r[H]), expression(beta[HA]), expression(beta[HH]))) +
+                   labels = c(expression(alpha), expression(tau), expression(kappa), expression(phi), expression(mu[H]), expression(zeta), 
+                              expression(r[A]), expression(beta[AA]), expression(mu[A]),
+                              expression(beta[HA]), expression(beta[AH]),
+                              expression(r[H]), expression(beta[HH]))) +
   labs(fill = NULL, title = bquote(Sensitivity~Analysis~of~"I*"["RHProp"])) + 
   theme(legend.text=element_text(size=14), axis.text=element_text(size=14), plot.title = element_text(size = 15, vjust = 1.5, hjust = 0.5, face = "bold"),
         axis.title.y=element_text(size=14), axis.title.x= element_text(size=14), plot.margin = unit(c(0.4,0.4,0.4,0.55), "cm"))
@@ -158,19 +151,20 @@ resprop <- ggplot(df.equilibrium1, aes(x = reorder(parameter, -value), y = value
 sensplot <- ggarrange(ICombH, resprop, nrow = 2, ncol = 1, align = "v", labels = c("A","B"), font.label = c(size = 20)) 
 
 ggsave(sensplot, filename = "Sensitivity_ICombH_ResRat.png", dpi = 300, type = "cairo", width = 7, height = 8, units = "in",
-       path = "C:/Users/amorg/Documents/PhD/Chapter_2/Figures/Redraft_v1")
+       path = "//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Figures/comb_data")
 
 # What Parameters Cause the Largest Relative Increase? --------------------
 
-parms = fast_parameters(minimum = c(600^-1, 55^-1, 2400^-1, 288350^-1, 
-                                    sensparms["betaAA"]/10, 0.000001, 0.000001, 0.000001, 
-                                    sensparms["phi"]/10 , sensparms["kappa"]/10, 0, sensparms["zeta"]/10), 
-                        maximum = c(6^-1, 0.55^-1, 24^-1, 2883.5^-1, 
-                                    sensparms["betaAA"]*10, 0.0001, 0.0001, 0.0001, 
+parms = fast_parameters(minimum = c(0, 55^-1, mean_ua/10, 288350^-1, 
+                                    sensparms["betaAA"]/10, 0.000001, 0.000001, sensparms["betaHA"]/10, 
+                                    sensparms["phi"]/10 , sensparms["kappa"]/10, 0,  sensparms["zeta"]/10), 
+                        maximum = c(6^-1, 0.55^-1, mean_ua*10, 2883.5^-1, 
+                                    sensparms["betaAA"]*10, 0.0001, 0.0001, sensparms["betaHA"]*10, 
                                     sensparms["phi"]*10 , sensparms["kappa"]*10, 1, sensparms["zeta"]*10), 
                         factor=12, names = c("ra", "rh" ,"ua", "uh", 
                                              "betaAA", "betaAH", "betaHH", "betaHA",
                                              "phi", "kappa", "alpha", "zeta"))
+
 
 
 tauoutput <- data.frame(matrix(nrow = 0, ncol = 3))
@@ -182,14 +176,16 @@ for (j in 1:nrow(parms)) {
     parms2 = c(ra = parms$ra[j], rh = parms$rh[j], ua = parms$ua[j], uh = parms$uh[j], betaAA = parms$betaAA[j],
                betaAH = parms$betaAH[j], betaHH = parms$betaHH[j], betaHA = parms$betaHA[j], phi=parms$phi[j],
                kappa=parms$kappa[j], alpha = parms$alpha[j], tau = tau_range[i], zeta = parms$zeta[j])
-    out <- ode(y = init, func = amr, times = times, parms = parms2)
-    temp[i] <- (rounding(out[nrow(out),6]) + rounding(out[nrow(out),7]))*100000
+    
+    out <- runsteady(y = init, func = amr, times = c(0,Inf), parms = parms2)
+    temp[i] <- ((out[[2]] + out[[3]])*(446000000))/100000
   }
   tauoutput <- rbind(tauoutput, c(temp[1], temp[2], abs(temp[1] - temp[2]), parms2[parms2 != "tau"] ))
   print(j/nrow(parms))
 }
 
-colnames(tauoutput) <- c("curt", "usage", "diff") 
+colnames(tauoutput) <- c("curt", "usage", "diff", names(parms2)) 
+
 
 #Running the FAST Sensitivity Analysis
 tauoutput1 <- tauoutput 
@@ -204,9 +200,8 @@ tauanalysis <- tauanalysis[tauanalysis < quantile(tauanalysis, 0.99)]
 #The tail of the distribution has also been trimmed to prevent massive artificial increases from showing up
 
 #We then view the Distribution of Increases Above Baseline
-
-mean(c(0.0122887, 0.01156391, 0.006666697))
-hist(tauanalysis, xlab = bquote("% Increase above Baseline"~"I*"["H"]~" (Tau = 0.0102)"), breaks = 50)
+sensparms[["tau"]]
+hist(tauanalysis, xlab = bquote("% Increase above Baseline"~"I*"["H"]~" (Tau = 0.00934)"), breaks = 50)
 
 # What Parameters Can Compensate? ------------------------------------------
 
@@ -216,9 +211,9 @@ for (j in 1:nrow(parms)) {
   parms2 = c(ra = parms$ra[j], rh = parms$rh[j], ua = parms$ua[j], uh = parms$uh[j], betaAA = parms$betaAA[j],
              betaAH = parms$betaAH[j], betaHH = parms$betaHH[j], betaHA = parms$betaHA[j], phi=parms$phi[j],
              kappa=parms$kappa[j], alpha = parms$alpha[j], tau = 0, zeta = parms$zeta[j])
-  out <- ode(y = init, func = amr, times = times, parms = parms2)
-  temp <- (rounding(out[nrow(out),6]) + rounding(out[nrow(out),7]))*100000
-  tauoutput <- rbind(tauoutput, c(temp ,abs(temp - 3.26)))
+  out <- runsteady(y = init, func = amr, times = c(0, Inf), parms = parms2)
+  temp <- ((out[[2]] + out[[3]])*(446000000))/100000
+  tauoutput <- rbind(tauoutput, c(temp ,abs(temp - 0.593)))
   print(j/nrow(parms))
 }
 
@@ -226,7 +221,7 @@ colnames(tauoutput) <- c("IComb0","diff")
 
 tauoutput1 <- tauoutput 
 
-tauoutput1$inc <- ((tauoutput1$IComb0 / 3.26) - 1)* 100 # % Increase from the current usage scenario
+tauoutput1$inc <- ((tauoutput1$IComb0 / 0.593) - 1)* 100 # % Increase from the current usage scenario
 tauoutput1$inc[is.nan(tauoutput1$inc)] <- 0; neg <- tauoutput1[tauoutput1$inc < 0,] 
 tauanalysis2 <- tauoutput1$inc[!is.infinite(tauoutput1$inc)]
 tauanalysis2 <- tauanalysis2[tauanalysis2 < quantile(tauanalysis2, 0.99)]
@@ -234,7 +229,7 @@ tauanalysis2 <- tauanalysis2[tauanalysis2 < quantile(tauanalysis2, 0.99)]
 #removes all negative changes - might need to review
 #The tail of the distribution has also been trimmed to prevent massive artificial increases from showing up
 
-hist(tauanalysis2, xlab = bquote("% Increase above Baseline"~"I*"["H"]~" (3.26 per 100,000)"), breaks = 50)
+hist(tauanalysis2, xlab = bquote("% Increase above Baseline"~"I*"["H"]~" (0.593 per 100,000)"), breaks = 50)
 
 # Plotting Sensitivity Analysis -------------------------------------------
 
@@ -259,10 +254,10 @@ ggplot(df.equilibrium, aes(x = reorder(parameter, -value), y = value)) + geom_ba
 p1 <- ggplot(df.equilibrium, aes(x = reorder(parameter, -value), y = value)) + geom_bar(stat="identity", fill="lightgrey", col = "black", width  = 0.8) + theme_bw() + 
   scale_y_continuous(limits = c(0,  max(df.equilibrium$value)*1.1), expand = c(0, 0), name = "Partial Variance") + 
   scale_x_discrete(expand = c(0, 0.7), name = "Parameter", 
-                   labels = c(expression(zeta), expression(kappa), expression(alpha), expression(r[A]), expression(phi), expression(mu[H]),
-                              expression(mu[A]), expression(beta[AA]),expression(r[H]),
-                              expression(beta[AH]) , expression(beta[HH]), expression(beta[HA]))) +
-  labs(fill = NULL, title = bquote(bold("Increase in"~ "I*"["H"] ~ "from" ~ tau ~ "=" ~ 0.0102 ~ "to" ~ tau ~ "=" ~  0))) + 
+                   labels = c(expression(zeta), expression(kappa), expression(alpha), expression(phi), expression(beta[AA]),
+                              expression(r[A]), expression(mu[A]), expression(mu[H]),
+                               expression(r[H]),expression(beta[HH]), expression(beta[HA]), expression(beta[AH]))) +
+  labs(fill = NULL, title = bquote(bold("Increase in"~ "I*"["H"] ~ "due to curtailment" ~ tau ~ "=" ~ 0.00934 ~ "to" ~ tau ~ "=" ~  0))) + 
   theme(legend.text=element_text(size=14), axis.text=element_text(size=14), plot.title = element_text(size = 15, vjust = 1.5, hjust = 0.5),
         axis.title.y=element_text(size=14), axis.title.x= element_text(size=14), plot.margin = unit(c(0.4,0.4,0.4,0.55), "cm"))
 
@@ -271,9 +266,9 @@ ggplot(df.equilibrium1, aes(x = reorder(parameter, -value), y = value)) + geom_b
 p2 <- ggplot(df.equilibrium1, aes(x = reorder(parameter, -value), y = value)) + geom_bar(stat="identity", fill="lightgrey", col = "black", width  = 0.8) + theme_bw() + 
   scale_y_continuous(limits = c(0,  max(df.equilibrium1$value)*1.1), expand = c(0, 0), name = "Partial Variance") + 
   scale_x_discrete(expand = c(0, 0.7), name = "Parameter", 
-                   labels = c(expression(r[H]), expression(beta[HA]), expression(r[A]), expression(alpha), 
-                              expression(zeta),expression(beta[AA]), expression(kappa), expression(beta[AH]),
-                              expression(mu[A]), expression(beta[HH]), expression(phi),expression(mu[H]))) +
+                   labels = c(expression(beta[HA]), expression(r[H]), expression(phi),  expression(zeta), expression(alpha),
+                              expression(r[A]),  expression(mu[A]), expression(beta[AA]), expression(beta[HH]),
+                              expression(kappa),expression(mu[H]),  expression(beta[AH]))) +
   labs(fill = NULL, title = bquote(bold(.(Mitigating ~ Increases ~ from ~ Baseline ~ "I*"["H"] ~ "=" ~ 3.26~ per ~ "100,000")))) + 
   theme(legend.text=element_text(size=14), axis.text=element_text(size=14), plot.title = element_text(size = 15, vjust = 1.5, hjust = 0.5),
         axis.title.y=element_text(size=14), axis.title.x= element_text(size=14), plot.margin = unit(c(0.4,0.4,0.4,0.55), "cm"))
@@ -284,12 +279,12 @@ sensplot <- ggarrange(p1,p2, nrow = 2, ncol = 1,
                       align = "v", labels = c("A","B"), font.label = c(size = 20)) 
 
 ggsave(sensplot, filename = "Sensitivity.png", dpi = 300, type = "cairo", width = 7, height = 8, units = "in",
-       path = "C:/Users/amorg/Documents/PhD/Chapter_2/Figures/Redraft_v1")
+       path = "//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Figures/comb_data")
 
 # Effect on Parameters ----------------------------------------------------
 
 parmdetails <- rbind(data.frame("Parameter" = "betaAA", "Value" = seq(0, sensparms["betaAA"]*10, by = (sensparms["betaAA"]*10)/100)),
-                     data.frame("Parameter" = "betaHA", "Value" = seq(0, 0.0001, by = 0.0001/100)),
+                     data.frame("Parameter" = "betaHA", "Value" = seq(0, sensparms["phi"]*10, by = (sensparms["phi"]*10)/100)),
                      data.frame("Parameter" = "betaHH", "Value" = seq(0, 0.0001, by = 0.0001/100)),
                      data.frame("Parameter" = "betaAH", "Value" = seq(0, 0.0001, by = 0.0001/100)),
                      data.frame("Parameter" = "phi", "Value" = seq(0, sensparms["phi"]*10, by = (sensparms["phi"]*10)/100)),
@@ -301,12 +296,11 @@ parmdetails <- rbind(data.frame("Parameter" = "betaAA", "Value" = seq(0, senspar
                      data.frame("Parameter" = "uh", "Value" = seq(0, 2883.5^-1, by = 2883.5^-1/100)),
                      data.frame("Parameter" = "ua", "Value" = seq(0, 24^-1, by = 24^-1/100)))
 
-times <- seq(0,30000, by = 100) 
 init <- c(Sa=0.98, Isa=0.01, Ira=0.01, Sh=1, Ish=0, Irh=0)
 tau_range <- c(0, sensparms[["tau"]])
 
 parms = c(ra = 60^-1, rh =  (5.5^-1), ua = 240^-1, uh = 28835^-1, betaAA = (sensparms[["betaAA"]]), betaAH = 0.00001, betaHH = 0.00001, 
-          betaHA = (0.00001), phi = sensparms[["phi"]], kappa = sensparms[["kappa"]], alpha = sensparms[["alpha"]], zeta = sensparms[["zeta"]])
+          betaHA = sensparms[["betaHA"]], phi = sensparms[["phi"]], kappa = sensparms[["kappa"]], alpha = sensparms[["alpha"]], zeta = sensparms[["zeta"]])
 
 suppplotlist <- list()
 
@@ -322,8 +316,8 @@ for (j in 1:length(unique(parmdetails[,1]))) {
         temp <- data.frame(matrix(nrow = 0, ncol=3))
         parmstemp <- c(parms, tau = tau_range[i])
         parmstemp[as.character(unique(parmdetails[,1])[j])] <- parmdetails[parmdetails == as.character(unique(parmdetails[,1])[j]), 2][x]
-        out <- ode(y = init, func = amr, times = times, parms = parmstemp)
-        temp[1,1] <- (rounding(out[nrow(out),6]) + rounding(out[nrow(out),7]))*100000
+        out <- runsteady(y = init, func = amr, times = c(0, Inf), parms = parmstemp)
+        temp[1,1] <- ((out[[2]] + out[[3]])*(446000000))/100000
         temp[1,2] <- as.character(parmdetails[parmdetails == as.character(unique(parmdetails[,1])[j]), 2][x]) #what is the parameter value used
         temp[1,3] <- as.character(unique(parmdetails[,1])[j]) # what is the parameter explored 
         temp1 <- rbind.data.frame(temp1, temp)
@@ -333,7 +327,7 @@ for (j in 1:length(unique(parmdetails[,1]))) {
                         as.numeric(temp1[2,1]), 
                         as.numeric(abs(temp1[1,1] - temp1[2,1])),
                         as.numeric(abs(((temp1[1,1] / temp1[2,1]) - 1)* 100)),
-                        as.numeric(abs(((temp1[1,1] / 3.26) - 1)* 100)),
+                        as.numeric(abs(((temp1[1,1] / 0.593) - 1)* 100)),
                         as.numeric(temp1[i,2]),
                         as.factor(temp1[i,3])))
       
@@ -355,24 +349,9 @@ for (j in 1:length(unique(parmdetails[,1]))) {
       scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(limits = c(0, max(output$RelInc) + 10), expand = c(0, 0)) +
       labs(x = plotnames) + theme(plot.margin=unit(c(0.3,0.3,0.3,0.3),"cm"), axis.title.y=element_blank())
     
-    if(unique(parmdetails[,1])[j] == "betaHA"){
-      p2 <- p2 + geom_vline(xintercept = 8.0e-06, col = "red", size  = 0.7, lty = 3)
+    if(unique(parmdetails[,1])[j] == "alpha"){
+      p2 <- p2 + geom_vline(xintercept = 0.74, col = "red", size  = 0.7, lty = 3)
     }
-    if(unique(parmdetails[,1])[j] == "zeta"){
-      p2 <- p2 + geom_vline(xintercept = 0.011084193, col = "red", size  = 0.7, lty = 3)
-    }
-    if(unique(parmdetails[,1])[j] == "ra"){
-      p2 <- p2 + geom_vline(xintercept = 0.038333333, col = "red", size  = 0.7, lty = 3)
-    }
-    if(unique(parmdetails[,1])[j] == "ua"){
-      p2 <- p2 + geom_vline(xintercept = 0.0254166667, col = "red", size  = 0.7, lty = 3)
-    }
-    
-    if(unique(parmdetails[,1])[j] == "rh"){
-      p2 <- p2 + geom_vline(xintercept = 0.22818182, col = "red", size  = 0.7, lty = 3)
-    }
-    
-    
     return(list(p1,p2))
   })
 }
@@ -384,7 +363,7 @@ pabdiff <- plot_grid(plot_grid(suppplotlist[[1]][[1]], suppplotlist[[2]][[1]], s
   draw_label(bquote("% Change in"~ " I*"["H"]~" Relative to Baseline Usage"), x=  0, y=0.5, vjust= 1.5, angle=90, size = 12)
 
 ggsave(pabdiff, filename = "Sensitivity_RelInc.png", dpi = 300, type = "cairo", width = 5, height = 7, units = "in",
-       path = "C:/Users/amorg/Documents/PhD/Chapter_2/Figures/Redraft_v1")
+       path = "//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Figures/comb_data")
 
 #Relative Increase from 3.382
 pcompdiff <- plot_grid(plot_grid(suppplotlist[[1]][[2]], suppplotlist[[2]][[2]], suppplotlist[[3]][[2]],suppplotlist[[4]][[2]], suppplotlist[[5]][[2]], 
@@ -393,4 +372,4 @@ pcompdiff <- plot_grid(plot_grid(suppplotlist[[1]][[2]], suppplotlist[[2]][[2]],
   draw_label(bquote("% Change in"~ " I*"["H"]~ " Relative to Case Study Baseline (3.26 per 100,000)"), x=  0, y=0.5, vjust= 1.5, angle=90, size = 12)
 
 ggsave(pcompdiff, filename = "Sensitivity_Compen.png", dpi = 300, type = "cairo", width = 5, height = 7, units = "in",
-       path = "C:/Users/amorg/Documents/PhD/Chapter_2/Figures/Redraft_v1")
+       path = "//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Figures/comb_data")

@@ -27,60 +27,58 @@ amr <- function(t, y, parms) {
 #### Data Import ####
 
 #Import Data
-datatet_broil <- read.csv("Tet_Broil_Comb.csv")
-datatet_hum <- read.csv("Hum_Broil.csv")
-
-datatet_broil[,(2):(5)]
+dataamp_pigs <- read.csv("Amp_FatPigs_Comb.csv")
+dataamp_hum <- read.csv("Hum_FatPigs.csv")
 
 #Cleaning Data - Animals
-datatet_broil[,(2+4):(5+4)][datatet_broil[,2:5] < 10] <- NA #If N > 10, replace the particular country/year with NA for the No. of pos isolates
-datatet_broil[,(2+8):(5+8)][datatet_broil[,2:5] < 10] <- NA #If N > 10, replace the particular country/year with NA for the prop of resistant isolates
-datatet_broil[,2:5][datatet_broil[,2:5] < 10] <- NA #If N > 10, replace the particular country/year with NA for N
-datatet_broil <- datatet_broil[!(is.na(datatet_broil$N_2014) & is.na(datatet_broil$N_2016) & is.na(datatet_broil$N_2017) & 
-                         is.na(datatet_broil$N_2018)),]
-broil_yrs <- sub("N_", "", grep("N_20",colnames(datatet_broil), value = TRUE)) #Find years of the EFSA and ESVAC data in the dataset
+dataamp_pigs[,(2+5):(6+5)][dataamp_pigs[,2:6] < 10] <- NA #If N > 10, replace the particular country/year with NA for the No. of pos isolates
+dataamp_pigs[,(2+10):(6+10)][dataamp_pigs[,2:6] < 10] <- NA #If N > 10, replace the particular country/year with NA for the prop of resistant isolates
+dataamp_pigs[,2:6][dataamp_pigs[,2:6] < 10] <- NA #If N > 10, replace the particular country/year with NA for N
+dataamp_pigs <- dataamp_pigs[!(is.na(dataamp_pigs$N_2015) & is.na(dataamp_pigs$N_2016) & is.na(dataamp_pigs$N_2017) & 
+                         is.na(dataamp_pigs$N_2018) & is.na(dataamp_pigs$N_2019)),]
+pig_yrs <- sub("N_", "", grep("N_20",colnames(dataamp_pigs), value = TRUE)) #Find years of the EFSA and ESVAC data in the dataset
 
 # NON-AGGREGATED - AMP PIGS  -------------------------------------------------------------
-colnames(datatet_broil)[10:13] <- broil_yrs
+colnames(dataamp_pigs)[12:16] <- pig_yrs
 
 #Create dataset where each row is a different observation. 
-melt_tet_broil <- melt(datatet_broil, id.vars = "Country", measure.vars = broil_yrs)
-melt_tet_broil$usage <- melt(datatet_broil, id.vars = "Country", measure.vars = c("scale_tetusage_2014", "scale_tetusage_2016", 
-                                                                              "scale_tetusage_2017", "scale_tetusage_2018"))[,3]
-melt_tet_broil$N <- melt(datatet_broil, id.vars = "Country", measure.vars = c("N_2014", "N_2016", 
-                                                                        "N_2017", "N_2018"))[,3]
-melt_tet_broil$IsolPos <- melt(datatet_broil, id.vars = "Country", measure.vars = c("PosIsol_2014", "PosIsol_2016", 
-                                                                              "PosIsol_2017", "PosIsol_2018"))[,3]
-colnames(melt_tet_broil)[c(2,3)] <- c("Year", "Resistance")
+melt_amp_pigs <- melt(dataamp_pigs, id.vars = "Country", measure.vars = pig_yrs)
+melt_amp_pigs$usage <- melt(dataamp_pigs, id.vars = "Country", measure.vars = c("scale_ampusage_2015", "scale_ampusage_2016", 
+                                                                              "scale_ampusage_2017", "scale_ampusage_2018", "scale_ampusage_2019"))[,3]
+melt_amp_pigs$N <- melt(dataamp_pigs, id.vars = "Country", measure.vars = c("N_2015", "N_2016", 
+                                                                        "N_2017", "N_2018", "N_2019"))[,3]
+melt_amp_pigs$IsolPos <- melt(dataamp_pigs, id.vars = "Country", measure.vars = c("PosIsol_2015", "PosIsol_2016", 
+                                                                              "PosIsol_2017", "PosIsol_2018", "PosIsol_2019"))[,3]
+colnames(melt_amp_pigs)[c(2,3)] <- c("Year", "Resistance")
 
 #Cleaning Data - Humans
 #only include countries/years which are present in the resistance dataset
-datatet_hum <- datatet_hum[datatet_hum$Country %in% intersect(datatet_hum$Country, datatet_broil$Country),]
-colnames(datatet_hum)[32:37] <- as.character(2014:2019)
-datatet_hum_melt <- melt(datatet_hum, id.vars = "Country", measure.vars = broil_yrs)
-colnames(datatet_hum_melt)[c(2,3)] <- c("Year", "Resistance")
+dataamp_hum <- dataamp_hum[dataamp_hum$Country %in% intersect(dataamp_hum$Country, dataamp_pigs$Country),]
+colnames(dataamp_hum)[26:31] <- as.character(2014:2019)
+dataamp_hum_melt <- melt(dataamp_hum, id.vars = "Country", measure.vars = pig_yrs)
+colnames(dataamp_hum_melt)[c(2,3)] <- c("Year", "Resistance")
 
 # Combine Human and Livestock Dataset -----------------------------------------------------------------
-melt_tet_broil$ResPropHum <- datatet_hum_melt[,3] #Obtain the melted human resistances
+melt_amp_pigs$ResPropHum <- dataamp_hum_melt[,3] #Obtain the melted human resistances
 
-melt_tet_broil <- melt_tet_broil[!is.na(melt_tet_broil$Resistance),]
-melt_tet_broil <- melt_tet_broil[!is.na(melt_tet_broil$usage),] # Remove all rows with NAs for usage and resistance
+melt_amp_pigs <- melt_amp_pigs[!is.na(melt_amp_pigs$Resistance),]
+melt_amp_pigs <- melt_amp_pigs[!is.na(melt_amp_pigs$usage),] # Remove all rows with NAs for usage and resistance
 
 #Add 95% CIs for each datapoint
-melt_tet_broil$lower_tet <- unlist(lapply(1:nrow(melt_tet_broil), function(i) prop.test(melt_tet_broil$IsolPos[i],melt_tet_broil$N[i])[[6]][[1]]))
-melt_tet_broil$upper_tet <- unlist(lapply(1:nrow(melt_tet_broil), function(i) prop.test(melt_tet_broil$IsolPos[i],melt_tet_broil$N[i])[[6]][[2]]))
+melt_amp_pigs$lower_amp <- unlist(lapply(1:nrow(melt_amp_pigs), function(i) prop.test(melt_amp_pigs$IsolPos[i],melt_amp_pigs$N[i])[[6]][[1]]))
+melt_amp_pigs$upper_amp <- unlist(lapply(1:nrow(melt_amp_pigs), function(i) prop.test(melt_amp_pigs$IsolPos[i],melt_amp_pigs$N[i])[[6]][[2]]))
 
 #Rename the columns
-colnames(melt_tet_broil) <- c("Country", "Year", "ResPropAnim", "Usage", "N", "IsolPos", "ResPropHum", "Lower_Tet", "Upper_Tet")
-melt_tet_broil$Usage <- melt_tet_broil$Usage/1000 #Change from mg/PCU to g/PCU
+colnames(melt_amp_pigs) <- c("Country", "Year", "ResPropAnim", "Usage", "N", "IsolPos", "ResPropHum", "Lower_Amp", "Upper_Amp")
+melt_amp_pigs$Usage <- melt_amp_pigs$Usage/1000 #Change from mg/PCU to g/PCU
 
-ggplot(melt_tet_broil, aes(x = Usage, y= ResPropAnim, color = Country)) + geom_point() +
-  scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0), limits = c(0,1)) +
+ggplot(melt_amp_pigs, aes(x = Usage, y= ResPropAnim, color = Country)) + geom_point() +
+  scale_x_continuous(expand = c(0, 0), limits = c(0,0.055)) + scale_y_continuous(expand = c(0, 0), limits = c(0,1)) +
   labs(x ="Livestock Antibiotic Usage (g/PCU)", y = "Antibiotic-Resistant Livestock Carriage")
 
 #Find the average EU antibiotic usage and average human resistance for model fitting
-avg_EU_usage <- mean(melt_tet_broil$Usage)
-avg_hum_res <- mean(melt_tet_broil$ResPropHum, na.rm = TRUE)
+avg_EU_usage <- mean(melt_amp_pigs$Usage)
+avg_hum_res <- mean(melt_amp_pigs$ResPropHum, na.rm = TRUE)
 
 #### Approximate Bayesian Computation - Rejection Algorithm ####
 
@@ -145,9 +143,9 @@ ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, ini
       if(g==1) {
         d_betaAA <- runif(1, min = 0, max = 1)
         d_phi <- runif(1, min = 0, max = 0.5)
-        d_kappa <- runif(1, min = 0, max = 40)
+        d_kappa <- runif(1, min = 0, max = 100)
         d_alpha <- rbeta(1, 1.5, 8.5)
-        d_zeta <- runif(1, 0, 2)
+        d_zeta <- runif(1, 0, 5)
         d_betaHA <- runif(1, 0, 0.00075)
         
       } else{ 
@@ -198,15 +196,17 @@ ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, ini
     print(res.old)
     w.old <- w.new/sum(w.new)
     colnames(res.new) <- c("betaAA", "phi", "kappa", "alpha", "zeta", "betaHA")
-    write.csv(res.new, file = paste("ABC_post_tetbroil_",g,".csv",sep=""), row.names=FALSE)
+    write.csv(res.new, file = paste("//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Models/Chapter-2/NewFits_041021/data/new/ABC_post_amppigs_",g,".csv",sep=""), row.names=FALSE)
   }
   return(N_ITER_list)
 }
 
+
+
 N <- 1000 #(ACCEPTED PARTICLES PER GENERATION)
 
 lm.low <- c(0, 0, 0, 0, 0, 0)
-lm.upp <- c(1, 0.5, 40, 1, 2, 0.00075) #Upper and lower bounds for the priors - for the multivariate normal dist pert kernel
+lm.upp <- c(1, 0.5, 100, 1, 5, 0.00075) #Upper and lower bounds for the priors - for the multivariate normal dist pert kernel
 
 # Empty matrices to store results (6 model parameters)
 res.old<-matrix(ncol=6,nrow=N)
@@ -217,10 +217,9 @@ w.old<-matrix(ncol=1,nrow=N)
 w.new<-matrix(ncol=1,nrow=N)
 
 #Thresholds 
-epsilon_dist <- c(20, 17.5, 15, 12.5, 10, 9, 8.5, 8, 7.5, 7)
-epsilon_food <- c(0.593*1, 0.593*0.8, 0.593*0.6, 0.593*0.5, 0.593*0.4, 0.593*0.3, 0.593*0.2, 0.593*0.15, 0.593*0.125, 0.593*0.1)
-epsilon_AMR <- c(avg_hum_res*1, avg_hum_res*0.8, avg_hum_res*0.6, avg_hum_res*0.5, avg_hum_res*0.4, avg_hum_res*0.3, avg_hum_res*0.2, avg_hum_res*0.15, avg_hum_res*0.125, avg_hum_res*0.1)
-
+epsilon_dist <- c(4, 3.5, 3, 2.5, 2, 1.8, 1.6, 1.55, 1.5, 1.45)
+epsilon_food <- c(0.593*1, 0.593*0.8, 0.593*0.6, 0.593*0.5, 0.593*0.4, 0.593*0.3, 0.593*0.2, 0.593*0.15, 0.593*0.1, 0.593*0.075)
+epsilon_AMR <- c(avg_hum_res*1, avg_hum_res*0.8, avg_hum_res*0.6, avg_hum_res*0.5, avg_hum_res*0.4, avg_hum_res*0.3, avg_hum_res*0.2, avg_hum_res*0.15, avg_hum_res*0.1, avg_hum_res*0.075)
 #Run the model 
 start_time <- Sys.time()
 
@@ -229,18 +228,18 @@ dist_save <- ABC_algorithm(N = 1000,
               sum.stats = summarystatprev, 
               distanceABC = sum_square_diff_dist, 
               fitmodel = amr, 
-              tau_range = melt_tet_broil$Usage, 
+              tau_range = melt_amp_pigs$Usage, 
               init.state = c(Sa=0.98, Isa=0.01, Ira=0.01, Sh=1, Ish=0, Irh=0), 
-              data = melt_tet_broil)
+              data = melt_amp_pigs)
 
 end_time <- Sys.time(); end_time - start_time
 
-saveRDS(dist_save, file = "dist_tetbroil_list.rds")
+saveRDS(dist_save, file = "dist_amppigs_list.rds")
 
 
 # Examining Posteriors ----------------------------------------------------
 
-post_dist_names <- grep("ABC_post_tetbroil_",
+post_dist_names <- grep("ABC_post_amppigs_",
                       list.files("//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Models/Chapter-2/NewFits_041021/data"), value = TRUE)
 post_dist <- lapply(post_dist_names, read.csv)
 

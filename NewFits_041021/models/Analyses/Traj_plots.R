@@ -35,7 +35,7 @@ amr <- function(t, y, parms) {
 import <- function(id) {
   data <- data.frame(matrix(ncol = 6, nrow = 0))
   
-  for(i in 1:length(grep(id, list.files(), value = TRUE))) {
+  for(i in 1:length(grep(paste0("post_",id), list.files(), value = TRUE))) {
     test  <- cbind(read.csv(paste0("ABC_post_",substitute(id),"_",i,".csv"), 
                             header = TRUE), "group" = paste0("data",i), "fit" = as.character(substitute(id)))
     data <- rbind(data, test)
@@ -250,7 +250,7 @@ start_time <- Sys.time()
 
 data_bind <- do.call(rbind,data)
 
-parmtau <- seq(0,0.08, by = 0.002)
+parmtau <- seq(0,0.08, by = 0.004)
 
 init <- c(Sa=0.98, Isa=0.01, Ira=0.01, Sh=1, Ish=0, Irh=0)
 icombhdata <- data.frame(matrix(ncol = 8, nrow = 0))
@@ -297,19 +297,19 @@ for(j in 1:nrow(MAP)) {
     for(z in 1:1000) {
       if(rownames(MAP)[j] == "ampbroil") {
         parms2 = c(ra = 0, rh =  (5.5^-1), ua = 42^-1, uh = 28835^-1, betaAA = ribbondata[z,"betaAA"], betaAH = 0.00001, betaHH = 0.00001, 
-                   betaHA = (0.00001), phi =  ribbondata[z,"phi"], kappa = ribbondata[z,"kappa"], alpha = ribbondata[z,"alpha"], tau = parmtau[i],
+                   betaHA = ribbondata[z,"betaHA"], phi =  ribbondata[z,"phi"], kappa = ribbondata[z,"kappa"], alpha = ribbondata[z,"alpha"], tau = parmtau[i],
                    zeta = ribbondata[z,"zeta"])} 
       if(rownames(MAP)[j] == "tetbroil") {
         parms2 = c(ra = 0, rh =  (5.5^-1), ua = 42^-1, uh = 28835^-1, betaAA = ribbondata[z,"betaAA"], betaAH = 0.00001, betaHH = 0.00001, 
-                   betaHA = (0.00001), phi =  ribbondata[z,"phi"], kappa = ribbondata[z,"kappa"], alpha = ribbondata[z,"alpha"], tau = parmtau[i],
+                   betaHA =  ribbondata[z,"betaHA"], phi =  ribbondata[z,"phi"], kappa = ribbondata[z,"kappa"], alpha = ribbondata[z,"alpha"], tau = parmtau[i],
                    zeta = ribbondata[z,"zeta"])} 
       if(rownames(MAP)[j] == "amppigs") {
         parms2 = c(ra = 60^-1, rh = (5.5^-1), ua = 240^-1, uh = 28835^-1, betaAA = ribbondata[z,"betaAA"], betaAH = 0.00001, betaHH = 0.00001, 
-                   betaHA = (0.00001), phi =  ribbondata[z,"phi"], kappa = ribbondata[z,"kappa"], alpha = ribbondata[z,"alpha"], tau = parmtau[i],
+                   betaHA =  ribbondata[z,"betaHA"], phi =  ribbondata[z,"phi"], kappa = ribbondata[z,"kappa"], alpha = ribbondata[z,"alpha"], tau = parmtau[i],
                    zeta = ribbondata[z,"zeta"])} 
       if(rownames(MAP)[j] == "tetpigs") {
         parms2 = c(ra = 60^-1, rh = (5.5^-1), ua = 240^-1, uh = 28835^-1, betaAA = ribbondata[z,"betaAA"], betaAH = 0.00001, betaHH = 0.00001, 
-                   betaHA = (0.00001), phi =  ribbondata[z,"phi"], kappa = ribbondata[z,"kappa"], alpha = ribbondata[z,"alpha"], tau = parmtau[i],
+                   betaHA =  ribbondata[z,"betaHA"], phi =  ribbondata[z,"phi"], kappa = ribbondata[z,"kappa"], alpha = ribbondata[z,"alpha"], tau = parmtau[i],
                    zeta = ribbondata[z,"zeta"])}
       
       out <- runsteady(y = init, func = amr, times = c(0, Inf), parms = parms2)
@@ -405,8 +405,8 @@ for(i in 1:4){
     
     p1 <- ggplot(plotdata, aes(fill = variable, x = tau, y = value)) + theme_bw() + 
       geom_vline(xintercept = averagesales[i], alpha = 0.3, size = 2) + 
-      geom_col(color = "black",position= "stack", width  = 0.002) + scale_x_continuous(expand = c(0, 0.0005)) + 
-      scale_y_continuous(limits = c(0, 2.5), expand = c(0, 0))  + 
+      geom_col(color = "black",position= "stack", width  = 0.004) + scale_x_continuous(expand = c(0, 0.0005)) + 
+      scale_y_continuous(limits = c(0, 1), expand = c(0, 0))  + 
       geom_text(label= c(round(icombhdata$IResRat[icombhdata$group == unique(icombhdata$group)[i]],digits = 2),rep("",length(parmtau))),vjust=-0.5, hjust = 0.05,
                 position = "stack", angle = 45) +
       theme(legend.position=c(0.75, 0.875), legend.text=element_text(size=12), legend.title = element_blank(), axis.text=element_text(size=12), 
@@ -434,38 +434,16 @@ for(i in 1:4){
   })
 }
 
-
-
-
 plotdata <- melt(icombhdata[icombhdata$group == unique(icombhdata$group)[2],],
                  id.vars = c("tau"), measure.vars = c("ResInfHumans","InfHumans")) 
-
-ggplot(plotdata, aes(fill = variable, x = tau, y = value)) + theme_bw() + 
-  geom_vline(xintercept = averagesales[i], alpha = 0.3, size = 2) + 
-  geom_col(color = "black",position= "stack", width  = 0.002) + scale_x_continuous(expand = c(0, 0.0005)) + 
-  scale_y_continuous(limits = c(0, 5), expand = c(0, 0))  + 
-  geom_text(label= c(round(icombhdata$IResRat[icombhdata$group == unique(icombhdata$group)[i]],digits = 2),rep("",length(parmtau))),vjust=-0.5, hjust = 0.05,
-            position = "stack", angle = 45) +
-  theme(legend.position=c(0.75, 0.875), legend.text=element_text(size=12), legend.title = element_blank(), axis.text=element_text(size=12), 
-        axis.title.y=element_text(size=12), axis.title.x= element_text(size=12), plot.margin = unit(c(0.35,1,0.35,1), "cm"),
-        legend.spacing.x = unit(0.3, 'cm')) + 
-  scale_fill_manual(labels = c("Antibiotic-Resistant Infection", "Antibiotic-Sensitive Infection"), values = c("#F8766D", "#619CFF")) 
-
-
-
-
-
-
-
-
 
 icombh <- ggarrange(icombhlist[[1]], icombhlist[[2]], 
                     icombhlist[[3]], icombhlist[[4]], 
                     nrow = 2, ncol = 2, align = "v", labels = c("A","B", "C", "D"), font.label = c(size = 20),
                   common.legend = TRUE, legend = "bottom") 
 
-ggsave(icombh, filename = "Icombh.png", dpi = 300, type = "cairo", width = 8, height = 11, units = "in",
-       path = "//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Models/Chapter-2/NewFits_041021/data")
+ggsave(icombh, filename = "Icombh.png", dpi = 300, type = "cairo", width = 11, height = 9, units = "in",
+       path = "//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Figures/comb_data")
 
 ggsave(icombh, filename = "Icombh_poster.png", dpi = 300, type = "cairo", width = 10, height = 7, units = "in",
        path = "C:/Users/amorg/Documents/PhD/Chapter_2/Figures/Redraft_v1")

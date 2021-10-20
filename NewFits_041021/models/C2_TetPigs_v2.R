@@ -141,12 +141,12 @@ ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, ini
       N_ITER <- N_ITER + 1
       
       if(g==1) {
-        d_betaAA <- runif(1, min = 0, max = 0.4)
+        d_betaAA <- runif(1, min = 0, max = 1)
         d_phi <- runif(1, min = 0, max = 0.3)
-        d_kappa <- runif(1, min = 0, max = 20)
+        d_kappa <- runif(1, min = 0, max = 30)
         d_alpha <- rbeta(1, 1.5, 8.5)
-        d_zeta <- runif(1, 0, 1)
-        d_betaHA <- runif(1, 0, 0.002)
+        d_zeta <- runif(1, 0, 2)
+        d_betaHA <- runif(1, 0, 0.00075)
         
       } else{ 
         p <- sample(seq(1,N),1,prob= w.old) # check w.old here
@@ -204,7 +204,7 @@ ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, ini
 N <- 1000 #(ACCEPTED PARTICLES PER GENERATION)
 
 lm.low <- c(0, 0, 0, 0, 0, 0)
-lm.upp <- c(0.4, 0.3, 20, 1, 1, 0.002) #Upper and lower bounds for the priors - for the multivariate normal dist pert kernel
+lm.upp <- c(1, 0.3, 30, 1, 2, 0.00075) #Upper and lower bounds for the priors - for the multivariate normal dist pert kernel
 
 # Empty matrices to store results (6 model parameters)
 res.old<-matrix(ncol=6,nrow=N)
@@ -261,4 +261,3 @@ for(i in 1:(length(post_dist)-1)) {
   return(p)
     })
 }
-

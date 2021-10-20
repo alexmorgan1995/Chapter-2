@@ -145,9 +145,9 @@ ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, ini
       if(g==1) {
         d_betaAA <- runif(1, min = 0, max = 1)
         d_phi <- runif(1, min = 0, max = 0.5)
-        d_kappa <- runif(1, min = 0, max = 40)
+        d_kappa <- runif(1, min = 0, max = 100)
         d_alpha <- rbeta(1, 1.5, 8.5)
-        d_zeta <- runif(1, 0, 2)
+        d_zeta <- runif(1, 0, 5)
         d_betaHA <- runif(1, 0, 0.00075)
         
       } else{ 
@@ -198,7 +198,7 @@ ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, ini
     print(res.old)
     w.old <- w.new/sum(w.new)
     colnames(res.new) <- c("betaAA", "phi", "kappa", "alpha", "zeta", "betaHA")
-    write.csv(res.new, file = paste("ABC_post_tetbroil_",g,".csv",sep=""), row.names=FALSE)
+    write.csv(res.new, file = paste("//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Models/Chapter-2/NewFits_041021/data/new/ABC_post_tetbroil_",g,".csv",sep=""), row.names=FALSE)
   }
   return(N_ITER_list)
 }
@@ -206,7 +206,7 @@ ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, ini
 N <- 1000 #(ACCEPTED PARTICLES PER GENERATION)
 
 lm.low <- c(0, 0, 0, 0, 0, 0)
-lm.upp <- c(1, 0.5, 40, 1, 2, 0.00075) #Upper and lower bounds for the priors - for the multivariate normal dist pert kernel
+lm.upp <- c(1, 0.5, 100, 1, 5, 0.00075) #Upper and lower bounds for the priors - for the multivariate normal dist pert kernel
 
 # Empty matrices to store results (6 model parameters)
 res.old<-matrix(ncol=6,nrow=N)
@@ -218,8 +218,8 @@ w.new<-matrix(ncol=1,nrow=N)
 
 #Thresholds 
 epsilon_dist <- c(20, 17.5, 15, 12.5, 10, 9, 8.5, 8, 7.5, 7)
-epsilon_food <- c(0.593*1, 0.593*0.8, 0.593*0.6, 0.593*0.5, 0.593*0.4, 0.593*0.3, 0.593*0.2, 0.593*0.15, 0.593*0.125, 0.593*0.1)
-epsilon_AMR <- c(avg_hum_res*1, avg_hum_res*0.8, avg_hum_res*0.6, avg_hum_res*0.5, avg_hum_res*0.4, avg_hum_res*0.3, avg_hum_res*0.2, avg_hum_res*0.15, avg_hum_res*0.125, avg_hum_res*0.1)
+epsilon_food <- c(0.593*1, 0.593*0.8, 0.593*0.6, 0.593*0.5, 0.593*0.4, 0.593*0.3, 0.593*0.2, 0.593*0.15, 0.593*0.1, 0.593*0.05)
+epsilon_AMR <- c(avg_hum_res*1, avg_hum_res*0.8, avg_hum_res*0.6, avg_hum_res*0.5, avg_hum_res*0.4, avg_hum_res*0.3, avg_hum_res*0.2, avg_hum_res*0.15, avg_hum_res*0.1, avg_hum_res*0.05)
 
 #Run the model 
 start_time <- Sys.time()

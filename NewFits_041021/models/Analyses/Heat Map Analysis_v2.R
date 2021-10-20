@@ -29,7 +29,7 @@ amr <- function(t, y, parms) {
 #Importing in the Datasets
 import <- function(id) {
   data <- data.frame(matrix(ncol = 6, nrow = 0))
-  for(i in 1:length(grep(id, list.files(), value = TRUE))) {
+  for(i in 1:length(grep(paste0("post_", id), list.files(), value = TRUE))) {
     test  <- cbind(read.csv(paste0("ABC_post_",substitute(id),"_",i,".csv"), 
                             header = TRUE), "group" = paste0("data",i), "fit" = as.character(substitute(id)))
     data <- rbind(data, test)
@@ -176,7 +176,7 @@ for(i in 1:4) {
       geom_contour(color = "red", size = 1, breaks = 0.593, alpha = 0.8) +
       geom_text_contour(col = "white",nudge_y = -0.4, fontface = "bold", size = 5, breaks = breaks, label.placer = label_placer_fraction(frac = 0.5),
                               stroke = 0.05, stroke.color = "black",) +
-      scale_fill_viridis_b(breaks = breaks, direction = -1, begin = 0, end = 0.9, values = c(0, seq(0.75, 1, by = 0.25/8))) +
+      scale_fill_viridis_b(breaks = breaks, direction = -1, begin = 0, end = 0.9, values = c(0, seq(0.70, 1, by = 0.30/8))) +
       scale_y_continuous(expand = c(0,0), limits = c(70, 100)) + scale_x_continuous(expand = c(0, 0), limits = c(70, 100)) + theme_bw() +
       theme(legend.position = "right", legend.title = element_text(size=14), legend.text=element_text(size=12),  axis.text=element_text(size=14),
             axis.title.y=element_text(size=14),axis.title.x = element_text(size=14),  
@@ -215,7 +215,7 @@ plot1 <- ggplot(scentest1, aes(percdecrease, percbetaHA, z = icombh)) + metR::ge
   geom_contour(color = "red", size = 1, breaks = 0.593, alpha = 0.8) +
   geom_text_contour(col = "white",nudge_y = -0.4, fontface = "bold", size = 5, breaks = breaks1, label.placer = label_placer_fraction(frac = 0.5),
                           stroke = 0.05, stroke.color = "black",) +
-  scale_fill_viridis_b(breaks = breaks1, direction = -1, begin = 0, end = 0.9, values = c(0, seq(0.75,1, by = 0.25/8))) +
+  scale_fill_viridis_b(breaks = breaks1, direction = -1, begin = 0, end = 0.9, values = c(0, seq(0.70,1, by = 0.30/8))) +
   scale_y_continuous(expand = c(0,0), limits = c(70, 100)) + scale_x_continuous(expand = c(0, 0), limits = c(70, 100)) + theme_bw() +
   theme(legend.position = "right", legend.title = element_text(size=14), legend.text=element_text(size=12),  axis.text=element_text(size=14),
         axis.title.y=element_text(size=14),axis.title.x = element_text(size=14),  
@@ -231,7 +231,7 @@ plot2 <- ggplot(scentest2, aes(percdecrease, percbetaHA, z = icombh)) + metR::ge
   geom_contour(color = "red", size = 1, breaks = 0.593, alpha = 0.8) +
   geom_text_contour(col = "white",nudge_y = -0.4, fontface = "bold", size = 5, breaks = breaks2, label.placer = label_placer_fraction(frac = 0.5),
                           stroke = 0.05, stroke.color = "black",) +
-  scale_fill_viridis_b(breaks = breaks2, direction = -1, begin = 0, end = 0.9, values = c(0, seq(0.75,1, by = 0.25/8))) +
+  scale_fill_viridis_b(breaks = breaks2, direction = -1, begin = 0, end = 0.9, values = c(0, seq(0.70,1, by = 0.30/8))) +
   scale_y_continuous(expand = c(0,0), limits = c(70, 100)) + scale_x_continuous(expand = c(0, 0), limits = c(70, 100)) + theme_bw() +
   theme(legend.position = "right", legend.title = element_text(size=14), legend.text=element_text(size=12),  axis.text=element_text(size=14),
         axis.title.y=element_text(size=14),axis.title.x = element_text(size=14),  
@@ -246,7 +246,7 @@ plot3 <- ggplot(scentest3, aes(percdecrease, percbetaHA, z = icombh)) + metR::ge
   geom_contour(color = "red", size = 1, breaks = 0.593, alpha = 0.8) +
   geom_text_contour(col = "white",nudge_y = -0.4, fontface = "bold", size = 5, breaks = breaks3, label.placer = label_placer_fraction(frac = 0.5),
                           stroke = 0.05, stroke.color = "black",) +
-  scale_fill_viridis_b(breaks = breaks3, direction = -1, begin = 0, end = 0.9, values = c(0, seq(0.75,1, by = 0.25/8))) +
+  scale_fill_viridis_b(breaks = breaks3, direction = -1, begin = 0, end = 0.9, values = c(0, seq(0.70,1, by = 0.30/8))) +
   scale_y_continuous(expand = c(0,0), limits = c(70, 100)) + scale_x_continuous(expand = c(0, 0), limits = c(70, 100)) + theme_bw() +
   theme(legend.position = "right", legend.title = element_text(size=14), legend.text=element_text(size=12),  axis.text=element_text(size=14),
         axis.title.y=element_text(size=14),axis.title.x = element_text(size=14),  
@@ -261,7 +261,7 @@ plot4 <- ggplot(scentest4, aes(percdecrease, percbetaHA, z = icombh)) + metR::ge
   geom_contour(color = "red", size = 1, breaks = 0.593, alpha = 0.8) +
   geom_text_contour(col = "white",nudge_y = -0.4, fontface = "bold", size = 5, breaks = breaks3, label.placer = label_placer_fraction(frac = 0.5),
                           stroke = 0.05, stroke.color = "black",) +
-  scale_fill_viridis_b(breaks = breaks4, direction = -1, begin = 0, end = 0.9, values = c(0, seq(0.75,1, by = 0.25/8))) +
+  scale_fill_viridis_b(breaks = breaks4, direction = -1, begin = 0, end = 0.9, values = c(0, seq(0.70,1, by = 0.30/8))) +
   scale_y_continuous(expand = c(0,0), limits = c(70, 100)) + scale_x_continuous(expand = c(0, 0), limits = c(70, 100)) + theme_bw() +
   theme(legend.position = "right", legend.title = element_text(size=14), legend.text=element_text(size=12),  axis.text=element_text(size=14),
         axis.title.y=element_text(size=14),axis.title.x = element_text(size=14),  
