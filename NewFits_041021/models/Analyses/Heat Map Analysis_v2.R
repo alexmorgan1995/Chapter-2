@@ -145,6 +145,22 @@ for(j in 1:4) {
   })
 }
 
+scentest <- heatmap[[1]][[3]]
+
+breaks <- c(0, 3.26, seq(3.26, max(scentest$prevH)*100000, by = 1))
+
+ggplot(scentest, aes(percbetaAA, percbetaHA, z = prevH*100000)) + metR::geom_contour_fill(breaks = breaks, color = "black", size = 0.1)  + 
+  geom_contour(color = "red", size = 1, breaks = 3.26, alpha = 0.8) +
+  geom_text_contour(col = "white",nudge_y = -0.4, fontface = "bold", size = 5, breaks = breaks, label.placer = label_placer_fraction(frac = 0.5),
+                    stroke = 0.05, stroke.color = "black",) +
+  scale_fill_viridis_b(breaks = breaks, direction = -1, begin = 0, end = 0.9, values = c(0, seq(0.70, 1, by = 0.30/8))) +
+  scale_y_continuous(expand = c(0,0), limits = c(70, 100)) + scale_x_continuous(expand = c(0, 0), limits = c(70, 100)) + theme_bw() +
+  theme(legend.position = "right", legend.title = element_text(size=14), legend.text=element_text(size=12),  axis.text=element_text(size=14),
+        axis.title.y=element_text(size=14),axis.title.x = element_text(size=14),  
+        plot.title = element_text(size = 18, vjust = 3, hjust = 0.1, face = "bold"),
+        legend.spacing.x = unit(0.3, 'cm'), plot.margin=unit(c(0.5,0.4,0.4,0.4),"cm"), legend.key.height =unit(0.75, "cm"),
+        legend.key.width =  unit(2, "cm"))
+  
 # Plotting ----------------------------------------------------------------
 
 plotheat <- list()

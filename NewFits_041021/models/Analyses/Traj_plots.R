@@ -253,7 +253,7 @@ data_bind <- do.call(rbind,data)
 parmtau <- seq(0,0.08, by = 0.004)
 
 init <- c(Sa=0.98, Isa=0.01, Ira=0.01, Sh=1, Ish=0, Irh=0)
-icombhdata <- data.frame(matrix(ncol = 8, nrow = 0))
+icombhdata <- data.frame(matrix(ncol = 10, nrow = 0))
 ribbon_final <- data.frame()
 
 for(j in 1:nrow(MAP)) {
@@ -292,7 +292,9 @@ for(j in 1:nrow(MAP)) {
     output1[i,5] <- ((out[[2]] + out[[3]])*(446000000))/100000
     output1[i,6] <- out[[3]] / (out[[2]] + out[[3]])
     output1[i,7] <- out$y["Ira"] / (out$y["Isa"] + out$y["Ira"])
-    output1[i,8] <- rownames(MAP)[j]
+    output1[i,8] <- out$y["Ish"] 
+    output1[i,9] <- out$y["Irh"]
+    output1[i,10] <- rownames(MAP)[j]
     
     for(z in 1:1000) {
       if(rownames(MAP)[j] == "ampbroil") {
@@ -327,7 +329,7 @@ for(j in 1:nrow(MAP)) {
   ribbon_final <- rbind(ribbon_final, output_ribbon)
 }
 
-colnames(icombhdata)[1:8] <- c("tau", "SuscHumans","InfHumans","ResInfHumans","ICombH","IResRat","IResRatA", "group")
+colnames(icombhdata)[1:10] <- c("tau", "SuscHumans","InfHumans","ResInfHumans","ICombH","IResRat","IResRatA","PrevHS","PrevHR", "group")
 colnames(ribbon_final)[1:4] <- c("tau","particle","IResRatA", "group")
 
 HDI_ribbon <- data.frame()
@@ -343,53 +345,78 @@ for(j in 1:length(unique(ribbon_final$group))) {
 
 end_time <- Sys.time(); end_time - start_time
 
-amp_broil <- ggplot(melt_amp_broil, aes(x = usage/1000, y= Resistance))  + geom_point() + theme_bw() + 
-  scale_x_continuous(limits = c(0,(max(melt_amp_broil$usage)/1000)*1.05), expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0), limits = c(0,1)) +
+amp_broil <- ggplot(melt_amp_broil, aes(x = usage/1000, y= Resistance, color = Country))  + geom_point() + theme_bw() + 
+  scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0), limits = c(0,1)) +
   labs(x ="Broiler Poultry Ampicillin Sales (g/PCU)", y = "Ampicillin-Resistant Broiler Poultry Carriage") +
-  geom_errorbar(aes(ymin=lower, ymax=upper), colour="black", size=1.01, inherit.aes =  TRUE) + 
+  geom_errorbar(aes(ymin=lower, ymax=upper, color = Country), size=1.01, inherit.aes =  TRUE) + 
   geom_line(data = icombhdata[icombhdata$group == "ampbroil",], aes(x = tau, y= IResRatA), col = "red", size = 1.1)+
   geom_ribbon(data = HDI_ribbon[HDI_ribbon$scen == "ampbroil",],
               aes(x = tau ,ymin = lowHDI, ymax = highHDI), fill = "hotpink", alpha = 0.7, inherit.aes=FALSE) +
   theme(legend.text=element_text(size=12), axis.text=element_text(size=12), 
-        axis.title.y=element_text(size=12), axis.title.x= element_text(size=12), plot.margin = unit(c(1,1,1,1), "cm"))
+        axis.title.y=element_text(size=12), axis.title.x= element_text(size=12), plot.margin = unit(c(1,1,1,1), "cm"))  + 
+  coord_cartesian(xlim = c(0,(max(melt_amp_broil$usage)/1000)*1.05))
 
-tet_broil <- ggplot(melt_tet_broil, aes(x = usage/1000, y= Resistance))  + geom_point() + theme_bw() + 
-  scale_x_continuous(limits = c(0,(max(melt_tet_broil$usage)/1000)*1.05), expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0), limits = c(0,1)) +
+tet_broil <- ggplot(melt_tet_broil, aes(x = usage/1000, y= Resistance, color = Country))  + geom_point() + theme_bw() + 
+  scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0), limits = c(0,1)) +
   labs(x ="Broiler Poultry Tetracycline Sales (g/PCU)", y = "Tetracycline-Resistant Broiler Poultry Carriage") +
-  geom_errorbar(aes(ymin=lower, ymax=upper), colour="black", size=1.01, inherit.aes =  TRUE) + 
+  geom_errorbar(aes(ymin=lower, ymax=upper, color = Country), size=1.01, inherit.aes =  TRUE) + 
   geom_ribbon(data = HDI_ribbon[HDI_ribbon$scen == "tetbroil",],
               aes(x = tau ,ymin = lowHDI, ymax = highHDI), fill = "hotpink", alpha = 0.7, inherit.aes=FALSE) +
   geom_line(data = icombhdata[icombhdata$group == "tetbroil",], aes(x = tau, y= IResRatA), col = "red", size = 1.1)+
   theme(legend.text=element_text(size=12), axis.text=element_text(size=12), 
-        axis.title.y=element_text(size=12), axis.title.x= element_text(size=12), plot.margin = unit(c(1,1,1,1), "cm"))
+        axis.title.y=element_text(size=12), axis.title.x= element_text(size=12), plot.margin = unit(c(1,1,1,1), "cm")) + 
+  coord_cartesian(xlim = c(0,(max(melt_tet_broil$usage)/1000)*1.05))
 
-amp_pig <- ggplot(melt_amp_pigs, aes(x = usage/1000, y= Resistance))  + geom_point() + theme_bw() + 
-  scale_x_continuous(limits = c(0,(max(melt_amp_pigs$usage)/1000)*1.05),expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0), limits = c(0,1)) +
+amp_pig <- ggplot(melt_amp_pigs, aes(x = usage/1000, y= Resistance, color = Country))  + geom_point() + theme_bw() + 
+  scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0), limits = c(0,1)) +
   labs(x ="Fattening Pig Ampicillin Sales (g/PCU)", y = "Ampicillin-Resistant Fattening Pig Carriage") +
-  geom_errorbar(aes(ymin=lower, ymax=upper), colour="black", size=1.01, inherit.aes =  TRUE) + 
+  geom_errorbar(aes(ymin=lower, ymax=upper, color = Country),  size=1.01, inherit.aes =  TRUE) + 
   geom_line(data = icombhdata[icombhdata$group == "amppigs",], aes(x = tau, y= IResRatA), col = "red", size = 1.1) +
   geom_ribbon(data = HDI_ribbon[HDI_ribbon$scen == "amppigs",],
               aes(x = tau ,ymin = lowHDI, ymax = highHDI), fill = "hotpink", alpha = 0.7, inherit.aes=FALSE) +
   theme(legend.text=element_text(size=12), axis.text=element_text(size=12), 
-        axis.title.y=element_text(size=12), axis.title.x= element_text(size=12), plot.margin = unit(c(1,1,1,1), "cm"))
+        axis.title.y=element_text(size=12), axis.title.x= element_text(size=12), plot.margin = unit(c(1,1,1,1), "cm")) + 
+  coord_cartesian(xlim = c(0,(max(melt_amp_pigs$usage)/1000)*1.05))
 
-tet_pig <- ggplot(melt_tet_pigs, aes(x = usage/1000, y= Resistance))  + geom_point() + theme_bw() + 
-  scale_x_continuous(limits = c(0,(max(melt_tet_pigs$usage)/1000)*1.05), expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0), limits = c(0,1)) +
+tet_pig <- ggplot(melt_tet_pigs, aes(x = usage/1000, y= Resistance, color = Country))  + geom_point() + theme_bw() + 
+  scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0), limits = c(0,1)) +
   labs(x ="Fattening Pig Tetracycline Sales (g/PCU)", y = "Tetracycline-Resistant Fattening Pig Carriage") +
-  geom_errorbar(aes(ymin=lower, ymax=upper), colour="black", size=1.01, inherit.aes =  TRUE) + 
+  geom_errorbar(aes(ymin=lower, ymax=upper, color = Country), size=1.01, inherit.aes =  TRUE) + 
   geom_ribbon(data = HDI_ribbon[HDI_ribbon$scen == "tetpigs",],
               aes(x = tau ,ymin = lowHDI, ymax = highHDI), fill = "hotpink", alpha = 0.7, inherit.aes=FALSE) +
   geom_line(data = icombhdata[icombhdata$group == "tetpigs",], aes(x = tau, y= IResRatA), col = "red", size = 1.1) +
   theme(legend.text=element_text(size=12), axis.text=element_text(size=12), 
-        axis.title.y=element_text(size=12), axis.title.x= element_text(size=12), plot.margin = unit(c(1,1,1,1), "cm"))
+        axis.title.y=element_text(size=12), axis.title.x= element_text(size=12), plot.margin = unit(c(1,1,1,1), "cm")) + 
+  coord_cartesian(xlim = c(0,(max(melt_tet_pigs$usage)/1000)*1.05))
 
 fits <- ggarrange(amp_broil, tet_broil,amp_pig, tet_pig, nrow = 2, ncol = 2, align = "h", labels = c("A","B", "C", "D"), font.label = c(size = 20),
                   common.legend = TRUE, legend = "bottom") 
 
-ggsave(fits, filename = "Model_Fits_v1.png", dpi = 300, type = "cairo", width = 14, height = 10, units = "in",
+ggsave(fits, filename = "Model_Fits_v1.png", dpi = 300, type = "cairo", width = 12, height = 11, units = "in",
        path = "//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Figures/comb_data")
 
 # Tau and ICombH Base Plot - Requires you to run previous section ----------------------------------------------------------
+
+
+
+plotdata <- melt(icombhdata[icombhdata$group == "ampbroil",],
+                 id.vars = c("tau"), measure.vars = c("PrevH")) 
+
+p1 <- ggplot(plotdata, aes(fill = variable, x = tau, y = value)) + theme_bw() + 
+  geom_vline(xintercept = averagesales[i], alpha = 0.3, size = 2) + 
+  geom_col(color = "black",position= "stack", width  = 0.0035) + scale_x_continuous(expand = c(0, 0.0005)) + 
+  scale_y_continuous(limits = c(0, 1), expand = c(0, 0))  + 
+  geom_text(label= c(round(icombhdata$IResRat[icombhdata$group == unique(icombhdata$group)[i]],digits = 2),rep("",length(parmtau))),vjust=-0.5, hjust = 0.05,
+            position = "stack", angle = 45) +
+  theme(legend.position=c(0.75, 0.875), legend.text=element_text(size=12), legend.title = element_blank(), axis.text=element_text(size=12), 
+        axis.title.y=element_text(size=12), axis.title.x= element_text(size=12), plot.margin = unit(c(0.35,1,0.35,1), "cm"),
+        legend.spacing.x = unit(0.3, 'cm')) + 
+  scale_fill_manual(labels = c("Antibiotic-Resistant Infection", "Antibiotic-Sensitive Infection"), values = c("#F8766D", "#619CFF")) 
+
+
+
+
+
 
 icombhlist <- list()
 
@@ -405,7 +432,7 @@ for(i in 1:4){
     
     p1 <- ggplot(plotdata, aes(fill = variable, x = tau, y = value)) + theme_bw() + 
       geom_vline(xintercept = averagesales[i], alpha = 0.3, size = 2) + 
-      geom_col(color = "black",position= "stack", width  = 0.004) + scale_x_continuous(expand = c(0, 0.0005)) + 
+      geom_col(color = "black",position= "stack", width  = 0.0035) + scale_x_continuous(expand = c(0, 0.0005)) + 
       scale_y_continuous(limits = c(0, 1), expand = c(0, 0))  + 
       geom_text(label= c(round(icombhdata$IResRat[icombhdata$group == unique(icombhdata$group)[i]],digits = 2),rep("",length(parmtau))),vjust=-0.5, hjust = 0.05,
                 position = "stack", angle = 45) +
@@ -445,8 +472,8 @@ icombh <- ggarrange(icombhlist[[1]], icombhlist[[2]],
 ggsave(icombh, filename = "Icombh.png", dpi = 300, type = "cairo", width = 11, height = 9, units = "in",
        path = "//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Figures/comb_data")
 
-ggsave(icombh, filename = "Icombh_poster.png", dpi = 300, type = "cairo", width = 10, height = 7, units = "in",
-       path = "C:/Users/amorg/Documents/PhD/Chapter_2/Figures/Redraft_v1")
+#ggsave(icombh, filename = "Icombh_poster.png", dpi = 300, type = "cairo", width = 10, height = 7, units = "in",
+#       path = "C:/Users/amorg/Documents/PhD/Chapter_2/Figures/Redraft_v1")
 
 # HDI for parameter estimates ---------------------------------------------
 
@@ -615,14 +642,13 @@ comb.prior.plot <- ggarrange(prior.plot.list[[1]],prior.plot.list[[2]],prior.plo
                              ncol = 1,nrow = 5)
 
 ggsave(comb.prior.plot, filename = "prior_parms.png", dpi = 300, type = "cairo", width = 8, height = 13, units = "in",
-       path = "C:/Users/amorg/Documents/PhD/Chapter_2/Figures/Redraft_v1")
+       path = "//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Figures/comb_data")
 
 # Supplementary Plots (kappa Responsible for Co-Existence) -----------------------------------------------------
 
-parmtau <- seq(0,0.035, by = 0.002)
+parmtau <- seq(0,0.08, by = 0.004)
 init <- c(Sa=0.98, Isa=0.01, Ira=0.01, Sh=1, Ish=0, Irh=0)
-output1 <- data.frame(matrix(ncol = 8, nrow = 0))
-times <- seq(0, 200000, by = 100)
+output1 <- data.frame(matrix(ncol = 6, nrow = 0))
 
 for (i in 1:length(parmtau)) {
   temp <- data.frame(matrix(NA, nrow = 1, ncol=7))
@@ -631,39 +657,36 @@ for (i in 1:length(parmtau)) {
              betaHA = (0.00001), phi = MAP[1,"phi"], kappa = 0, alpha = 0, tau = parmtau[i],
              zeta = MAP[1,"zeta"])
   
-  out <- ode(y = init, func = amr, times = times, parms = parms2)
+  out <- runsteady(y = init, func = amr, times = c(0, Inf), parms = parms2)
   temp[1,1] <- parmtau[i]
-  temp[1,2] <- rounding(out[nrow(out),5]) 
-  temp[1,3] <- rounding(out[nrow(out),6]) 
-  temp[1,4] <- rounding(out[nrow(out),7])
-  temp[1,5] <- temp[1,3] + temp[1,4]
-  temp[1,6] <- signif(as.numeric(temp[1,4]/temp[1,5]), digits = 3)
-  temp[1,7] <- rounding(out[nrow(out),4]) / (rounding(out[nrow(out),3]) + rounding(out[nrow(out),4]))
-  temp[1,8] <- rownames(MAP)[1]
+  temp[1,2] <- (out[[2]]*(446000000))/10000
+  temp[1,3] <- (out[[3]]*(446000000))/10000
+  temp[1,4] <- ((out[[2]] + out[[3]])*(446000000))/10000
+  temp[1,5] <- signif(as.numeric(out[[3]]/(out[[2]] + out[[3]])), digits = 3)
+  temp[1,6] <- rownames(MAP)[1]
   print(temp[1,3])
   output1 <- rbind.data.frame(output1, temp)
 }
 
-colnames(output1)[1:8] <- c("tau", "SuscHumans","InfHumans","ResInfHumans","ICombH","IResRat","IResRatA", "group")
-output1[,2:5] <- output1[,2:5]*100000 #Scaling the prevalence (per 100,000)
+colnames(output1)[1:6] <- c("tau","InfHumans","ResInfHumans","ICombH","IResRat", "group")
 
 plotdata <- melt(output1,
                  id.vars = c("tau"), measure.vars = c("ResInfHumans","InfHumans")) 
 
-averagesales <- 0.0122887
+averagesales <- 0.0094
 
 p1 <- ggplot(plotdata, aes(fill = variable, x = tau, y = value)) + theme_bw() + 
   geom_vline(xintercept = averagesales, alpha = 0.3, size = 2) + 
-  geom_col(color = "black",position= "stack", width  = 0.0015) + scale_x_continuous(expand = c(0, 0.0005)) + 
-  scale_y_continuous(limits = c(0,7), expand = c(0, 0))  + 
+  geom_col(color = "black",position= "stack", width  = 0.0035) + scale_x_continuous(expand = c(0, 0.0005)) + 
+  scale_y_continuous(limits = c(0, 0.75), expand = c(0, 0))  + 
   geom_text(label= c(round(output1$IResRat,digits = 2),rep("",length(parmtau))),vjust=-0.5, hjust = 0.05,
             position = "stack", angle = 45) +
   theme(legend.position=c(0.75, 0.875), legend.text=element_text(size=12), legend.title = element_blank(), axis.text=element_text(size=12), 
         axis.title.y=element_text(size=12), axis.title.x= element_text(size=12), plot.margin = unit(c(0.35,1,0.35,1), "cm"),
         legend.spacing.x = unit(0.3, 'cm')) + 
   scale_fill_manual(labels = c("Antibiotic-Resistant Infection", "Antibiotic-Sensitive Infection"), values = c("#F8766D", "#619CFF")) +
-  labs(x ="Tetracycline Sales in Fattening Pig (g/PCU)", y = "Infected Humans (per 100,000)")  
+  labs(x ="Tetracycline Sales in Fattening Pig (g/PCU)", y = "Daily Incidence (per 100,000)")  
 
 
 ggsave(p1, filename = "Icombh_nokappa.png", dpi = 300, type = "cairo", width = 7, height = 4, units = "in",
-       path = "C:/Users/amorg/Documents/PhD/Chapter_2/Figures/Redraft_v1")
+       path = "//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Figures/comb_data")

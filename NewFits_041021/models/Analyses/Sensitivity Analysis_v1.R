@@ -29,7 +29,7 @@ amr <- function(t, y, parms) {
 #Importing in the Datasets
 import <- function(id) {
   data <- data.frame(matrix(ncol = 6, nrow = 0))
-  for(i in 1:length(grep(id, list.files(), value = TRUE))) {
+  for(i in 1:length(grep(paste0("post_",id), list.files(), value = TRUE))) {
     test  <- cbind(read.csv(paste0("ABC_post_",substitute(id),"_",i,".csv"), 
                             header = TRUE), "group" = paste0("data",i), "fit" = as.character(substitute(id)))
     data <- rbind(data, test)
@@ -122,7 +122,7 @@ ICombH <- ggplot(df.equilibrium, aes(x = reorder(parameter, -value), y = value))
                               expression(zeta), expression(beta[AA]), expression(phi), expression(beta[HH]),
                               expression(mu[H]), expression(r[A]), 
                               expression(mu[A]), expression(r[H]),  expression(beta[AH]))) +
-  labs(fill = NULL, title = bquote(Sensitivity~Analysis~of~"I*"["H"])) + 
+  labs(fill = NULL, title = bquote(Sensitivity~Analysis~of~Daily~Incidence)) + 
   theme(legend.text=element_text(size=14), axis.text=element_text(size=14), plot.title = element_text(size = 15, vjust = 1.5, hjust = 0.5, face = "bold"),
         axis.title.y=element_text(size=14), axis.title.x= element_text(size=14), plot.margin = unit(c(0.4,0.4,0.4,0.55), "cm"))
 
@@ -201,7 +201,7 @@ tauanalysis <- tauanalysis[tauanalysis < quantile(tauanalysis, 0.99)]
 
 #We then view the Distribution of Increases Above Baseline
 sensparms[["tau"]]
-hist(tauanalysis, xlab = bquote("% Increase above Baseline"~"I*"["H"]~" (Tau = 0.00934)"), breaks = 50)
+hist(tauanalysis, xlab = bquote("% Increase above Baseline Incidence (Tau = 0.00934)"), breaks = 50)
 
 # What Parameters Can Compensate? ------------------------------------------
 
@@ -229,7 +229,7 @@ tauanalysis2 <- tauanalysis2[tauanalysis2 < quantile(tauanalysis2, 0.99)]
 #removes all negative changes - might need to review
 #The tail of the distribution has also been trimmed to prevent massive artificial increases from showing up
 
-hist(tauanalysis2, xlab = bquote("% Increase above Baseline"~"I*"["H"]~" (0.593 per 100,000)"), breaks = 50)
+hist(tauanalysis2, xlab = bquote("% Increase above Baseline Incidence (0.593 per 100,000)"), breaks = 50)
 
 # Plotting Sensitivity Analysis -------------------------------------------
 
@@ -257,7 +257,7 @@ p1 <- ggplot(df.equilibrium, aes(x = reorder(parameter, -value), y = value)) + g
                    labels = c(expression(zeta), expression(kappa), expression(alpha), expression(phi), expression(beta[AA]),
                               expression(r[A]), expression(mu[A]), expression(mu[H]),
                                expression(r[H]),expression(beta[HH]), expression(beta[HA]), expression(beta[AH]))) +
-  labs(fill = NULL, title = bquote(bold("Increase in"~ "I*"["H"] ~ "due to curtailment" ~ tau ~ "=" ~ 0.00934 ~ "to" ~ tau ~ "=" ~  0))) + 
+  labs(fill = NULL, title = bquote(bold("Increase in Incidence due to Curtailment" ~ tau ~ "=" ~ 0.00934 ~ "to" ~ tau ~ "=" ~  0))) + 
   theme(legend.text=element_text(size=14), axis.text=element_text(size=14), plot.title = element_text(size = 15, vjust = 1.5, hjust = 0.5),
         axis.title.y=element_text(size=14), axis.title.x= element_text(size=14), plot.margin = unit(c(0.4,0.4,0.4,0.55), "cm"))
 
@@ -269,7 +269,7 @@ p2 <- ggplot(df.equilibrium1, aes(x = reorder(parameter, -value), y = value)) + 
                    labels = c(expression(beta[HA]), expression(r[H]), expression(phi),  expression(zeta), expression(alpha),
                               expression(r[A]),  expression(mu[A]), expression(beta[AA]), expression(beta[HH]),
                               expression(kappa),expression(mu[H]),  expression(beta[AH]))) +
-  labs(fill = NULL, title = bquote(bold(.(Mitigating ~ Increases ~ from ~ Baseline ~ "I*"["H"] ~ "=" ~ 3.26~ per ~ "100,000")))) + 
+  labs(fill = NULL, title = bquote(bold(.(Mitigating ~ Increases ~ from ~ Baseline ~ Incidence ~ "=" ~ 0.593~ per ~ "100,000")))) + 
   theme(legend.text=element_text(size=14), axis.text=element_text(size=14), plot.title = element_text(size = 15, vjust = 1.5, hjust = 0.5),
         axis.title.y=element_text(size=14), axis.title.x= element_text(size=14), plot.margin = unit(c(0.4,0.4,0.4,0.55), "cm"))
 
@@ -278,7 +278,7 @@ p2 <- ggplot(df.equilibrium1, aes(x = reorder(parameter, -value), y = value)) + 
 sensplot <- ggarrange(p1,p2, nrow = 2, ncol = 1,
                       align = "v", labels = c("A","B"), font.label = c(size = 20)) 
 
-ggsave(sensplot, filename = "Sensitivity.png", dpi = 300, type = "cairo", width = 7, height = 8, units = "in",
+ggsave(sensplot, filename = "Sensitivity.png", dpi = 300, type = "cairo", width = 8, height = 8, units = "in",
        path = "//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Figures/comb_data")
 
 # Effect on Parameters ----------------------------------------------------
@@ -350,7 +350,8 @@ for (j in 1:length(unique(parmdetails[,1]))) {
       labs(x = plotnames) + theme(plot.margin=unit(c(0.3,0.3,0.3,0.3),"cm"), axis.title.y=element_blank())
     
     if(unique(parmdetails[,1])[j] == "alpha"){
-      p2 <- p2 + geom_vline(xintercept = 0.74, col = "red", size  = 0.7, lty = 3)
+      #print(output)
+      p2 <- p2 + geom_vline(xintercept = 0.61, col = "red", size  = 0.7, lty = 3)
     }
     return(list(p1,p2))
   })
@@ -360,16 +361,16 @@ for (j in 1:length(unique(parmdetails[,1]))) {
 pabdiff <- plot_grid(plot_grid(suppplotlist[[1]][[1]], suppplotlist[[2]][[1]], suppplotlist[[3]][[1]],suppplotlist[[4]][[1]], suppplotlist[[5]][[1]], 
                     suppplotlist[[6]][[1]], suppplotlist[[7]][[1]], suppplotlist[[8]][[1]], suppplotlist[[9]][[1]], suppplotlist[[10]][[1]], suppplotlist[[11]][[1]],
                     suppplotlist[[12]][[1]], nrow = 4, ncol =3), scale=0.95) + 
-  draw_label(bquote("% Change in"~ " I*"["H"]~" Relative to Baseline Usage"), x=  0, y=0.5, vjust= 1.5, angle=90, size = 12)
+  draw_label(bquote("% Change in Incidence Relative to Baseline Usage"), x=  0, y=0.5, vjust= 1.5, angle=90, size = 12)
 
-ggsave(pabdiff, filename = "Sensitivity_RelInc.png", dpi = 300, type = "cairo", width = 5, height = 7, units = "in",
+ggsave(pabdiff, filename = "Sensitivity_RelInc.png", dpi = 300, type = "cairo", width = 6, height = 7, units = "in",
        path = "//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Figures/comb_data")
 
 #Relative Increase from 3.382
 pcompdiff <- plot_grid(plot_grid(suppplotlist[[1]][[2]], suppplotlist[[2]][[2]], suppplotlist[[3]][[2]],suppplotlist[[4]][[2]], suppplotlist[[5]][[2]], 
                     suppplotlist[[6]][[2]], suppplotlist[[7]][[2]], suppplotlist[[8]][[2]], suppplotlist[[9]][[2]], suppplotlist[[10]][[2]], suppplotlist[[11]][[2]], 
                     suppplotlist[[12]][[2]], nrow = 4, ncol =3), scale=0.95) + 
-  draw_label(bquote("% Change in"~ " I*"["H"]~ " Relative to Case Study Baseline (3.26 per 100,000)"), x=  0, y=0.5, vjust= 1.5, angle=90, size = 12)
+  draw_label(bquote("% Change in Incidence Relative to Case Study Baseline (0.593 per 100,000)"), x=  0, y=0.5, vjust= 1.5, angle=90, size = 12)
 
 ggsave(pcompdiff, filename = "Sensitivity_Compen.png", dpi = 300, type = "cairo", width = 5, height = 7, units = "in",
        path = "//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Figures/comb_data")

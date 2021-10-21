@@ -2,24 +2,37 @@ library("deSolve"); library("ggplot2"); library("plotly"); library("reshape2")
 library("bayestestR"); library("tmvtnorm"); library("ggpubr"); library("rootSolve")
 
 rm(list=ls())
-
 setwd("//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Models/Chapter-2/NewFits_041021/data")
 
-#Model
+#Function to remove negative prevalence values and round large DP numbers
+
 amr <- function(t, y, parms) {
   with(as.list(c(y, parms)), {
-    dSa = ua + ra*(Isa + Ira) + kappa*tau*Isa - (betaAA*Isa*Sa) - (betaAH*Ish*Sa) - (1-alpha)*(betaAH*Irh*Sa) - (1-alpha)*(betaAA*Ira*Sa) - ua*Sa -
-      (0.5*zeta)*Sa*(1-alpha) - (0.5*zeta)*Sa 
-    dIsa = betaAA*Isa*Sa + betaAH*Ish*Sa + phi*Ira - kappa*tau*Isa - tau*Isa - ra*Isa - ua*Isa + (0.5*zeta)*Sa
-    dIra = (1-alpha)*betaAH*Irh*Sa + (1-alpha)*betaAA*Ira*Sa + tau*Isa - phi*Ira - ra*Ira - ua*Ira + (0.5*zeta)*Sa*(1-alpha)
     
-    dSh = uh + rh*(Ish+Irh) - (betaHH*Ish*Sh) - (1-alpha)*(betaHH*Irh*Sh) - (betaHA*Isa*Sh) - (1-alpha)*(betaHA*Ira*Sh) - uh*Sh 
-    dIsh = betaHH*Ish*Sh + betaHA*Isa*Sh - rh*Ish - uh*Ish 
-    dIrh = (1-alpha)*(betaHH*Irh*Sh) + (1-alpha)*(betaHA*Ira*Sh) - rh*Irh - uh*Irh 
+    if(m == 1) {#Model 1 - with Zeta 
+      dSa = ua + ra*(Isa + Ira) + kappa*tau*Isa - (betaAA*Isa*Sa) - (betaAH*Ish*Sa) - (1-alpha)*(betaAH*Irh*Sa) - (1-alpha)*(betaAA*Ira*Sa) - ua*Sa -
+        (0.5*zeta)*Sa*(1-alpha) - (0.5*zeta)*Sa 
+      dIsa = betaAA*Isa*Sa + betaAH*Ish*Sa + phi*Ira - kappa*tau*Isa - tau*Isa - ra*Isa - ua*Isa + (0.5*zeta)*Sa
+      dIra = (1-alpha)*betaAH*Irh*Sa + (1-alpha)*betaAA*Ira*Sa + tau*Isa - phi*Ira - ra*Ira - ua*Ira + (0.5*zeta)*Sa*(1-alpha)
+      
+      dSh = uh + rh*(Ish+Irh) - (betaHH*Ish*Sh) - (1-alpha)*(betaHH*Irh*Sh) - (betaHA*Isa*Sh) - (1-alpha)*(betaHA*Ira*Sh) - uh*Sh 
+      dIsh = betaHH*Ish*Sh + betaHA*Isa*Sh - rh*Ish - uh*Ish 
+      dIrh = (1-alpha)*(betaHH*Irh*Sh) + (1-alpha)*(betaHA*Ira*Sh) - rh*Irh - uh*Irh 
+    }
+    
+    if(m == 2) {#Model 2 - no Zeta 
+      dSa = ua + ra*(Isa + Ira) + kappa*tau*Isa - (betaAA*Isa*Sa) - (betaAH*Ish*Sa) - (1-alpha)*(betaAH*Irh*Sa) - (1-alpha)*(betaAA*Ira*Sa) - ua*Sa 
+      dIsa = betaAA*Isa*Sa + betaAH*Ish*Sa + phi*Ira - kappa*tau*Isa - tau*Isa - ra*Isa - ua*Isa 
+      dIra = (1-alpha)*betaAH*Irh*Sa + (1-alpha)*betaAA*Ira*Sa + tau*Isa - phi*Ira - ra*Ira - ua*Ira
+      
+      dSh = uh + rh*(Ish+Irh) - (betaHH*Ish*Sh) - (1-alpha)*(betaHH*Irh*Sh) - (betaHA*Isa*Sh) - (1-alpha)*(betaHA*Ira*Sh) - uh*Sh 
+      dIsh = betaHH*Ish*Sh + betaHA*Isa*Sh - rh*Ish - uh*Ish 
+      dIrh = (1-alpha)*(betaHH*Irh*Sh) + (1-alpha)*(betaHA*Ira*Sh) - rh*Irh - uh*Irh 
+    }
     
     CumS = betaHH*Ish*Sh + betaHA*Isa*Sh
     CumR = (1-alpha)*(betaHH*Irh*Sh) + (1-alpha)*(betaHA*Ira*Sh)
-    
+
     return(list(c(dSa,dIsa,dIra,dSh,dIsh,dIrh), CumS, CumR))
   })
 }
@@ -35,7 +48,7 @@ datatet_pigs[,(2+5):(6+5)][datatet_pigs[,2:6] < 10] <- NA #If N > 10, replace th
 datatet_pigs[,(2+10):(6+10)][datatet_pigs[,2:6] < 10] <- NA #If N > 10, replace the particular country/year with NA for the prop of resistant isolates
 datatet_pigs[,2:6][datatet_pigs[,2:6] < 10] <- NA #If N > 10, replace the particular country/year with NA for N
 datatet_pigs <- datatet_pigs[!(is.na(datatet_pigs$N_2015) & is.na(datatet_pigs$N_2016) & is.na(datatet_pigs$N_2017) & 
-                         is.na(datatet_pigs$N_2018) & is.na(datatet_pigs$N_2019)),]
+                                 is.na(datatet_pigs$N_2018) & is.na(datatet_pigs$N_2019)),]
 pig_yrs <- sub("N_", "", grep("N_20",colnames(datatet_pigs), value = TRUE)) #Find years of the EFSA and ESVAC data in the dataset
 
 # NON-AGGREGATED - AMP PIGS  -------------------------------------------------------------
@@ -44,11 +57,11 @@ colnames(datatet_pigs)[12:16] <- pig_yrs
 #Create dataset where each row is a different observation. 
 melt_tet_pigs <- melt(datatet_pigs, id.vars = "Country", measure.vars = pig_yrs)
 melt_tet_pigs$usage <- melt(datatet_pigs, id.vars = "Country", measure.vars = c("scale_tetusage_2015", "scale_tetusage_2016", 
-                                                                              "scale_tetusage_2017", "scale_tetusage_2018", "scale_tetusage_2019"))[,3]
+                                                                                "scale_tetusage_2017", "scale_tetusage_2018", "scale_tetusage_2019"))[,3]
 melt_tet_pigs$N <- melt(datatet_pigs, id.vars = "Country", measure.vars = c("N_2015", "N_2016", 
-                                                                        "N_2017", "N_2018", "N_2019"))[,3]
+                                                                            "N_2017", "N_2018", "N_2019"))[,3]
 melt_tet_pigs$IsolPos <- melt(datatet_pigs, id.vars = "Country", measure.vars = c("PosIsol_2015", "PosIsol_2016", 
-                                                                              "PosIsol_2017", "PosIsol_2018", "PosIsol_2019"))[,3]
+                                                                                  "PosIsol_2017", "PosIsol_2018", "PosIsol_2019"))[,3]
 colnames(melt_tet_pigs)[c(2,3)] <- c("Year", "Resistance")
 
 #Cleaning Data - Humans
@@ -95,7 +108,6 @@ sum_square_diff_dist <- function(sum.stats, data.obs, model.obs) {
   return(sum(sumsquare))
 }
 
-#Compute the distances for all 3 summary statistics - this section involves running the model
 computeDistanceABC_ALEX <- function(sum.stats, distanceABC, fitmodel, tau_range, thetaparm, init.state, data) {
   tauoutput <-data.frame(matrix(nrow = length(tau_range), ncol=4))
   tau_range <- append(tau_range, avg_EU_usage)
@@ -118,17 +130,18 @@ computeDistanceABC_ALEX <- function(sum.stats, distanceABC, fitmodel, tau_range,
            abs(tauoutput$ResPropHum[tauoutput$tau == avg_EU_usage] - avg_hum_res)))
 }
 
+#Run the fit - This is where I will build the ABC-SMC Approach
+
+start_time <- Sys.time()
+
 #Where G is the number of generations
-#Function to 100% make sure the sampled particles for all parameters are non zero
-prior.non.zero <- function(par){
+prior.non.zero<-function(par){
   prod(sapply(1:6, function(a) as.numeric((par[a]-lm.low[a]) > 0) * as.numeric((lm.upp[a]-par[a]) > 0)))
 }
 
-#Wrapper function for all of the functions to output the distance measures and the diagnostics
-#Saving of the accepted particles in each generation done within the function 
 ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, init.state, data)  {
   N_ITER_list <- list()
-  fit_parms <- c("betaAA", "phi", "kappa", "alpha", "zeta", "betaHA")
+  fit_parms <- c("betaAA", "phi", "kappa", "alpha", "zeta", "betaHA", "m")
   thetaparm <- c(ra = 60^-1, rh =  (5.5^-1), ua = 240^-1, uh = 28835^-1, betaAH = 0.00001, betaHH = 0.00001)
   
   for(g in 1:G) {
@@ -142,11 +155,12 @@ ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, ini
       
       if(g==1) {
         d_betaAA <- runif(1, min = 0, max = 1)
-        d_phi <- runif(1, min = 0, max = 0.5)
+        d_phi <- runif(1, min = 0, max = 0.75)
         d_kappa <- runif(1, min = 0, max = 100)
         d_alpha <- rbeta(1, 1.5, 8.5)
         d_zeta <- runif(1, 0, 5)
         d_betaHA <- runif(1, 0, 0.00075)
+        d_m <- ceiling(runif(1, min=0, max=2))
         
       } else{ 
         p <- sample(seq(1,N),1,prob= w.old) # check w.old here
@@ -157,11 +171,12 @@ ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, ini
         d_alpha<-par[4]
         d_zeta <- par[5]
         d_betaHA <-par[6]
+        d_m <- round(par[7],0)
       }
-      if(prior.non.zero(c(d_betaAA, d_phi, d_kappa, d_alpha, d_zeta, d_betaHA))) {
+      if(prior.non.zero(c(d_betaAA, d_phi, d_kappa, d_alpha, d_zeta, d_betaHA, d_m))) {
         m <- 0
         thetaparm <- c(ra = 60^-1, rh = (5.5^-1), ua = 240^-1, uh = 28835^-1, betaAA = d_betaAA, betaAH = 0.00001, betaHH = 0.00001, 
-                       betaHA = d_betaHA, phi = d_phi, kappa = d_kappa, alpha = d_alpha, zeta = d_zeta)
+                       betaHA = d_betaHA, phi = d_phi, kappa = d_kappa, alpha = d_alpha, zeta = d_zeta, m = d_m)
         
         dist <- computeDistanceABC_ALEX(sum.stats, distanceABC, fitmodel, tau_range, thetaparm, init.state, data)
         print(dist)
@@ -169,7 +184,7 @@ ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, ini
         if((dist[1] <= epsilon_dist[g]) && (dist[2] <= epsilon_food[g]) && (dist[3] <= epsilon_AMR[g]) && (!is.na(dist))) {
           # Store results
           
-          res.new[i,]<-c(d_betaAA, d_phi, d_kappa, d_alpha, d_zeta, d_betaHA)  
+          res.new[i,]<-c(d_betaAA, d_phi, d_kappa, d_alpha, d_zeta, d_betaHA, d_m)  
           dist_data[i,] <- dist
           # Calculate weights
           if(g==1){
@@ -177,7 +192,7 @@ ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, ini
             w.new[i] <- 1
             
           } else {
-            w1<-prod(c(sapply(c(1:3,5:6), function(b) dunif(res.new[i,b], min=lm.low[b], max=lm.upp[b])),
+            w1<-prod(c(sapply(c(1:3,5:7), function(b) dunif(res.new[i,b], min=lm.low[b], max=lm.upp[b])),
                        dbeta(res.new[i,4], 1.5, 8.5))) 
             w2<-sum(sapply(1:N, function(a) w.old[a]* dtmvnorm(res.new[i,], mean=res.old[a,], sigma=sigma, lower=lm.low, upper=lm.upp)))
             w.new[i] <- w1/w2
@@ -195,71 +210,72 @@ ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, ini
     res.old <- res.new
     print(res.old)
     w.old <- w.new/sum(w.new)
-    colnames(res.new) <- c("betaAA", "phi", "kappa", "alpha", "zeta", "betaHA")
-    write.csv(res.new, file = paste("//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Models/Chapter-2/NewFits_041021/data/new/ABC_post_tetpigs_",g,".csv",sep=""), row.names=FALSE)
+    colnames(res.new) <- c("betaAA", "phi", "kappa", "alpha", "zeta", "betaHA", "d_m")
+    write.csv(res.new, file = paste("//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Models/Chapter-2/NewFits_041021/data/new/compare/COMPARE_ABC_post_tetpigs_",g,".csv",sep=""), row.names=FALSE)
   }
   return(N_ITER_list)
 }
 
 N <- 1000 #(ACCEPTED PARTICLES PER GENERATION)
 
-lm.low <- c(0, 0, 0, 0, 0, 0)
-lm.upp <- c(1, 0.5, 100, 1, 5, 0.00075) #Upper and lower bounds for the priors - for the multivariate normal dist pert kernel
+lm.low <- c(0, 0, 0, 0, 0, 0, 1)
+lm.upp <- c(1, 0.75, 100, 1, 5, 0.00075,  2)
 
-# Empty matrices to store results (6 model parameters)
-res.old<-matrix(ncol=6,nrow=N)
-res.new<-matrix(ncol=6,nrow=N)
+# Empty matrices to store results (5 model parameters)
+res.old<-matrix(ncol=7,nrow=N)
+res.new<-matrix(ncol=7,nrow=N)
 
 # Empty vectors to store weights
 w.old<-matrix(ncol=1,nrow=N)
 w.new<-matrix(ncol=1,nrow=N)
 
-#Thresholds 
 epsilon_dist <- c(4, 3.5, 3, 2.5, 2.25, 2, 1.8, 1.75, 1.725, 1.7)
 epsilon_food <- c(0.593*1, 0.593*0.8, 0.593*0.6, 0.593*0.5, 0.593*0.4, 0.593*0.3, 0.593*0.2, 0.593*0.15, 0.593*0.1, 0.593*0.075)
 epsilon_AMR <- c(avg_hum_res*1, avg_hum_res*0.8, avg_hum_res*0.6, avg_hum_res*0.5, avg_hum_res*0.4, avg_hum_res*0.3, avg_hum_res*0.2, avg_hum_res*0.15, avg_hum_res*0.1, avg_hum_res*0.075)
+
 #Run the model 
 start_time <- Sys.time()
 
 dist_save <- ABC_algorithm(N = 1000, 
-              G = 10,
-              sum.stats = summarystatprev, 
-              distanceABC = sum_square_diff_dist, 
-              fitmodel = amr, 
-              tau_range = melt_tet_pigs$Usage, 
-              init.state = c(Sa=0.98, Isa=0.01, Ira=0.01, Sh=1, Ish=0, Irh=0), 
-              data = melt_tet_pigs)
+                           G = 10,
+                           sum.stats = summarystatprev, 
+                           distanceABC = sum_square_diff_dist, 
+                           fitmodel = amr, 
+                           tau_range = melt_tet_pigs$Usage, 
+                           init.state = c(Sa=0.98, Isa=0.01, Ira=0.01, Sh=1, Ish=0, Irh=0), 
+                           data = melt_tet_pigs)
 
 end_time <- Sys.time(); end_time - start_time
 
-saveRDS(dist_save, file = "dist_tetpigs_list.rds")
+#### Test Data ####
+post_dist_m <- list()
+post_dist_m[[1]] <- cbind(read.csv("COMP_ABC_SMC_gen_amp_1.csv", header = TRUE), "group" = "data1")
+post_dist_m[[2]]  <- cbind(read.csv("COMP_ABC_SMC_gen_amp_2.csv", header = TRUE), "group" = "data2")
+post_dist_m[[3]]  <- cbind(read.csv("COMP_ABC_SMC_gen_amp_3.csv", header = TRUE), "group" = "data3")
+post_dist_m[[4]]  <- cbind(read.csv("COMP_ABC_SMC_gen_amp_4.csv", header = TRUE), "group" = "data4") 
+post_dist_m[[5]]  <- cbind(read.csv("COMP_ABC_SMC_gen_amp_5.csv", header = TRUE), "group" = "data5") 
+post_dist_m[[6]]  <- cbind(read.csv("COMP_ABC_SMC_gen_amp_6.csv", header = TRUE), "group" = "data6") 
+post_dist_m[[7]]  <- cbind(read.csv("COMP_ABC_SMC_gen_amp_7.csv", header = TRUE), "group" = "data7") 
+post_dist_m[[8]]  <- cbind(read.csv("COMP_ABC_SMC_gen_amp_8.csv", header = TRUE), "group" = "data8") 
 
-# Examining Posteriors ----------------------------------------------------
+post_dist_m_data <- data.frame("gen" = seq(1,length(post_dist_m), by =1), 
+                               "Model_1_Prop" = matrix(unlist(lapply(post_dist_m, function(x) prop.table(table(x$m))))[seq(1,length(post_dist_m)*2,by = 2)]))
 
-post_dist_names <- grep("ABC_post_tetpigs_",
-                      list.files("//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Models/Chapter-2/NewFits_041021/data/new"), value = TRUE)
+post_dist_m_data$Model_2_Prop <- 1 - post_dist_m_data$Model_1_Prop
 
-setwd("//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Models/Chapter-2/NewFits_041021/data/new")
+post_dist_m_data_melt <- as.data.frame(melt(post_dist_m_data, id.vars = c("gen"), measure.vars = c("Model_1_Prop", "Model_2_Prop")))
+post_dist_m_data_melt$scen <- "amp_pigs"
 
-post_dist <- lapply(post_dist_names, read.csv)
+write.csv(post_dist_m_data_melt, file = "comp_amppigs.csv")
 
-post_dist <- mapply(cbind, post_dist, "gen" = sapply(1:length(post_dist), function(x) paste0("gen_", x)), 
-                    SIMPLIFY=F)
-post_dist <- do.call("rbind", post_dist)
+ggplot(post_dist_m_data_melt, aes(x = gen, y = value, fill = as.factor(variable))) + geom_bar(position = "fill", stat="identity") + 
+  scale_x_continuous(breaks = seq(1,10), expand = c(0, 0), name = expression(paste("Generation"))) + 
+  scale_y_continuous(expand = c(0, 0), name = bquote("Proportion of " ~ italic(m) ~ "particles accepted (n = 1000)")) +
+  theme(legend.text=element_text(size=14),  axis.text = element_text(size=14),
+        axis.title.y=element_text(size=14), axis.title.x = element_text(size=14), plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"),
+        legend.title=element_text(size=14), title= element_text(size= 15)) +
+  scale_fill_manual(values = c("black","grey"),name = "Model", labels = c("1 (Zeta)", "2 (No Zeta)")) + 
+  labs(title = "Model Comparison (Ampicillin usage in Fattening Pigs)")
 
-maps_est <- map_estimate(post_dist[post_dist$gen == tail(unique(post_dist$gen),1),][,1:6])
+  
 
-p_list <- list()
-
-for(i in 1:(length(post_dist)-1)) {
-  p_list[[i]] <- local ({
-    name_exp <- post_dist[,c(i,7)]
-    p <- ggplot(name_exp, aes(x= name_exp[,1], fill=gen)) + geom_density(alpha=.5) + 
-      geom_vline(xintercept = maps_est[i,2], size = 1.2, col = "red") +
-      scale_x_continuous(expand = c(0, 0), name = colnames(post_dist)[-7][i]) + 
-      scale_y_continuous(expand = c(0, 0)) +
-      theme(legend.text=element_text(size=14),axis.text=element_text(size=14),
-            axis.title.y=element_text(size=14),axis.title.x= element_text(size=14), plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"))
-  return(p)
-    })
-}
