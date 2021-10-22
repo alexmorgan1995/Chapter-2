@@ -397,27 +397,6 @@ ggsave(fits, filename = "Model_Fits_v1.png", dpi = 300, type = "cairo", width = 
 
 # Tau and ICombH Base Plot - Requires you to run previous section ----------------------------------------------------------
 
-
-
-plotdata <- melt(icombhdata[icombhdata$group == "ampbroil",],
-                 id.vars = c("tau"), measure.vars = c("PrevH")) 
-
-p1 <- ggplot(plotdata, aes(fill = variable, x = tau, y = value)) + theme_bw() + 
-  geom_vline(xintercept = averagesales[i], alpha = 0.3, size = 2) + 
-  geom_col(color = "black",position= "stack", width  = 0.0035) + scale_x_continuous(expand = c(0, 0.0005)) + 
-  scale_y_continuous(limits = c(0, 1), expand = c(0, 0))  + 
-  geom_text(label= c(round(icombhdata$IResRat[icombhdata$group == unique(icombhdata$group)[i]],digits = 2),rep("",length(parmtau))),vjust=-0.5, hjust = 0.05,
-            position = "stack", angle = 45) +
-  theme(legend.position=c(0.75, 0.875), legend.text=element_text(size=12), legend.title = element_blank(), axis.text=element_text(size=12), 
-        axis.title.y=element_text(size=12), axis.title.x= element_text(size=12), plot.margin = unit(c(0.35,1,0.35,1), "cm"),
-        legend.spacing.x = unit(0.3, 'cm')) + 
-  scale_fill_manual(labels = c("Antibiotic-Resistant Infection", "Antibiotic-Sensitive Infection"), values = c("#F8766D", "#619CFF")) 
-
-
-
-
-
-
 icombhlist <- list()
 
 #amp_broil, tet_broil, amp_pigs, tet_pigs
@@ -442,19 +421,19 @@ for(i in 1:4){
       scale_fill_manual(labels = c("Antibiotic-Resistant Infection", "Antibiotic-Sensitive Infection"), values = c("#F8766D", "#619CFF")) 
     
     if(unique(icombhdata$group)[i] == "ampbroil") {
-      p1 <- p1 + labs(x ="Ampicillin Usage in Broiler Poultry (g/PCU)", y = "Inf Humans (per 100,000)")  
+      p1 <- p1 + labs(x ="Ampicillin Usage in Broiler Poultry (g/PCU)", y = "Daily Incidence (per 100,000)")  
     }
     
     if(unique(icombhdata$group)[i] == "tetbroil") {
-      p1 <- p1 + labs(x ="Tetracycline Usage in Broiler Poultry (g/PCU)", y = "Inf Humans (per 100,000)")  
+      p1 <- p1 + labs(x ="Tetracycline Usage in Broiler Poultry (g/PCU)", y = "Daily Incidence (per 100,000)")  
     }
     
     if(unique(icombhdata$group)[i] == "amppigs") {
-      p1 <- p1 + labs(x ="Ampicillin Usage in Fattening Pigs (g/PCU)", y = "Inf Humans (per 100,000)")  
+      p1 <- p1 + labs(x ="Ampicillin Usage in Fattening Pigs (g/PCU)", y = "Daily Incidence (per 100,000)")  
     }
     
     if(unique(icombhdata$group)[i] == "tetpigs") {
-      p1 <- p1 + labs(x ="Tetracycline Usage in Fattening Pigs (g/PCU)", y = "Inf Humans (per 100,000)")  
+      p1 <- p1 + labs(x ="Tetracycline Usage in Fattening Pigs (g/PCU)", y = "Daily Incidence (per 100,000)")  
     }
     
     return(p1)
