@@ -150,10 +150,10 @@ stat_tet_pigs <- lm(Resistance ~ usage, melt_tet_pigs); summary(stat_tet_pigs)
 stat_amp_broil <- lm(Resistance ~ usage, melt_amp_broil); summary(stat_amp_broil)
 stat_tet_broil <- lm(Resistance ~ usage, melt_tet_broil); summary(stat_tet_broil)
 
-comb_nonaggre_plot <- ggarrange(p_tet_pigs, p_amp_pigs, p_tet_broil, p_amp_broil, ncol = 2,  nrow = 2, common.legend = TRUE,
+comb_nonaggre_plot <- ggarrange(p_amp_broil,p_tet_broil, p_amp_pigs, p_tet_pigs, labels = c("A","B","C","D"),ncol = 2,  nrow = 2, common.legend = TRUE,
                                 legend = "bottom")
 
-ggsave(comb_nonaggre_plot, filename = "nonaggreg_stat.png", dpi = 300, type = "cairo", width = 11, height = 9, units = "in",
+ggsave(comb_nonaggre_plot, filename = "nonaggreg_stat.png", dpi = 300, type = "cairo", width = 11, height = 10, units = "in",
        path = "//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Figures/comb_data")
 
 # Create aggregated data  -------------------------------------------------
