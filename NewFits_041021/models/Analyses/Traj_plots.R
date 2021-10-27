@@ -2,7 +2,7 @@ library("deSolve"); library("ggplot2"); library("plotly"); library("reshape2"); 
 library("bayestestR"); library("tmvtnorm"); library("ggpubr"); library("sensitivity")
 
 rm(list=ls())
-setwd("//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Models/Chapter-2/NewFits_041021/data")
+setwd("C:/Users/amorg/Documents/PhD/Chapter_2/Models/Github/Chapter-2/NewFits_041021/data/new")
 
 # Model Functions ----------------------------------------------------------
 
@@ -50,7 +50,7 @@ lapply(1:4, function(x) data[[x]]$group = factor(data[[x]]$group, levels = uniqu
 
 #Import of Fitting Data
 #Ampicillin in Broiler
-dataamp_broil <- read.csv("Amp_Broil_Comb.csv")
+dataamp_broil <- read.csv("C:/Users/amorg/Documents/PhD/Chapter_2/Models/Github/Chapter-2/NewFits_041021/data/Amp_Broil_Comb.csv")
 dataamp_broil[,(2+4):(5+4)][dataamp_broil[,2:5] < 10] <- NA #If N > 10, replace the particular country/year with NA for the No. of pos isolates
 dataamp_broil[,(2+8):(5+8)][dataamp_broil[,2:5] < 10] <- NA #If N > 10, replace the particular country/year with NA for the prop of resistant isolates
 dataamp_broil[,2:5][dataamp_broil[,2:5] < 10] <- NA #If N > 10, replace the particular country/year with NA for N
@@ -70,7 +70,7 @@ colnames(melt_amp_broil)[c(2,3)] <- c("Year", "Resistance"); rm(dataamp_broil)
 melt_amp_broil <- melt_amp_broil[!(is.na(melt_amp_broil$Resistance) | is.na(melt_amp_broil$usage)),]
 
 #Tetracycline in Broiler
-datatet_broil <- read.csv("Tet_Broil_Comb.csv")
+datatet_broil <- read.csv("C:/Users/amorg/Documents/PhD/Chapter_2/Models/Github/Chapter-2/NewFits_041021/data/Tet_Broil_Comb.csv")
 datatet_broil[,(2+4):(5+4)][datatet_broil[,2:5] < 10] <- NA #If N > 10, replace the particular country/year with NA for the No. of pos isolates
 datatet_broil[,(2+8):(5+8)][datatet_broil[,2:5] < 10] <- NA #If N > 10, replace the particular country/year with NA for the prop of resistant isolates
 datatet_broil[,2:5][datatet_broil[,2:5] < 10] <- NA #If N > 10, replace the particular country/year with NA for N
@@ -90,7 +90,7 @@ colnames(melt_tet_broil)[c(2,3)] <- c("Year", "Resistance"); rm(datatet_broil)
 melt_tet_broil <- melt_tet_broil[!(is.na(melt_tet_broil$Resistance) | is.na(melt_tet_broil$usage)),]
 
 #Ampicillin in Pigs
-dataamp_pigs <- read.csv("Amp_FatPigs_Comb.csv")
+dataamp_pigs <- read.csv("C:/Users/amorg/Documents/PhD/Chapter_2/Models/Github/Chapter-2/NewFits_041021/data/Amp_FatPigs_Comb.csv")
 dataamp_pigs[,(2+5):(6+5)][dataamp_pigs[,2:6] < 10] <- NA #If N > 10, replace the particular country/year with NA for the No. of pos isolates
 dataamp_pigs[,(2+10):(6+10)][dataamp_pigs[,2:6] < 10] <- NA #If N > 10, replace the particular country/year with NA for the prop of resistant isolates
 dataamp_pigs[,2:6][dataamp_pigs[,2:6] < 10] <- NA #If N > 10, replace the particular country/year with NA for N
@@ -110,7 +110,7 @@ colnames(melt_amp_pigs)[c(2,3)] <- c("Year", "Resistance"); rm(dataamp_pigs)
 melt_amp_pigs <- melt_amp_pigs[!(is.na(melt_amp_pigs$Resistance) | is.na(melt_amp_pigs$usage)),]
 
 #Tetracycline in Pigs
-datatet_pigs <- read.csv("Tet_FatPigs_Comb.csv")
+datatet_pigs <- read.csv("C:/Users/amorg/Documents/PhD/Chapter_2/Models/Github/Chapter-2/NewFits_041021/data/Tet_FatPigs_Comb.csv")
 datatet_pigs[,(2+5):(6+5)][datatet_pigs[,2:6] < 10] <- NA #If N > 10, replace the particular country/year with NA for the No. of pos isolates
 datatet_pigs[,(2+10):(6+10)][datatet_pigs[,2:6] < 10] <- NA #If N > 10, replace the particular country/year with NA for the prop of resistant isolates
 datatet_pigs[,2:6][datatet_pigs[,2:6] < 10] <- NA #If N > 10, replace the particular country/year with NA for N
@@ -153,13 +153,13 @@ MAP <- rbind(c(map_estimate(data[[1]][which(data[[1]]$group == tail(unique(data[
 colnames(MAP) <- c("betaAA", "phi", "kappa", "alpha", "zeta", "betaHA")
 rownames(MAP) <- c("ampbroil", "tetbroil","amppigs", "tetpigs")
 
-MAP <- rbind(c(colMeans(data[[1]][which(data[[1]]$group == tail(unique(data[[1]]$group),1)),][,1:6])),
-             c(colMeans(data[[2]][which(data[[2]]$group == tail(unique(data[[2]]$group),1)),][,1:6])),
-             c(colMeans(data[[3]][which(data[[3]]$group == tail(unique(data[[3]]$group),1)),][,1:6])),
-             c(colMeans(data[[4]][which(data[[4]]$group == tail(unique(data[[4]]$group),1)),][,1:6])))
-
-colnames(MAP) <- c("betaAA", "phi", "kappa", "alpha", "zeta", "betaHA")
-rownames(MAP) <- c("ampbroil", "tetbroil","amppigs", "tetpigs")
+#MAP <- rbind(c(colMeans(data[[1]][which(data[[1]]$group == tail(unique(data[[1]]$group),1)),][,1:6])),
+#             c(colMeans(data[[2]][which(data[[2]]$group == tail(unique(data[[2]]$group),1)),][,1:6])),
+#             c(colMeans(data[[3]][which(data[[3]]$group == tail(unique(data[[3]]$group),1)),][,1:6])),
+ #            c(colMeans(data[[4]][which(data[[4]]$group == tail(unique(data[[4]]$group),1)),][,1:6])))
+#
+#colnames(MAP) <- c("betaAA", "phi", "kappa", "alpha", "zeta", "betaHA")
+#rownames(MAP) <- c("ampbroil", "tetbroil","amppigs", "tetpigs")
 
 # ABC-SMC Posterior -------------------------------------------------------
 
@@ -167,23 +167,22 @@ data_bind <- do.call(rbind,data)
 
 plotlist1 <- list()
 
-data_test <- data_bind[data_bind$fit == unique(data_bind$fit)[1],]
-data_test[data_test$group == tail(unique(data_test$group),1),]
-
 for(j in 1:length(unique(data_bind$fit))) {
   
   plotlist2 <- list()
   
   data_test <- data_bind[data_bind$fit == unique(data_bind$fit)[j],]
+  data_test$group <- factor(data_test$group, levels = unique(data_test$group))
   
   for (i in 1:length(colnames(MAP))) { # Loop over loop.vector
 
     dens <- density(data_test[data_test$group == tail(unique(data_test$group),1),][,i])
     
+    
     plotlist2[[i]] <- local({
+      
       i = i
       p1 <- ggplot(data_test, aes(x=get(colnames(MAP)[i]), fill=group)) + geom_density(alpha=.5) + theme_bw()  +
-        scale_fill_discrete(labels = unique(data_test$group)) +
         theme(legend.text=element_text(size=10), axis.text.x=element_text(size=10),axis.ticks.y=element_blank(), axis.text.y=element_blank(),
               axis.title.y=element_text(size=10), axis.title.x= element_text(size=10), plot.margin = unit(c(0.25,0.4,0.15,0.55), "cm"),
               plot.title = element_text(size = 12, vjust = 3, hjust = 0.5, face = "bold"))
@@ -194,24 +193,24 @@ for(j in 1:length(unique(data_bind$fit))) {
       }
       if(colnames(MAP)[i] == "kappa") {
         p1 <- p1 + scale_x_continuous(expand = c(0, 0), name = expression(paste("Efficacy of Antibiotic-Mediated Recovery (", kappa, ")"))) +
-          labs(fill = NULL, title = "") + scale_y_continuous(limits = c(0, max(dens$y)*1.2), expand = c(0, 0), name = " ") 
+          labs(fill = NULL, title = "") + scale_y_continuous(limits = c(0, max(dens$y)*1.5), expand = c(0, 0), name = " ") 
       }
       if(colnames(MAP)[i] == "betaAA") {
-        p1 <- p1 + scale_x_continuous(expand = c(0, 0), name = expression(paste("Rate of Animal-to-Animal Transmission (", beta[AA], ")")))+ scale_y_continuous(limits = c(0, max(dens$y)*1.2), expand = c(0, 0), name = " ") +
+        p1 <- p1 + scale_x_continuous(expand = c(0, 0), name = expression(paste("Rate of Animal-to-Animal Transmission (", beta[AA], ")")))+ scale_y_continuous(limits = c(0, max(dens$y)*1.5), expand = c(0, 0), name = " ") +
           labs(fill = NULL, title = c("Ampicillin Sales in Broilers", "Tetracycline Sales in Broilers", 
                                       "Ampicillin Sales in Pigs", "Tetracycline Sales in Pigs")[j]) 
       }
       if(colnames(MAP)[i] == "alpha") {
         p1 <- p1 + scale_x_continuous(limits = c(0,0.8),expand = c(0, 0), name = expression(paste("Antibiotic-Resistant Fitness Cost (", alpha, ")"))) +
-          labs(fill = NULL, title = "") + scale_y_continuous(limits = c(0, max(dens$y)*1.2), expand = c(0, 0), name = " ")
+          labs(fill = NULL, title = "") + scale_y_continuous(limits = c(0, max(dens$y)*1.5), expand = c(0, 0), name = " ")
       }
       if(colnames(MAP)[i] == "zeta") {
         p1 <- p1 + scale_x_continuous(expand = c(0, 0), name = expression(paste("Background Infection Rate (", zeta, ")"))) +
-          labs(fill = NULL, title = "") + scale_y_continuous(limits = c(0, max(dens$y)*1.2), expand = c(0, 0), name = " ")
+          labs(fill = NULL, title = "") + scale_y_continuous(limits = c(0, max(dens$y)*1.5), expand = c(0, 0), name = " ")
       }
       if(colnames(MAP)[i] == "betaHA") {
         p1 <- p1 + scale_x_continuous(expand = c(0, 0), name = expression(paste("Rate of Animal-to-Human Transmission (", beta[HA], ")"))) +
-          labs(fill = NULL, title = "") + scale_y_continuous(limits = c(0, max(dens$y)*1.2), expand = c(0, 0), name = " ")
+          labs(fill = NULL, title = "") + scale_y_continuous(limits = c(0, max(dens$y)*1.5), expand = c(0, 0), name = " ")
       }
       
       p1 <- p1 + geom_vline(xintercept = MAP[j,i], size  = 1.2, color = "red", alpha = 0.5)
@@ -242,7 +241,7 @@ abc <- ggarrange(plotlist1[[1]][[1]], plotlist1[[2]][[1]], plotlist1[[3]][[1]], 
                  align = "hv", vjust = 1.05)
 
 ggsave(abc, filename = "ABC_SMC_Post_v2.png", dpi = 300, type = "cairo", width = 13, height = 12, units = "in",
-       path = "//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Figures/comb_data")
+       path = "C:/Users/amorg/Documents/PhD/Chapter_2/Figures/Redraft_v1")
 
 # Model Fit with Data - Ribbon -----------------------------------------------------
 
