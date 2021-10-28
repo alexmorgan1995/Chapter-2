@@ -143,7 +143,7 @@ ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, ini
       N_ITER <- N_ITER + 1
       
       if(g==1) {
-        d_betaAA <- runif(1, min = 0, max = 0.2)
+        d_betaAA <- runif(1, min = 0, max = 0.25)
         d_phi <- runif(1, min = 0, max = 0.1)
         d_kappa <- runif(1, min = 0, max = 2)
         d_alpha <- rbeta(1, 1.5, 8.5)
@@ -198,15 +198,15 @@ ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, ini
     print(res.old)
     w.old <- w.new/sum(w.new)
     colnames(res.new) <- c("betaAA", "phi", "kappa", "alpha", "zeta", "betaHA")
-    write.csv(res.new, file = paste("//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Models/Chapter-2/NewFits_041021/data/new/ABC_post_tetbroil_",g,".csv",sep=""), row.names=FALSE)
+    write.csv(res.new, file = paste("//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Models/Chapter-2/NewFits_041021/data/new/full/ABC_post_tetbroil_",g,".csv",sep=""), row.names=FALSE)
   }
   return(N_ITER_list)
 }
 
-N <- 100 #(ACCEPTED PARTICLES PER GENERATION)
+N <- 1000 #(ACCEPTED PARTICLES PER GENERATION)
 
 lm.low <- c(0, 0, 0, 0, 0, 0)
-lm.upp <- c(0.2, 0.1, 2, 1, 1, 0.0005) #Upper and lower bounds for the priors - for the multivariate normal dist pert kernel
+lm.upp <- c(0.25, 0.1, 2, 1, 1, 0.0005) #Upper and lower bounds for the priors - for the multivariate normal dist pert kernel
 
 # Empty matrices to store results (6 model parameters)
 res.old<-matrix(ncol=6,nrow=N)
@@ -217,12 +217,12 @@ w.old<-matrix(ncol=1,nrow=N)
 w.new<-matrix(ncol=1,nrow=N)
 
 #Thresholds 
-epsilon_dist <- c(10, 8, 7, 6.5, 6.25, 6, 5.9, 5.6, 5.7)
+epsilon_dist <- c(10, 8, 7, 6.5, 6.25, 6, 5.9, 5.8, 5.7, 5.6)
 epsilon_food <- c(0.593*1, 0.593*0.8, 0.593*0.6, 0.593*0.4, 0.593*0.2, 0.593*0.1, 0.593*0.08, 0.593*0.07, 0.593*0.06, 0.593*0.05)
 epsilon_AMR <- c(avg_hum_res*1, avg_hum_res*0.8, avg_hum_res*0.6, avg_hum_res*0.4, avg_hum_res*0.2, avg_hum_res*0.1, avg_hum_res*0.08, avg_hum_res*0.07, avg_hum_res*0.06, avg_hum_res*0.05)
 start_time <- Sys.time()
 
-dist_save <- ABC_algorithm(N = 100, 
+dist_save <- ABC_algorithm(N = 1000, 
               G = 10,
               sum.stats = summarystatprev, 
               distanceABC = sum_square_diff_dist, 
@@ -233,13 +233,13 @@ dist_save <- ABC_algorithm(N = 100,
 
 end_time <- Sys.time(); end_time - start_time
 
-saveRDS(dist_save, file = "dist_tetbroil_list.rds")
+saveRDS(dist_save, file = "//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Models/Chapter-2/NewFits_041021/data/new/full/dist_tetbroil_list.rds")
 
 
 # Examining Posteriors ----------------------------------------------------
 
 post_dist_names <- grep("ABC_post_tetbroil_",
-                      list.files("//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Models/Chapter-2/NewFits_041021/data/new"), value = TRUE)
+                      list.files("//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Models/Chapter-2/NewFits_041021/data/new/full"), value = TRUE)
 setwd("//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Models/Chapter-2/NewFits_041021/data/new")
 
 post_dist <- lapply(post_dist_names, read.csv)
