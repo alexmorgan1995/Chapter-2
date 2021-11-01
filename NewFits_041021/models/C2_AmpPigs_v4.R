@@ -239,7 +239,7 @@ saveRDS(dist_save, file = "dist_amppigs_list.rds")
 post_dist_names <- grep("ABC_post_amppigs_",
                       list.files("//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Models/Chapter-2/NewFits_041021/data/new/full"), value = TRUE)
 
-setwd("//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Models/Chapter-2/NewFits_041021/data/new")
+setwd("//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Models/Chapter-2/NewFits_041021/data/new/full")
 
 post_dist <- lapply(post_dist_names, read.csv)
 

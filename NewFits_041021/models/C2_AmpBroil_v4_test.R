@@ -200,7 +200,7 @@ ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, ini
   return(N_ITER_list)
 }
 
-N <- 1000 #(ACCEPTED PARTICLES PER GENERATION)
+N <- 100 #(ACCEPTED PARTICLES PER GENERATION)
 
 lm.low <- c(0, 0, 0, 0, 0, 0)
 lm.upp <- c(0.25, 0.1, 2, 1, 1.5, 0.0005) #Upper and lower bounds for the priors - for the multivariate normal dist pert kernel
@@ -214,14 +214,14 @@ w.old<-matrix(ncol=1,nrow=N)
 w.new<-matrix(ncol=1,nrow=N)
 
 #Thresholds 
-epsilon_dist <-  c(5, 4, 3.5, 3.25, 3, 2.75, 2.5, 2.25, 2.1, 2)
+epsilon_dist <-  rep(10,10)#c(4, 3, 2.5, 2.25, 2, 1.9, 1.875, 1.86, 1.85, 1.84)
 epsilon_food <- c(0.593*1, 0.593*0.8, 0.593*0.6, 0.593*0.4, 0.593*0.3, 0.593*0.2, 0.593*0.15, 0.593*0.1, 0.593*0.075, 0.593*0.05)
 epsilon_AMR <- c(avg_hum_res*1, avg_hum_res*0.8, avg_hum_res*0.6, avg_hum_res*0.4, avg_hum_res*0.3, avg_hum_res*0.2, avg_hum_res*0.15, avg_hum_res*0.1, avg_hum_res*0.075, avg_hum_res*0.05)
 
 #Run the model 
 start_time <- Sys.time()
 
-dist_save <- ABC_algorithm(N = 1000, 
+dist_save <- ABC_algorithm(N = 100, 
               G = 10,
               sum.stats = summarystatprev, 
               distanceABC = sum_square_diff_dist, 
@@ -232,7 +232,7 @@ dist_save <- ABC_algorithm(N = 1000,
 
 end_time <- Sys.time(); end_time - start_time
 
-saveRDS(dist_save, file = "//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Models/Chapter-2/NewFits_041021/data/new/full/dist_ampbroil_list.rds")
+saveRDS(dist_save, file = "//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Models/Chapter-2/NewFits_041021/data/new/dist_ampbroil_list.rds")
 
 
 # Examining Posteriors ----------------------------------------------------
