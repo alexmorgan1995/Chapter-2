@@ -2,13 +2,11 @@ library("deSolve"); library("ggplot2"); library("plotly"); library("reshape2")
 library("bayestestR"); library("tmvtnorm"); library("ggpubr")
 
 rm(list=ls())
-setwd("C:/Users/amorg/Documents/PhD/Chapter_2/Models/Github/Chapter-2/NewFits_041021/data/new")
+setwd("C:/Users/amorg/Documents/PhD/Chapter_2/Models/Github/Chapter-2/NewFits_041021/data/new/full")
 
 # Pairs Plot --------------------------------------------------------------
 
 final_amp_post <- lapply(sapply(1:4, function(x) tail(grep(list.files(), pattern = c("post_ampbroil_10", "post_tetbroil_10", "post_amppigs_10", "post_tetpigs_10")[x], value = TRUE),1)), read.csv)
-
-MAP_list <- lapply(1:4, function(x) map_estimate(final_amp_post[[x]]))
 
 plot_lower <- function(data, mapping){
   p <- ggplot(data = data, mapping = mapping) + scale_x_continuous(expand = c(0,0))  + scale_y_continuous(expand = c(0,0)) + 
@@ -29,21 +27,19 @@ plot_tetpig <- GGally::ggpairs(final_amp_post[[3]], lower=list(continuous=plot_l
 plot_amppig <- GGally::ggpairs(final_amp_post[[4]], lower=list(continuous=plot_lower), diag = list(continuous = plot_diag)) + theme_bw()
 
 ggsave(plot_ampbroil, filename = "pairs_plot_ampbroil.png", dpi = 300, type = "cairo", width = 8, height = 8, units = "in",
-       path = "C:/Users/amorg/Documents/PhD/Chapter_2/Figures/Redraft_v1")
+       path = "C:/Users/amorg/Documents/PhD/Chapter_2/Models/Github/Chapter-2/NewFits_041021/figures")
 ggsave(plot_tetbroil, filename = "pairs_plot_tetbroil.png", dpi = 300, type = "cairo", width = 8, height = 8, units = "in",
-       path = "C:/Users/amorg/Documents/PhD/Chapter_2/Figures/Redraft_v1")
+       path = "C:/Users/amorg/Documents/PhD/Chapter_2/Models/Github/Chapter-2/NewFits_041021/figures")
 ggsave(plot_tetpig, filename = "pairs_plot_amppig.png", dpi = 300, type = "cairo", width = 8, height = 8, units = "in",
-       path = "C:/Users/amorg/Documents/PhD/Chapter_2/Figures/Redraft_v1")
+       path = "C:/Users/amorg/Documents/PhD/Chapter_2/Models/Github/Chapter-2/NewFits_041021/figures")
 ggsave(plot_amppig, filename = "pairs_plot_tetpig.png", dpi = 300, type = "cairo", width = 8, height = 8, units = "in",
-       path = "C:/Users/amorg/Documents/PhD/Chapter_2/Figures/Redraft_v1")
+       path = "C:/Users/amorg/Documents/PhD/Chapter_2/Models/Github/Chapter-2/NewFits_041021/figures")
 
 # Diagnostic Plots -------------------------------------------------------
 
-setwd("C:/Users/amorg/Documents/PhD/Chapter_2/Models/Github/Chapter-2/NewFits_041021/data")
+setwd("C:/Users/amorg/Documents/PhD/Chapter_2/Models/Github/Chapter-2/NewFits_041021/data/new/full")
 
 tetRDS <- lapply(list.files(pattern = ".rds"), readRDS)
-
-setwd("C:/Users/amorg/Documents/PhD/Chapter_2/Models/Github/Chapter-2/NewFits_041021/data/new")
 
 #Create a list of the RDSs
 
@@ -93,4 +89,4 @@ diag_plots <- ggarrange(p_diag_list[[1]][[1]], p_diag_list[[2]][[1]], p_diag_lis
           ncol = 4, nrow = 3)
 
 ggsave(diag_plots, filename = "diag_plots.png", dpi = 300, type = "cairo", width = 15, height = 11, units = "in",
-       path = "C:/Users/amorg/Documents/PhD/Chapter_2/Figures/Redraft_v1")
+       path = "C:/Users/amorg/Documents/PhD/Chapter_2/Models/Github/Chapter-2/NewFits_041021/figures")

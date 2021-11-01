@@ -2,7 +2,7 @@ library("deSolve"); library("ggplot2"); library("plotly"); library("reshape2"); 
 library("bayestestR"); library("tmvtnorm"); library("ggpubr"); library("sensitivity")
 
 rm(list=ls())
-setwd("C:/Users/amorg/Documents/PhD/Chapter_2/Models/Github/Chapter-2/NewFits_041021/data/new")
+setwd("C:/Users/amorg/Documents/PhD/Chapter_2/Models/Github/Chapter-2/NewFits_041021/data/new/full")
 
 # Model Functions ----------------------------------------------------------
 
@@ -145,25 +145,28 @@ melt_tet_pigs$upper <- unlist(lapply(1:nrow(melt_tet_pigs), function(i) prop.tes
 
 #Obtain the MAPs for each dataset
 
-MAP <- rbind(c(map_estimate(data[[1]][which(data[[1]]$group == tail(unique(data[[1]]$group),1)),][,1:6])[,2]),
-             c(map_estimate(data[[2]][which(data[[2]]$group == tail(unique(data[[2]]$group),1)),][,1:6])[,2]),
-             c(map_estimate(data[[3]][which(data[[3]]$group == tail(unique(data[[3]]$group),1)),][,1:6])[,2]),
-             c(map_estimate(data[[4]][which(data[[4]]$group == tail(unique(data[[4]]$group),1)),][,1:6])[,2]))
+MAP <- rbind(c(map_estimate(data[[2]][which(data[[2]]$group == tail(unique(data[[2]]$group),1)),][,1:6])[,2]),
+             c(map_estimate(data[[1]][which(data[[1]]$group == tail(unique(data[[1]]$group),1)),][,1:6])[,2]),
+             c(map_estimate(data[[4]][which(data[[4]]$group == tail(unique(data[[4]]$group),1)),][,1:6])[,2]),
+             c(map_estimate(data[[3]][which(data[[3]]$group == tail(unique(data[[3]]$group),1)),][,1:6])[,2]))
 
 colnames(MAP) <- c("betaAA", "phi", "kappa", "alpha", "zeta", "betaHA")
 rownames(MAP) <- c("ampbroil", "tetbroil","amppigs", "tetpigs")
 
-#MAP <- rbind(c(colMeans(data[[1]][which(data[[1]]$group == tail(unique(data[[1]]$group),1)),][,1:6])),
-#             c(colMeans(data[[2]][which(data[[2]]$group == tail(unique(data[[2]]$group),1)),][,1:6])),
-#             c(colMeans(data[[3]][which(data[[3]]$group == tail(unique(data[[3]]$group),1)),][,1:6])),
- #            c(colMeans(data[[4]][which(data[[4]]$group == tail(unique(data[[4]]$group),1)),][,1:6])))
-#
-#colnames(MAP) <- c("betaAA", "phi", "kappa", "alpha", "zeta", "betaHA")
-#rownames(MAP) <- c("ampbroil", "tetbroil","amppigs", "tetpigs")
+MAP <- rbind(c(colMeans(data[[2]][which(data[[2]]$group == tail(unique(data[[2]]$group),1)),][,1:6])),
+             c(colMeans(data[[1]][which(data[[1]]$group == tail(unique(data[[1]]$group),1)),][,1:6])),
+             c(colMeans(data[[4]][which(data[[4]]$group == tail(unique(data[[4]]$group),1)),][,1:6])),
+            c(colMeans(data[[3]][which(data[[3]]$group == tail(unique(data[[3]]$group),1)),][,1:6])))
+
+colnames(MAP) <- c("betaAA", "phi", "kappa", "alpha", "zeta", "betaHA")
+rownames(MAP) <- c("ampbroil", "tetbroil","amppigs", "tetpigs")
 
 # ABC-SMC Posterior -------------------------------------------------------
 
 data_bind <- do.call(rbind,data)
+data_bind$fit <- factor(data_bind$fit, levels = c( "ampbroil", "tetbroil", "amppigs","tetpigs" ))
+data_bind <- data_bind[order(data_bind$fit),]
+
 
 plotlist1 <- list()
 
@@ -241,13 +244,15 @@ abc <- ggarrange(plotlist1[[1]][[1]], plotlist1[[2]][[1]], plotlist1[[3]][[1]], 
                  align = "hv", vjust = 1.05)
 
 ggsave(abc, filename = "ABC_SMC_Post_v2.png", dpi = 300, type = "cairo", width = 13, height = 12, units = "in",
-       path = "C:/Users/amorg/Documents/PhD/Chapter_2/Figures/Redraft_v1")
+       path = "C:/Users/amorg/Documents/PhD/Chapter_2/Models/Github/Chapter-2/NewFits_041021/figures")
 
 # Model Fit with Data - Ribbon -----------------------------------------------------
 
 start_time <- Sys.time()
 
 data_bind <- do.call(rbind,data)
+data_bind$fit <- factor(data_bind$fit, levels = c( "ampbroil", "tetbroil", "amppigs","tetpigs" ))
+data_bind <- data_bind[order(data_bind$fit),]
 
 parmtau <- seq(0,0.08, by = 0.004)
 
@@ -392,7 +397,7 @@ fits <- ggarrange(amp_broil, tet_broil,amp_pig, tet_pig, nrow = 2, ncol = 2, ali
                   common.legend = TRUE, legend = "bottom") 
 
 ggsave(fits, filename = "Model_Fits_v1.png", dpi = 300, type = "cairo", width = 12, height = 11, units = "in",
-       path = "//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Figures/comb_data")
+       path = "C:/Users/amorg/Documents/PhD/Chapter_2/Models/Github/Chapter-2/NewFits_041021/figures")
 
 # Tau and ICombH Base Plot - Requires you to run previous section ----------------------------------------------------------
 
@@ -448,7 +453,7 @@ icombh <- ggarrange(icombhlist[[1]], icombhlist[[2]],
                   common.legend = TRUE, legend = "bottom") 
 
 ggsave(icombh, filename = "Icombh.png", dpi = 300, type = "cairo", width = 11, height = 9, units = "in",
-       path = "//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Figures/comb_data")
+       path = "C:/Users/amorg/Documents/PhD/Chapter_2/Models/Github/Chapter-2/NewFits_041021/figures")
 
 #ggsave(icombh, filename = "Icombh_poster.png", dpi = 300, type = "cairo", width = 10, height = 7, units = "in",
 #       path = "C:/Users/amorg/Documents/PhD/Chapter_2/Figures/Redraft_v1")
@@ -459,10 +464,9 @@ ggsave(icombh, filename = "Icombh.png", dpi = 300, type = "cairo", width = 11, h
 
 HDI_parms <- list()
 
-for(i in 1:length(unique(data$fit))) {
-  last_dat <- tail(grep(unique(data$fit)[i], list.files()),1)
-  
-  temp_data <- data[data$group == last_dat & data$fit == c("ampbroil", "tetbroil", "amppigs", "tetpigs")[i],]
+for(i in 1:4) {
+  dat <- data[[i]]
+  temp_data <- dat[dat$group == "data10",]
   HDI_parms[[i]] <- data.frame("parm" = c("betaAA", "phi", "kappa", "alpha", "zeta", "betaHA"),
                                "mean_parm" = unlist(lapply(list(temp_data[["betaAA"]], temp_data[["phi"]], temp_data[["kappa"]], 
                                                                 temp_data[["alpha"]], temp_data[["zeta"]], temp_data[["betaHA"]]), mean)),
@@ -474,24 +478,31 @@ for(i in 1:length(unique(data$fit))) {
 
 # Distances for Fits ------------------------------------------------------
 
+
+#Obtain the Resistance 
 summarystatprev <- function(prev) {
   return(prev$ResPropAnim)
 }
 
+#Return the sum of squares between resistance and the model output
 sum_square_diff_dist <- function(sum.stats, data.obs, model.obs) {
   sumsquare <- sapply(sum.stats, function(x) {
-    sumsquare <- abs((x(data.obs) - x(model.obs))^2)
+    sumsquare <- (x(data.obs) - x(model.obs))^2
   })
   return(sum(sumsquare))
 }
 
+#Compute the distances for all 3 summary statistics - this section involves running the model
 computeDistanceABC_ALEX <- function(sum.stats, distanceABC, fitmodel, tau_range, thetaparm, init.state, data) {
   tauoutput <-data.frame(matrix(nrow = length(tau_range), ncol=4))
   tau_range <- append(tau_range, avg_EU_usage)
+  
   for (i in 1:length(tau_range)) {
     parms2 = thetaparm
     parms2["tau"] = tau_range[i]
+    
     out <- runsteady(y = init.state, func = fitmodel, times = c(0, Inf), parms = parms2)
+    
     tauoutput[i,] <- c(tau_range[i],
                        ((out[[2]] + out[[3]])*(446000000))/100000,
                        out[[1]][["Ira"]] / (out[[1]][["Isa"]] + out[[1]][["Ira"]]),
@@ -513,7 +524,7 @@ melt_tet_broil$usage <- melt_tet_broil$usage/1000
 melt_amp_pigs$usage <- melt_amp_pigs$usage/1000
 melt_tet_pigs$usage <- melt_tet_pigs$usage/1000
 
-parms_ampbroil = c(ra = 0^-1, rh = (5.5^-1), ua = 42^-1, uh = 28835^-1, betaAA = MAP["ampbroil","betaAA"], 
+parms_ampbroil = c(ra = 0, rh = (5.5^-1), ua = 42^-1, uh = 28835^-1, betaAA = MAP["ampbroil","betaAA"], 
                   betaAH = 0.00001, betaHH = 0.00001, betaHA = MAP["ampbroil","betaHA"], phi = MAP["ampbroil","phi"] , 
                   kappa = MAP["ampbroil","kappa"], alpha = MAP["ampbroil","alpha"] , tau = 0, zeta = MAP["ampbroil","zeta"])
 
@@ -532,17 +543,21 @@ parms_tetpigs = c(ra = 60^-1, rh = (5.5^-1), ua = 240^-1, uh = 28835^-1, betaAA 
 
 for(i in 1:4) {
   casestudy <- list(melt_amp_broil, melt_tet_broil, melt_amp_pigs, melt_tet_pigs)[[i]]
+  colnames(casestudy)[3] <- "ResPropAnim"
   parms <- list(parms_ampbroil, parms_tetbroil, parms_amppigs, parms_tetpigs)[[i]]
+  avg_EU_usage <- mean(casestudy$usage)
+  avg_hum_res <- c(0.314, 0.316, 0.345, 0.340)[i]
   #print(parms)
   test <- computeDistanceABC_ALEX(sum.stats = summarystatprev, 
                           distanceABC = sum_square_diff_dist, 
                           fitmodel = amr, 
                           tau_range = casestudy$usage, 
-                          parms = parms,
+                          thetaparm = parms,
                           init.state = c(Sa=0.98, Isa=0.01, Ira=0.01, Sh=1, Ish=0, Irh=0), 
                           data = casestudy)
   print(test)
 }
+
 
 #Identify the Exact Values of the Fit - Relative increase in incidence
 
@@ -572,57 +587,11 @@ colnames(tauoutput) <- c("tau", "ICombH", "ResPropAnim", "ResPropHum")
 
 tauoutput$ICombH[tauoutput$tau == 0]/tauoutput$ICombH[tauoutput$tau == averagesales[1]]
 
-# Plotting Prior Distribution ---------------------------------------------
-
-prior.data <- setNames(data.frame(runif(1000, min = 0, max = 0.2), runif(1000, min = 0, max = 0.04), runif(1000, min = 0, max = 2),
-                                  "p_alpha" <- rbeta(1000, 1.5, 8.5), runif(1000, min = 0, max = 0.15)), 
-                       c("p_betaAA", "p_phi", "p_kappa", "p_alpha", "p_zeta", "p_betaHA"))
-
-prior.plot.list <- list()
-
-for (i in 1:length(colnames(prior.data))) { # Loop over loop.vector
-  
-  data <- data.frame("data" = prior.data[,colnames(prior.data)[i]])
-  p1 <- ggplot(data, aes(x=data)) + geom_histogram(fill="darkgrey", bins = 10, size = 0.7) + theme_bw() +
-    theme(legend.text=element_text(size=14), axis.text.x=element_text(size=14),axis.text.y=element_text(size=14),
-          axis.title.y=element_text(size=14), axis.title.x= element_text(size=14), plot.margin = unit(c(0.25,0.4,0.15,0.55), "cm"),
-          plot.title = element_text(size = 14, vjust = 3, hjust = 0.5, face = "bold"),
-          panel.grid.major.x = element_blank(),panel.grid.minor.x = element_blank())
-  
-  max.y <- max(ggplot_build(p1)$data[[1]][1])*1.2
-  
-  if(colnames(prior.data)[i] == "p_phi") {
-      p1 <- p1 + scale_x_continuous(expand = c(0, 0), name = expression(paste("Rate of Resistance Reversion (", phi, ")"))) +
-        labs(fill = NULL, title = "") + 
-        scale_y_continuous(limits = c(0,max.y), expand = c(0, 0), name = "Frequency") 
-    }
-    if(colnames(prior.data)[i] == "p_kappa") {
-      p1 <- p1 + scale_x_continuous(expand = c(0, 0), name = expression(paste("Efficacy of Antibiotic-Mediated Recovery (", kappa, ")"))) +
-        labs(fill = NULL, title = "") + 
-        scale_y_continuous(limits = c(0,max.y), expand = c(0, 0), name = "Frequency") 
-    }
-    if(colnames(prior.data)[i] == "p_betaAA") {
-      p1 <- p1 + scale_x_continuous(expand = c(0, 0), name = expression(paste("Rate of Animal-to-Animal Transmission (", beta[AA], ")")))+
-        labs(fill = NULL, title = "") + scale_y_continuous(limits = c(0,max.y), expand = c(0, 0), name = "Frequency")
-    }
-    if(colnames(prior.data)[i] == "p_alpha") {
-      p1 <- p1 + scale_x_continuous(expand = c(0, 0), name = expression(paste("Antibiotic-Resistant Fitness Cost (", alpha, ")"))) +
-        labs(fill = NULL, title = "") + scale_y_continuous(limits = c(0,max.y),expand = c(0, 0), name = "Frequency")
-    }
-    if(colnames(prior.data)[i] == "p_zeta") {
-      p1 <- p1 + scale_x_continuous(expand = c(0, 0), name = expression(paste("Background Infection Rate (", zeta, ")"))) +
-        labs(fill = NULL, title = "") + scale_y_continuous(limits = c(0,max.y),expand = c(0, 0), name = "Frequency")
-    }
-  prior.plot.list[[i]] <- p1
-}
-
-comb.prior.plot <- ggarrange(prior.plot.list[[1]],prior.plot.list[[2]],prior.plot.list[[3]],prior.plot.list[[4]],prior.plot.list[[5]],
-                             ncol = 1,nrow = 5)
-
-ggsave(comb.prior.plot, filename = "prior_parms.png", dpi = 300, type = "cairo", width = 8, height = 13, units = "in",
-       path = "//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Figures/comb_data")
-
 # Supplementary Plots (kappa Responsible for Co-Existence) -----------------------------------------------------
+
+#Get mean parms 
+
+mean_MAP <- colMeans(MAP)
 
 parmtau <- seq(0,0.08, by = 0.004)
 init <- c(Sa=0.98, Isa=0.01, Ira=0.01, Sh=1, Ish=0, Irh=0)
@@ -631,9 +600,9 @@ output1 <- data.frame(matrix(ncol = 6, nrow = 0))
 for (i in 1:length(parmtau)) {
   temp <- data.frame(matrix(NA, nrow = 1, ncol=7))
   
-  parms2 = c(ra = 60^-1, rh =  (5.5^-1), ua = 240^-1, uh = 28835^-1, betaAA = MAP[1,"betaAA"], betaAH = 0.00001, betaHH = 0.00001, 
-             betaHA = (0.00001), phi = MAP[1,"phi"], kappa = 0, alpha = 0, tau = parmtau[i],
-             zeta = MAP[1,"zeta"])
+  parms2 = c(ra = 60^-1, rh =  (5.5^-1), ua = 240^-1, uh = 28835^-1, betaAA = mean_MAP[["betaAA"]], betaAH = 0.00001, betaHH = 0.00001, 
+             betaHA = mean_MAP[["betaHA"]], phi = mean_MAP[["phi"]], kappa = 0, alpha = 0, tau = parmtau[i],
+             zeta = mean_MAP[["zeta"]])
   
   out <- runsteady(y = init, func = amr, times = c(0, Inf), parms = parms2)
   temp[1,1] <- parmtau[i]
@@ -656,7 +625,7 @@ averagesales <- 0.0094
 p1 <- ggplot(plotdata, aes(fill = variable, x = tau, y = value)) + theme_bw() + 
   geom_vline(xintercept = averagesales, alpha = 0.3, size = 2) + 
   geom_col(color = "black",position= "stack", width  = 0.0035) + scale_x_continuous(expand = c(0, 0.0005)) + 
-  scale_y_continuous(limits = c(0, 0.75), expand = c(0, 0))  + 
+  scale_y_continuous(limits = c(0, 12), expand = c(0, 0))  + 
   geom_text(label= c(round(output1$IResRat,digits = 2),rep("",length(parmtau))),vjust=-0.5, hjust = 0.05,
             position = "stack", angle = 45) +
   theme(legend.position=c(0.75, 0.875), legend.text=element_text(size=12), legend.title = element_blank(), axis.text=element_text(size=12), 
@@ -667,4 +636,4 @@ p1 <- ggplot(plotdata, aes(fill = variable, x = tau, y = value)) + theme_bw() +
 
 
 ggsave(p1, filename = "Icombh_nokappa.png", dpi = 300, type = "cairo", width = 7, height = 4, units = "in",
-       path = "//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Figures/comb_data")
+       path = "C:/Users/amorg/Documents/PhD/Chapter_2/Models/Github/Chapter-2/NewFits_041021/figures")

@@ -3,7 +3,7 @@ library("bayestestR"); library("tmvtnorm"); library("ggpubr"); library("sensitiv
 library("grid"); library("gridExtra"); library("rootSolve"); library("metR")
 
 rm(list=ls())
-setwd("//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Models/Chapter-2/NewFits_041021/data")
+setwd("C:/Users/amorg/Documents/PhD/Chapter_2/Models/Github/Chapter-2/NewFits_041021/data/new/full")
 
 # Model Functions ----------------------------------------------------------
 
@@ -45,10 +45,10 @@ lapply(1:4, function(x) data[[x]]$group = factor(data[[x]]$group, levels = uniqu
 
 #Obtain the MAPs for each dataset
 
-MAP <- rbind(c(colMeans(data[[1]][which(data[[1]]$group == tail(unique(data[[1]]$group),1)),][,1:6])),
-             c(colMeans(data[[2]][which(data[[2]]$group == tail(unique(data[[2]]$group),1)),][,1:6])),
-             c(colMeans(data[[3]][which(data[[3]]$group == tail(unique(data[[3]]$group),1)),][,1:6])),
-             c(colMeans(data[[4]][which(data[[4]]$group == tail(unique(data[[4]]$group),1)),][,1:6])))
+MAP <- rbind(c(colMeans(data[[2]][which(data[[2]]$group == tail(unique(data[[2]]$group),1)),][,1:6])),
+             c(colMeans(data[[1]][which(data[[1]]$group == tail(unique(data[[1]]$group),1)),][,1:6])),
+             c(colMeans(data[[4]][which(data[[4]]$group == tail(unique(data[[4]]$group),1)),][,1:6])),
+             c(colMeans(data[[3]][which(data[[3]]$group == tail(unique(data[[3]]$group),1)),][,1:6])))
 
 colnames(MAP) <- c("betaAA", "phi", "kappa", "alpha", "zeta", "betaHA")
 rownames(MAP) <- c("ampbroil", "tetbroil","amppigs", "tetpigs")
@@ -90,16 +90,16 @@ for(j in 1:4) {
     for(z in 1:3) {
       
       if(z == 1) {
-        parameterspace <- expand.grid("betaAA" = seq(parms[["betaAA"]]*0.70, parms[["betaAA"]], by = (parms[["betaAA"]]*0.30)/30), 
-                                      "betaHA" = seq(parms[["betaHA"]]*0.70, parms[["betaHA"]], by = parms[["betaHA"]]*0.30/30))  
+        parameterspace <- expand.grid("betaAA" = seq(parms[["betaAA"]]*0.75, parms[["betaAA"]], by = (parms[["betaAA"]]*0.25)/25), 
+                                      "betaHA" = seq(parms[["betaHA"]]*0.75, parms[["betaHA"]], by = parms[["betaHA"]]*0.25/25))  
       }
       if(z == 2) {
-        parameterspace <- expand.grid("zeta" = seq(parms[["zeta"]]*0.70, parms[["zeta"]], by = (parms[["zeta"]]*0.30)/30), 
-                                      "betaHA" = seq(parms[["betaHA"]]*0.70, parms[["betaHA"]], by = parms[["betaHA"]]*0.30/30))
+        parameterspace <- expand.grid("zeta" = seq(parms[["zeta"]]*0.75, parms[["zeta"]], by = (parms[["zeta"]]*0.25)/25), 
+                                      "betaHA" = seq(parms[["betaHA"]]*0.75, parms[["betaHA"]], by = parms[["betaHA"]]*0.25/25))
       }
       if(z == 3) {
-        parameterspace <- expand.grid("both" = seq(0.70, 1, by = 0.01), 
-                                      "betaHA" = seq(parms[["betaHA"]]*0.70, parms[["betaHA"]], by = parms[["betaHA"]]*0.30/30))
+        parameterspace <- expand.grid("both" = seq(0.75, 1, by = 0.01), 
+                                      "betaHA" = seq(parms[["betaHA"]]*0.75, parms[["betaHA"]], by = parms[["betaHA"]]*0.25/25))
       }
       
       scendata <- data.frame(matrix(nrow = nrow(parameterspace), ncol = 10))
@@ -145,22 +145,7 @@ for(j in 1:4) {
   })
 }
 
-scentest <- heatmap[[1]][[3]]
 
-breaks <- c(0, 3.26, seq(3.26, max(scentest$prevH)*100000, by = 1))
-
-ggplot(scentest, aes(percbetaAA, percbetaHA, z = prevH*100000)) + metR::geom_contour_fill(breaks = breaks, color = "black", size = 0.1)  + 
-  geom_contour(color = "red", size = 1, breaks = 3.26, alpha = 0.8) +
-  geom_text_contour(col = "white",nudge_y = -0.4, fontface = "bold", size = 5, breaks = breaks, label.placer = label_placer_fraction(frac = 0.5),
-                    stroke = 0.05, stroke.color = "black",) +
-  scale_fill_viridis_b(breaks = breaks, direction = -1, begin = 0, end = 0.9, values = c(0, seq(0.70, 1, by = 0.30/8))) +
-  scale_y_continuous(expand = c(0,0), limits = c(70, 100)) + scale_x_continuous(expand = c(0, 0), limits = c(70, 100)) + theme_bw() +
-  theme(legend.position = "right", legend.title = element_text(size=14), legend.text=element_text(size=12),  axis.text=element_text(size=14),
-        axis.title.y=element_text(size=14),axis.title.x = element_text(size=14),  
-        plot.title = element_text(size = 18, vjust = 3, hjust = 0.1, face = "bold"),
-        legend.spacing.x = unit(0.3, 'cm'), plot.margin=unit(c(0.5,0.4,0.4,0.4),"cm"), legend.key.height =unit(0.75, "cm"),
-        legend.key.width =  unit(2, "cm"))
-  
 # Plotting ----------------------------------------------------------------
 
 plotheat <- list()
@@ -192,8 +177,8 @@ for(i in 1:4) {
       geom_contour(color = "red", size = 1, breaks = 0.593, alpha = 0.8) +
       geom_text_contour(col = "white",nudge_y = -0.4, fontface = "bold", size = 5, breaks = breaks, label.placer = label_placer_fraction(frac = 0.5),
                               stroke = 0.05, stroke.color = "black",) +
-      scale_fill_viridis_b(breaks = breaks, direction = -1, begin = 0, end = 0.9, values = c(0, seq(0.70, 1, by = 0.30/8))) +
-      scale_y_continuous(expand = c(0,0), limits = c(70, 100)) + scale_x_continuous(expand = c(0, 0), limits = c(70, 100)) + theme_bw() +
+      scale_fill_viridis_b(breaks = breaks, direction = -1, begin = 0, end = 0.9, values = c(0, seq(0.75, 1, by = 0.25/8))) +
+      scale_y_continuous(expand = c(0,0), limits = c(75, 100)) + scale_x_continuous(expand = c(0, 0), limits = c(75, 100)) + theme_bw() +
       theme(legend.position = "right", legend.title = element_text(size=14), legend.text=element_text(size=12),  axis.text=element_text(size=14),
             axis.title.y=element_text(size=14),axis.title.x = element_text(size=14),  
             plot.title = element_text(size = 18, vjust = 3, hjust = 0.1, face = "bold"),
@@ -214,7 +199,7 @@ for(i in 1:4) {
 combplot <- ggarrange(plotheat[[1]], plotheat[[2]], plotheat[[3]],plotheat[[4]], ncol = 1, nrow = 4)
 
 ggsave(combplot, filename = "HeatMapcomb.png", dpi = 300, type = "cairo", width = 11, height = 16, units = "in",
-       path = "//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Figures/comb_data")
+       path = "C:/Users/amorg/Documents/PhD/Chapter_2/Models/Github/Chapter-2/NewFits_041021/figures")
 
 
 #Lone Plots
@@ -231,8 +216,8 @@ plot1 <- ggplot(scentest1, aes(percdecrease, percbetaHA, z = icombh)) + metR::ge
   geom_contour(color = "red", size = 1, breaks = 0.593, alpha = 0.8) +
   geom_text_contour(col = "white",nudge_y = -0.4, fontface = "bold", size = 5, breaks = breaks1, label.placer = label_placer_fraction(frac = 0.5),
                           stroke = 0.05, stroke.color = "black",) +
-  scale_fill_viridis_b(breaks = breaks1, direction = -1, begin = 0, end = 0.9, values = c(0, seq(0.70,1, by = 0.30/8))) +
-  scale_y_continuous(expand = c(0,0), limits = c(70, 100)) + scale_x_continuous(expand = c(0, 0), limits = c(70, 100)) + theme_bw() +
+  scale_fill_viridis_b(breaks = breaks1, direction = -1, begin = 0, end = 0.9, values = c(0, seq(0.75,1, by = 0.25/8))) +
+  scale_y_continuous(expand = c(0,0), limits = c(75, 100)) + scale_x_continuous(expand = c(0, 0), limits = c(75, 100)) + theme_bw() +
   theme(legend.position = "right", legend.title = element_text(size=14), legend.text=element_text(size=12),  axis.text=element_text(size=14),
         axis.title.y=element_text(size=14),axis.title.x = element_text(size=14),  
         plot.title = element_text(size = 15, vjust = 3, hjust = 0.1, face = "bold"),
@@ -247,8 +232,8 @@ plot2 <- ggplot(scentest2, aes(percdecrease, percbetaHA, z = icombh)) + metR::ge
   geom_contour(color = "red", size = 1, breaks = 0.593, alpha = 0.8) +
   geom_text_contour(col = "white",nudge_y = -0.4, fontface = "bold", size = 5, breaks = breaks2, label.placer = label_placer_fraction(frac = 0.5),
                           stroke = 0.05, stroke.color = "black",) +
-  scale_fill_viridis_b(breaks = breaks2, direction = -1, begin = 0, end = 0.9, values = c(0, seq(0.70,1, by = 0.30/8))) +
-  scale_y_continuous(expand = c(0,0), limits = c(70, 100)) + scale_x_continuous(expand = c(0, 0), limits = c(70, 100)) + theme_bw() +
+  scale_fill_viridis_b(breaks = breaks2, direction = -1, begin = 0, end = 0.9, values = c(0, seq(0.75,1, by = 0.25/8))) +
+  scale_y_continuous(expand = c(0,0), limits = c(75, 100)) + scale_x_continuous(expand = c(0, 0), limits = c(75, 100)) + theme_bw() +
   theme(legend.position = "right", legend.title = element_text(size=14), legend.text=element_text(size=12),  axis.text=element_text(size=14),
         axis.title.y=element_text(size=14),axis.title.x = element_text(size=14),  
         plot.title = element_text(size = 15, vjust = 3, hjust = 0.1, face = "bold"),
@@ -262,8 +247,8 @@ plot3 <- ggplot(scentest3, aes(percdecrease, percbetaHA, z = icombh)) + metR::ge
   geom_contour(color = "red", size = 1, breaks = 0.593, alpha = 0.8) +
   geom_text_contour(col = "white",nudge_y = -0.4, fontface = "bold", size = 5, breaks = breaks3, label.placer = label_placer_fraction(frac = 0.5),
                           stroke = 0.05, stroke.color = "black",) +
-  scale_fill_viridis_b(breaks = breaks3, direction = -1, begin = 0, end = 0.9, values = c(0, seq(0.70,1, by = 0.30/8))) +
-  scale_y_continuous(expand = c(0,0), limits = c(70, 100)) + scale_x_continuous(expand = c(0, 0), limits = c(70, 100)) + theme_bw() +
+  scale_fill_viridis_b(breaks = breaks3, direction = -1, begin = 0, end = 0.9, values = c(0, seq(0.75,1, by = 0.25/8))) +
+  scale_y_continuous(expand = c(0,0), limits = c(75, 100)) + scale_x_continuous(expand = c(0, 0), limits = c(75, 100)) + theme_bw() +
   theme(legend.position = "right", legend.title = element_text(size=14), legend.text=element_text(size=12),  axis.text=element_text(size=14),
         axis.title.y=element_text(size=14),axis.title.x = element_text(size=14),  
         plot.title = element_text(size = 15, vjust = 3, hjust = 0.1, face = "bold"),
@@ -277,8 +262,8 @@ plot4 <- ggplot(scentest4, aes(percdecrease, percbetaHA, z = icombh)) + metR::ge
   geom_contour(color = "red", size = 1, breaks = 0.593, alpha = 0.8) +
   geom_text_contour(col = "white",nudge_y = -0.4, fontface = "bold", size = 5, breaks = breaks3, label.placer = label_placer_fraction(frac = 0.5),
                           stroke = 0.05, stroke.color = "black",) +
-  scale_fill_viridis_b(breaks = breaks4, direction = -1, begin = 0, end = 0.9, values = c(0, seq(0.70,1, by = 0.30/8))) +
-  scale_y_continuous(expand = c(0,0), limits = c(70, 100)) + scale_x_continuous(expand = c(0, 0), limits = c(70, 100)) + theme_bw() +
+  scale_fill_viridis_b(breaks = breaks4, direction = -1, begin = 0, end = 0.9, values = c(0, seq(0.75,1, by = 0.25/8))) +
+  scale_y_continuous(expand = c(0,0), limits = c(75, 100)) + scale_x_continuous(expand = c(0, 0), limits = c(75, 100)) + theme_bw() +
   theme(legend.position = "right", legend.title = element_text(size=14), legend.text=element_text(size=12),  axis.text=element_text(size=14),
         axis.title.y=element_text(size=14),axis.title.x = element_text(size=14),  
         plot.title = element_text(size = 15, vjust = 3, hjust = 0.1, face = "bold"),
@@ -288,7 +273,7 @@ plot4 <- ggplot(scentest4, aes(percdecrease, percbetaHA, z = icombh)) + metR::ge
 combplot_solo <- ggarrange(plot1, plot2, plot3,  plot4, ncol = 1, nrow = 4, labels = c("A", "B", "C", "D"), font.label = list(size = 20), vjust = 1.2)
 
 ggsave(combplot_solo, filename = "HeatMapcomb_solo.png", dpi = 300, type = "cairo", width = 5, height = 10, units = "in",
-       path = "//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Figures/comb_data")
+       path = "C:/Users/amorg/Documents/PhD/Chapter_2/Models/Github/Chapter-2/NewFits_041021/figures")
 
 plot1 <- plot1 + theme(legend.position = "bottom", legend.key.height =unit(0.7, "cm"), legend.key.width =  unit(1.7, "cm"))
 plot2 <- plot2 + theme(legend.position = "bottom", legend.key.height =unit(0.7, "cm"), legend.key.width =  unit(1.7, "cm"))
@@ -297,4 +282,4 @@ plot4 <- plot4 + theme(legend.position = "bottom", legend.key.height =unit(0.7, 
 combplot_solo4by4 <- ggarrange(plot1, plot2, plot3,  plot4, ncol = 2, nrow = 2, labels = c("A", "B", "C", "D"), font.label = list(size = 20), vjust = 1.2)
 
 ggsave(combplot_solo4by4, filename = "HeatMapcomb_solo_4x4.png", dpi = 300, type = "cairo", width = 10, height = 10, units = "in",
-       path = "//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Figures/comb_data")
+       path = "C:/Users/amorg/Documents/PhD/Chapter_2/Models/Github/Chapter-2/NewFits_041021/figures")
