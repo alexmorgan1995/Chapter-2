@@ -214,7 +214,7 @@ w.old<-matrix(ncol=1,nrow=N)
 w.new<-matrix(ncol=1,nrow=N)
 
 #Thresholds 
-epsilon_dist <-  c(5, 4, 3.5, 3.25, 3, 2.75, 2.5, 2.25, 2.1, 2)
+epsilon_dist <-  c(5, 4, 3.5, 3.25, 3, 2.5, 2.25, 2.1, 2, 1.96)
 epsilon_food <- c(0.593*1, 0.593*0.8, 0.593*0.6, 0.593*0.4, 0.593*0.3, 0.593*0.2, 0.593*0.15, 0.593*0.1, 0.593*0.075, 0.593*0.05)
 epsilon_AMR <- c(avg_hum_res*1, avg_hum_res*0.8, avg_hum_res*0.6, avg_hum_res*0.4, avg_hum_res*0.3, avg_hum_res*0.2, avg_hum_res*0.15, avg_hum_res*0.1, avg_hum_res*0.075, avg_hum_res*0.05)
 

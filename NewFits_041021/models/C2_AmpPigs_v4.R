@@ -232,7 +232,7 @@ dist_save <- ABC_algorithm(N = 1000,
 
 end_time <- Sys.time(); end_time - start_time
 
-saveRDS(dist_save, file = "dist_amppigs_list.rds")
+saveRDS(dist_save, file = "//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Models/Chapter-2/NewFits_041021/data/new/full/dist_amppigs_list.rds")
 
 # Examining Posteriors ----------------------------------------------------
 
