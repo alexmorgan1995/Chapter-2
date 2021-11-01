@@ -530,8 +530,7 @@ parms_ampbroil = c(ra = 0, rh = (5.5^-1), ua = 42^-1, uh = 28835^-1, betaAA = MA
 
 parms_tetbroil = c(ra = 0, rh = (5.5^-1), ua = 42^-1, uh = 28835^-1, betaAA = MAP["tetbroil","betaAA"], 
                    betaAH = 0.00001, betaHH = 0.00001, betaHA = MAP["tetbroil","betaHA"], phi = MAP["tetbroil","phi"], 
-                   kappa = MAP["tetbroil","kappa"], alpha = MAP["tetbroil","alpha"] , tau = 0, 
-                   zeta = MAP["tetbroil","zeta"])
+                   kappa = MAP["tetbroil","kappa"], alpha = MAP["tetbroil","alpha"] , tau = 0, zeta = MAP["tetbroil","zeta"])
 
 parms_amppigs = c(ra = 60^-1, rh = (5.5^-1), ua = 240^-1, uh = 28835^-1, betaAA = MAP["amppigs","betaAA"], 
                   betaAH = 0.00001, betaHH = 0.00001, betaHA = MAP["amppigs","betaHA"], phi = MAP["amppigs","phi"], 
@@ -561,31 +560,38 @@ for(i in 1:4) {
 
 #Identify the Exact Values of the Fit - Relative increase in incidence
 
-tauoutput <- matrix(nrow = 0, ncol=4)
-
-averagesales <- sapply(list(melt_amp_broil$usage, melt_tet_broil$usage, melt_amp_pigs$usage,melt_tet_pigs$usage), mean)/1000
-
-exploredtau <- c(datatetra$usage, averagesales[1], 0)
-
+#rerun initial data if results look weird
+averagesales <- sapply(list(melt_amp_broil$usage, melt_tet_broil$usage, melt_amp_pigs$usage, melt_tet_pigs$usage), mean)/1000
 init.state = c(Sa=0.98, Isa=0.01, Ira=0.01, Sh=1, Ish=0, Irh=0)
 times = seq(0, 2000, by = 100)
 
-for (i in 1:length(exploredtau)) {
-  parms1 <- parmstet_pigs
-  parms1[["tau"]] <- exploredtau[[i]]
-  temp <- matrix(NA, nrow = 1, ncol=4)
-  out <- runsteady(y = init.state, func = amr, times = c(0, Inf), parms = parms1)
-  temp[1,1] <- exploredtau[i]
-  temp[1,2] <- (rounding(out[nrow(out),6]) + rounding(out[nrow(out),7]))*100000
-  temp[1,3] <- (rounding(out[nrow(out),4]) / (rounding(out[nrow(out),3]) + rounding(out[nrow(out),4])))
-  temp[1,4] <- (rounding(out[nrow(out),7]) / (rounding(out[nrow(out),6]) + rounding(out[nrow(out),7])))
-  tauoutput <- rbind(tauoutput, temp)
+outputframe <- data.frame(matrix(nrow = 4, ncol = 4))
+
+for(j in 1:4) {
+  data <- list(melt_amp_broil, melt_tet_broil, melt_amp_pigs, melt_tet_pigs)[[j]]
+  exploredtau <- c(data$usage/1000, averagesales[j], 0)
+  tauoutput <- data.frame(matrix(nrow = (exploredtau), ncol=4))
+  
+  for (i in 1:length(exploredtau)) {
+    parms1 <- list(parms_ampbroil, parms_tetbroil, parms_amppigs, parms_tetpigs)[[j]]
+    parms1[["tau"]] <- exploredtau[[i]]
+    out <- runsteady(y = init.state, func = amr, times = c(0, Inf), parms = parms1)
+    tauoutput[i,1] <- exploredtau[i]
+    tauoutput[i,2] <- ((out[[2]] + out[[3]])*(446000000))/100000
+    tauoutput[i,3] <- out[[1]][["Ira"]] / (out[[1]][["Isa"]] + out[[1]][["Ira"]])
+    tauoutput[i,4] <- out[[1]][["Irh"]] / (out[[1]][["Ish"]] + out[[1]][["Irh"]])
+  }
+  colnames(tauoutput) <- c("tau", "ICombH", "ResPropAnim", "ResPropHum") 
+  outputframe[j,] = c(tauoutput$ICombH[tauoutput$tau == 0],
+                      tauoutput$ResPropHum[tauoutput$tau == averagesales[j]],
+                      tauoutput$ICombH[tauoutput$tau == averagesales[j]],
+                      tauoutput$ICombH[tauoutput$tau == 0]/tauoutput$ICombH[tauoutput$tau == averagesales[j]])
 }
 
-tauoutput <- data.frame(tauoutput)
-colnames(tauoutput) <- c("tau", "ICombH", "ResPropAnim", "ResPropHum")  
+rownames(outputframe) <- c("amp_broil", "tet_broil","amp_pigs", "tet_pigs")
+colnames(outputframe) <- c("Inch_0", "ResPropHum_0", "Inch_Base", "Rat_inc")
 
-tauoutput$ICombH[tauoutput$tau == 0]/tauoutput$ICombH[tauoutput$tau == averagesales[1]]
+outputframe
 
 # Supplementary Plots (kappa Responsible for Co-Existence) -----------------------------------------------------
 
