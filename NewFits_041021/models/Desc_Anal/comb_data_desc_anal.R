@@ -33,7 +33,7 @@ for(i in 1:nrow(amp_pigs_melt)) {
 p1 <- ggplot(amp_pigs_melt, aes(x = variable, y = value, group = Country, color = Country)) + geom_point(position = position_dodge(2)) +
   geom_errorbar(aes(ymin=lower, ymax=upper, color = Country),  size=0.5, width = 0) + coord_flip() +
   facet_grid(Country~., scales = "free", space = "free") + theme_bw() + labs(x = "Surveillance Year", y = "Proportion of Ampicillin Resistant Isolates") +
-  theme(strip.text.y = element_text(angle = 0), plot.margin = unit(c(1,1,1,1), "cm"),
+  theme(strip.text.y = element_text(angle = 0), plot.margin = unit(c(1,1,1,1), "cm"),axis.text.y=element_blank(),
         legend.position = "none", panel.grid.major = element_blank(), panel.grid.minor = element_blank()) 
 
 # Ampicillin in Broiler Poultry ------------------------------------------
@@ -68,7 +68,7 @@ for(i in 1:nrow(amp_broil_melt)) {
 p2 <- ggplot(amp_broil_melt, aes(x = variable, y = value, group = Country, color = Country)) + geom_point(position = position_dodge(2)) +
   geom_errorbar(aes(ymin=lower, ymax=upper, color = Country),  size=0.5, width = 0) + coord_flip() +
   facet_grid(Country~., scales = "free", space = "free") + theme_bw() + labs(x = "Surveillance Year", y = "Proportion of Ampicillin Resistant Isolates") +
-  theme(strip.text.y = element_text(angle = 0), plot.margin = unit(c(1,1,1,1), "cm"),
+  theme(strip.text.y = element_text(angle = 0), plot.margin = unit(c(1,1,1,1), "cm"),axis.text.y=element_blank(),
         legend.position = "none", panel.grid.major = element_blank(), panel.grid.minor = element_blank()) 
 
 # Tetracycline in Fattening Pigs ------------------------------------------
@@ -103,7 +103,7 @@ for(i in 1:nrow(tet_pigs_melt)) {
 p3 <- ggplot(tet_pigs_melt, aes(x = variable, y = value, group = Country, color = Country)) + geom_point(position = position_dodge(2)) +
   geom_errorbar(aes(ymin=lower, ymax=upper, color = Country),  size=0.5, width = 0) + coord_flip() +
   facet_grid(Country~., scales = "free", space = "free") + theme_bw() + labs(x = "Surveillance Year", y = "Proportion of Tetracycline Resistant Isolates") +
-  theme(strip.text.y = element_text(angle = 0), plot.margin = unit(c(1,1,1,1), "cm"),
+  theme(strip.text.y = element_text(angle = 0), plot.margin = unit(c(1,1,1,1), "cm"),axis.text.y=element_blank(),
         legend.position = "none", panel.grid.major = element_blank(), panel.grid.minor = element_blank()) 
 
 # Tetracycline in Broiler Poultry ------------------------------------------
@@ -138,19 +138,19 @@ for(i in 1:nrow(tet_broil_melt)) {
 p4 <- ggplot(tet_broil_melt, aes(x = variable, y = value, group = Country, color = Country)) + geom_point(position = position_dodge(2)) +
   geom_errorbar(aes(ymin=lower, ymax=upper, color = Country),  size=0.5, width = 0) + coord_flip() +
   facet_grid(Country~., scales = "free", space = "free") + theme_bw() + labs(x = "Surveillance Year", y = "Proportion of Tetracycline Resistant Isolates") +
-  theme(strip.text.y = element_text(angle = 0), plot.margin = unit(c(1,1,1,1), "cm"),
+  theme(strip.text.y = element_text(angle = 0), plot.margin = unit(c(1,1,1,1), "cm"),axis.text.y=element_blank(),
         legend.position = "none", panel.grid.major = element_blank(), panel.grid.minor = element_blank()) 
 
 # Saving the Plots --------------------------------------------------------
 
 p_fatpig <- ggarrange(p1,p3, ncol = 2)
 
-ggsave(p_fatpig, filename = "prev_fatpig.png", dpi = 300, type = "cairo", width = 12, height = 12, units = "in",
+ggsave(p_fatpig, filename = "prev_fatpig.png", dpi = 300, type = "cairo", width = 8, height = 12, units = "in",
        path = "//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Figures/comb_data")
 
 p_broil <- ggarrange(p2,p4, ncol = 2)
 
-ggsave(p_broil, filename = "prev_broil.png", dpi = 300, type = "cairo", width = 12, height = 12, units = "in",
+ggsave(p_broil, filename = "prev_broil.png", dpi = 300, type = "cairo", width = 8, height = 12, units = "in",
        path = "//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Figures/comb_data")
 
 
@@ -210,10 +210,10 @@ p_tet_broilusage <- ggplot(tet_broilusage_melt, aes(x = variable, y = value, gro
 
 p_fatpigusage <- ggarrange(p_amp_pigsusage, p_tet_pigsusage, ncol = 2)
 
-ggsave(p_fatpigusage, filename = "usage_fatpig.png", dpi = 300, type = "cairo", width = 8, height = 10, units = "in",
+ggsave(p_fatpigusage, filename = "usage_fatpig.png", dpi = 300, type = "cairo", width = 8, height = 12, units = "in",
        path = "//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Figures/comb_data")
 
 p_broilusage <- ggarrange(p_amp_broilusage, p_tet_broilusage, ncol = 2)
 
-ggsave(p_broilusage, filename = "usage_broil.png", dpi = 300, type = "cairo", width = 8, height = 10, units = "in",
+ggsave(p_broilusage, filename = "usage_broil.png", dpi = 300, type = "cairo", width = 8, height = 12, units = "in",
        path = "//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Figures/comb_data")
