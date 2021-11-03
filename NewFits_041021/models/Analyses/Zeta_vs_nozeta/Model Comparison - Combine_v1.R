@@ -2,7 +2,7 @@ library("deSolve"); library("ggplot2"); library("plotly"); library("reshape2")
 library("bayestestR"); library("tmvtnorm"); library("ggpubr")
 
 rm(list=ls())
-setwd("//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Models/Chapter-2/NewFits_041021/models/Analyses/Zeta_vs_nozeta/output")
+setwd("//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Models/Chapter-2/NewFits_041021/data/new/compare")
 
 #do.call works by exceuting a function and a list of arguenments passed to it
 #lapply works by returning a list of all of the executed functions given a bunch of arguements passed to it
@@ -15,7 +15,6 @@ for(i in 1:4) {
   list_vec <- 1:(nrow(model_comp[[i]])/1000)
   model_comp[[i]]$gen <- unlist(lapply(list_vec, function(x) rep(list_vec[x], 1000)))
 }
-
 
 plot_list <- list()
 
