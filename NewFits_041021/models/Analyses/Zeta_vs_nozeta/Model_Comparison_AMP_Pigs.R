@@ -155,12 +155,12 @@ ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, ini
       N_ITER <- N_ITER + 1
       
       if(g==1) {
-        d_betaAA <- runif(1, min = 0, max = 1)
-        d_phi <- runif(1, min = 0, max = 0.75)
-        d_kappa <- runif(1, min = 0, max = 100)
+        d_betaAA <- runif(1, min = 0, max = 0.25)
+        d_phi <- runif(1, min = 0, max = 0.1)
+        d_kappa <- runif(1, min = 0, max = 2)
         d_alpha <- rbeta(1, 1.5, 8.5)
-        d_zeta <- runif(1, 0, 5)
-        d_betaHA <- runif(1, 0, 0.00075)
+        d_zeta <- runif(1, 0, 1)
+        d_betaHA <- runif(1, 0, 0.0005)
         d_m <- ceiling(runif(1, min=0, max=2))
         
       } else{ 
@@ -220,7 +220,7 @@ ABC_algorithm <- function(N, G, sum.stats, distanceABC, fitmodel, tau_range, ini
 N <- 1000 #(ACCEPTED PARTICLES PER GENERATION)
 
 lm.low <- c(0, 0, 0, 0, 0, 0, 1)
-lm.upp <- c(1, 0.75, 100, 1, 5, 0.00075,  2)
+lm.upp <- c(0.25, 0.1, 2, 1, 1, 0.0005,  2)
 
 # Empty matrices to store results (5 model parameters)
 res.old<-matrix(ncol=7,nrow=N)
@@ -231,9 +231,9 @@ w.old<-matrix(ncol=1,nrow=N)
 w.new<-matrix(ncol=1,nrow=N)
 
 #Thresholds 
-epsilon_dist <- c(4, 3.5, 3, 2.5, 2, 1.8, 1.6, 1.55, 1.5, 1.475)
-epsilon_food <- c(0.593*1, 0.593*0.8, 0.593*0.6, 0.593*0.5, 0.593*0.4, 0.593*0.3, 0.593*0.2, 0.593*0.15, 0.593*0.1, 0.593*0.075)
-epsilon_AMR <- c(avg_hum_res*1, avg_hum_res*0.8, avg_hum_res*0.6, avg_hum_res*0.5, avg_hum_res*0.4, avg_hum_res*0.3, avg_hum_res*0.2, avg_hum_res*0.15, avg_hum_res*0.1, avg_hum_res*0.075)
+epsilon_dist <- c(3.5, 3, 2.5, 2, 1.7, 1.5, 1.3, 1.2, 1.1, 1)
+epsilon_food <- c(0.593*1, 0.593*0.8, 0.593*0.6, 0.593*0.4, 0.593*0.2, 0.593*0.1, 0.593*0.08, 0.593*0.07, 0.593*0.06, 0.593*0.05)
+epsilon_AMR <- c(avg_hum_res*1, avg_hum_res*0.8, avg_hum_res*0.6, avg_hum_res*0.4, avg_hum_res*0.2, avg_hum_res*0.1, avg_hum_res*0.08, avg_hum_res*0.07, avg_hum_res*0.06, avg_hum_res*0.05)
 
 #Run the model 
 dist_save <- ABC_algorithm(N = 1000, 
