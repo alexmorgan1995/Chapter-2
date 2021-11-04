@@ -3,8 +3,8 @@ library("bayestestR"); library("tmvtnorm"); library("ggpubr"); library("rootSolv
 
 rm(list=ls())
 
-setwd("C:/Users/amorg/Documents/PhD/Chapter_2/Models/Github/Chapter-2/NewFits_041021/data")
-setwd("//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Models/Chapter-2/NewFits_041021\data")
+#setwd("C:/Users/amorg/Documents/PhD/Chapter_2/Models/Github/Chapter-2/NewFits_041021/data")
+setwd("//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Models/Chapter-2/NewFits_041021/data")
 
 # Model FUnctions ---------------------------------------------------------
 #Model
@@ -121,9 +121,12 @@ computeDistanceABC_ALEX <- function(distanceABC, fitmodel, tau_range, thetaparm,
 
 ####
 
-singlerun <- function(x, G, init.state, distanceABC, fitmodel, thetaparm, epsilon, tau_range, data, lm.low, lm.upp) {
+singlerun <- function(x, G, init.state, distanceABC, fitmodel, thetaparm, epsilon, 
+                      tau_range, data, lm.low, lm.upp, w.old, sigma, res.old, N) {
   i <- 0
   m <- 0
+  w.new <- 0
+  
   while(i <= 1) {
     m <- m + 1
     if(G == 1) {
@@ -133,76 +136,143 @@ singlerun <- function(x, G, init.state, distanceABC, fitmodel, thetaparm, epsilo
       d_alpha <- rbeta(1, 1.5, 8.5)
       d_zeta <- runif(1, 0, 1)
       d_betaHA <- runif(1, 0, 0.0005)
-    } 
+    } else { 
+      p <- sample(seq(1,N),1,prob = w.old) # check w.old here
+      par <- rtmvnorm(1,mean=res.old[p,], sigma=sigma, lower=lm.low, upper=lm.upp)
+      d_betaAA<-par[1]
+      d_phi<-par[2]
+      d_kappa<-par[3]
+      d_alpha<-par[4]
+      d_zeta <- par[5]
+      d_betaHA <-par[6]
+    }
     
-    if(prior.non.zero(c(d_betaAA, d_phi, d_kappa, d_alpha, d_zeta, d_betaHA), lm.low, lm.upp)) {
+    new.parms = c(d_betaAA, d_phi, d_kappa, d_alpha, d_zeta, d_betaHA)
+    
+    if(prior.non.zero(new.parms, lm.low, lm.upp)) {
       
-      thetaparm[c("betaAA", "phi", "kappa", "alpha", "zeta", "betaHA")] <- c(d_betaAA, d_phi, d_kappa, d_alpha, d_zeta, d_betaHA)
+      thetaparm[c("betaAA", "phi", "kappa", "alpha", "zeta", "betaHA")] <- new.parms
       
       dist <- computeDistanceABC_ALEX(distanceABC, fitmodel, tau_range, thetaparm, init.state, data)
       
       if((dist[1] <= epsilon[["dist"]][G]) && (dist[2] <= epsilon[["food"]][G]) && (dist[3] <= epsilon[["AMR"]][G]) && (!is.na(dist))) {
-        # Store results
-        # Calculate weights
         if(G==1){
-          1
+          w.new <- 1
+        } else {
+          w1 <- prod(c(sapply(c(1:3,5:6), function(b) dunif(new.parms[b], min=lm.low[b], max=lm.upp[b])),
+                       dbeta(new.parms[4], 1.5, 8.5))) 
+          w2 <- sum(sapply(1:N, function(a) w.old[a]* dtmvnorm(new.parms, mean=res.old[a,], sigma=sigma, lower=lm.low, upper=lm.upp)))
+          w.new <- w1/w2
         }
         i <- i + 1
-        return(list(dist, m, thetaparm[c("betaAA", "phi", "kappa", "alpha", "zeta", "betaHA")]))
+        return(list(dist, m, new.parms, w.new))
       }
     }
   }
 }
 
-#Parlapply 
+# Large Function ----------------------------------------------------------
+
+ABC_algorithm <- function(N, G, distanceABC, fitmodel, tau_range, init.state, data, epsilon, lm.low, lm.upp, thetaparm)  {
+  out <- list()
+  
+  for(g in 1:G) {
+    
+    print(paste0("Generation ", g, " | Time: ", Sys.time()))
+    
+    if(g == 1) {
+      sigma <- 0
+      res.old <- 0
+      w.old <- 0
+    }
+    clusterExport(cl, varlist = c("amr", "computeDistanceABC_ALEX", "prior.non.zero", "sum_square_diff_dist",
+                                  "melt_amp_pigs", "avg_EU_usage", "avg_hum_res"))
+    
+    particles <- parLapply(cl, 1:N, 
+                      singlerun, 
+                      G = g, 
+                      init.state = init.state,
+                      distanceABC = sum_square_diff_dist,
+                      fitmodel = amr, 
+                      thetaparm = thetaparm, 
+                      epsilon = epsilon,
+                      tau_range = melt_amp_pigs$Usage,
+                      data = melt_amp_pigs,
+                      lm.low = lm.low,
+                      lm.upp = lm.upp,
+                      w.old = w.old, 
+                      sigma = sigma, 
+                      res.old = res.old,
+                      N = N)
+    
+    dat_dist <- as.matrix(do.call(rbind, lapply(particles, "[[", 1)))
+    dat_nruns <- do.call(sum, lapply(particles, "[[", 2))
+    res.new <- as.matrix(do.call(rbind, lapply(particles, "[[", 3)))
+    w.new <- as.matrix(do.call(rbind, lapply(particles, "[[", 4)))
+    
+    sigma <- cov(res.new) 
+    res.old <- res.new
+    w.old <- w.new/sum(w.new)
+    
+    out[[g]] <- list(dat_nruns, dat_dist, res.old, w.old)
+    colnames(res.old) <- c("betaAA", "phi", "kappa", "alpha", "zeta", "betaHA")
+    write.csv(res.old, file = paste("//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Models/Chapter-2/Parallelising_Code/out/ABC_post_amppigs_",g,".csv",sep=""), row.names=FALSE)
+  }
+  return(out)
+}
+
+# Run the model -----------------------------------------------------------
 
 cl <- makeCluster(7,type="SOCK")
 
-clusterEvalQ(cl, {library("rootSolve")})
-clusterExport(cl, varlist = c("amr", "computeDistanceABC_ALEX", "prior.non.zero", "sum_square_diff_dist",
-                              "melt_amp_pigs", "avg_EU_usage", "avg_hum_res"))
+clusterEvalQ(cl, {c(library("rootSolve"), library("tmvtnorm"))})
 
-system.time(test <- parLapply(cl, 1:100, singlerun, 
-                  G = 1, 
-                  init.state = c(Sa=0.98, Isa=0.01, Ira=0.01, Sh=1, Ish=0, Irh=0),
-                  distanceABC = sum_square_diff_dist,
-                  fitmodel = amr, 
-                  thetaparm = c(ra = 60^-1, rh =  (5.5^-1), ua = 240^-1, uh = 28835^-1, betaAH = 0.00001, betaHH = 0.00001), 
-                  epsilon = list("dist" = c(3.5, 3, 2.5, 2, 1.7, 1.5, 1.3, 1.2, 1.1, 1),
-                                 "food" = c(0.593*1, 0.593*0.8, 0.593*0.6, 0.593*0.4, 0.593*0.2, 0.593*0.1, 0.593*0.08, 0.593*0.07, 0.593*0.06, 0.593*0.05),
-                                 "AMR" = c(avg_hum_res*1, avg_hum_res*0.8, avg_hum_res*0.6, avg_hum_res*0.4, avg_hum_res*0.2, avg_hum_res*0.1, avg_hum_res*0.08, 
-                                           avg_hum_res*0.07, avg_hum_res*0.06, avg_hum_res*0.05)),
-                  tau_range = melt_amp_pigs$Usage,
-                  data = melt_amp_pigs,
-                  lm.low = c(0, 0, 0, 0, 0, 0),
-                  lm.upp = c(0.25, 0.1, 2, 1, 1, 0.0005)))
+test <- ABC_algorithm(N = 1000,
+              G = 10,
+              distanceABC = sum_square_diff_dist, 
+              fitmodel = amr, 
+              tau_range = melt_amp_pigs$Usage, 
+              init.state = c(Sa=0.98, Isa=0.01, Ira=0.01, Sh=1, Ish=0, Irh=0), 
+              data = melt_amp_pigs, 
+              epsilon = list("dist" = c(3.5, 3, 2.5, 2, 1.7, 1.5, 1.3, 1.2, 1.1, 1),
+                             "food" = c(0.593*1, 0.593*0.8, 0.593*0.6, 0.593*0.4, 0.593*0.2, 0.593*0.1, 0.593*0.08, 0.593*0.07, 0.593*0.06, 0.593*0.05),
+                             "AMR" = c(avg_hum_res*1, avg_hum_res*0.8, avg_hum_res*0.6, avg_hum_res*0.4, avg_hum_res*0.2, avg_hum_res*0.1, avg_hum_res*0.08, 
+                                       avg_hum_res*0.07, avg_hum_res*0.06, avg_hum_res*0.05)), 
+              lm.low = c(0, 0, 0, 0, 0, 0), 
+              lm.upp = c(0.25, 0.1, 2, 1, 1, 0.0005), 
+              thetaparm = c(ra = 60^-1, rh =  (5.5^-1), ua = 240^-1, uh = 28835^-1, betaAH = 0.00001, betaHH = 0.00001))
 
 stopCluster(cl)
 
-dat_dist <- do.call(rbind, lapply(test, "[[", 1))
-dat_runs <- do.call(sum, lapply(test, "[[", 2))
-dat_part <- data.frame(do.call(rbind, lapply(test, "[[", 3)))
 
+# Test Distributions ------------------------------------------------------
 
-plot(density(test_dat$betaHA))
-plot(density(test_dat$alpha))
+post_dist_names <- grep("ABC_post_amppigs_",
+                        list.files("//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Models/Chapter-2/Parallelising_Code/out"), value = TRUE)
 
+setwd("//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Models/Chapter-2/Parallelising_Code/out")
 
-# Lapply ------------------------------------------------------------------
+post_dist <- lapply(post_dist_names, read.csv)
 
+post_dist <- mapply(cbind, post_dist, "gen" = sapply(1:length(post_dist), function(x) paste0("gen_", x)), 
+                    SIMPLIFY=F)
+post_dist <- do.call("rbind", post_dist)
 
-system.time(test <- lapply(1:100, singlerun, 
-                              G = 1, 
-                              init.state = c(Sa=0.98, Isa=0.01, Ira=0.01, Sh=1, Ish=0, Irh=0),
-                              distanceABC = sum_square_diff_dist,
-                              fitmodel = amr, 
-                              thetaparm = c(ra = 60^-1, rh =  (5.5^-1), ua = 240^-1, uh = 28835^-1, betaAH = 0.00001, betaHH = 0.00001), 
-                              fit_parms = c("betaAA", "phi", "kappa", "alpha", "zeta", "betaHA"), 
-                              epsilon = epsilon,
-                              tau_range = melt_amp_pigs$Usage,
-                              data = melt_amp_pigs,
-                              lm.low = c(0, 0, 0, 0, 0, 0),
-                              lm.upp = c(0.25, 0.1, 2, 1, 1, 0.0005)))
+maps_est <- map_estimate(post_dist[post_dist$gen == tail(unique(post_dist$gen),1),][,1:6])
 
+p_list <- list()
+
+for(i in 1:(length(post_dist)-1)) {
+  p_list[[i]] <- local ({
+    name_exp <- post_dist[,c(i,7)]
+    p <- ggplot(name_exp, aes(x= name_exp[,1], fill=gen)) + geom_density(alpha=.5) + 
+      geom_vline(xintercept = maps_est[i,2], size = 1.2, col = "red") +
+      scale_x_continuous(expand = c(0, 0), name = colnames(post_dist)[-7][i]) + 
+      scale_y_continuous(expand = c(0, 0)) +
+      theme(legend.text=element_text(size=14),axis.text=element_text(size=14),
+            axis.title.y=element_text(size=14),axis.title.x= element_text(size=14), plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm"))
+    return(p)
+  })
+}
 
 
