@@ -380,3 +380,74 @@ pcompdiff <- plot_grid(plot_grid(suppplotlist[[1]][[2]], suppplotlist[[2]][[2]],
 
 ggsave(pcompdiff, filename = "Sensitivity_Compen.png", dpi = 300, type = "cairo", width = 8, height = 8, units = "in",
        path = "C:/Users/amorg/Documents/PhD/Chapter_2/Models/Github/Chapter-2/NewFits_041021/figures")
+
+# What Parameters Cause the Largest Relative Increase? - RESISTANCE --------------------
+
+parms = fast_parameters(minimum = c(0, 55^-1, mean_ua/10, 288350^-1, 
+                                    sensparms["betaAA"]/10, 0.000001, 0.000001, sensparms["betaHA"]/10, 
+                                    sensparms["phi"]/10 , sensparms["kappa"]/10, 0,  sensparms["zeta"]/10), 
+                        maximum = c(6^-1, 0.55^-1, mean_ua*10, 2883.5^-1, 
+                                    sensparms["betaAA"]*10, 0.0001, 0.0001, sensparms["betaHA"]*10, 
+                                    sensparms["phi"]*10 , sensparms["kappa"]*10, 1, sensparms["zeta"]*10), 
+                        factor=12, names = c("ra", "rh" ,"ua", "uh", 
+                                             "betaAA", "betaAH", "betaHH", "betaHA",
+                                             "phi", "kappa", "alpha", "zeta"))
+
+tauoutput3 <- data.frame(matrix(nrow = 0, ncol = 3))
+tau_range <- c(0, sensparms[["tau"]]) # Comparing Baseline Average with Curtailment
+
+for (j in 1:nrow(parms)) {
+  temp <- numeric(2)
+  for (i in 1:length(tau_range)) {
+    parms2 = c(ra = parms$ra[j], rh = parms$rh[j], ua = parms$ua[j], uh = parms$uh[j], betaAA = parms$betaAA[j],
+               betaAH = parms$betaAH[j], betaHH = parms$betaHH[j], betaHA = parms$betaHA[j], phi=parms$phi[j],
+               kappa=parms$kappa[j], alpha = parms$alpha[j], tau = tau_range[i], zeta = parms$zeta[j])
+    
+    out <- runsteady(y = init, func = amr, times = c(0,Inf), parms = parms2)
+    temp[i] <- out[[1]][["Irh"]] / (out[[1]][["Ish"]] + out[[1]][["Irh"]])
+  }
+  tauoutput3 <- rbind(tauoutput3, c(temp[1], temp[2], abs(temp[1] - temp[2]), parms2[parms2 != "tau"] ))
+  print(j/nrow(parms))
+}
+
+colnames(tauoutput3) <- c("curt", "usage", "diff", names(parms2)) 
+
+
+#Running the FAST Sensitivity Analysis
+tauoutput_res <- tauoutput3
+
+tauoutput_res$inc <- ((tauoutput_res$curt / tauoutput_res$usage))* 100 # % Change from the current usage scenario
+
+tauoutput_res$inc[is.nan(tauoutput_res$inc)] <- 0; neg <- tauoutput_res[tauoutput_res$inc < 0,] 
+tauoutput_res_df <- tauoutput_res$inc[!is.infinite(tauoutput_res$inc)]
+tauoutput_res_df <- tauoutput_res_df[tauoutput_res_df < quantile(tauoutput_res_df, 0.99)]
+
+#This step changes all NA input to 0 and removes infinities
+#removes all negative changes - might need to review
+#The tail of the distribution has also been trimmed to prevent massive artificial increases from showing up
+
+#We then view the Distribution of Increases Above Baseline
+sensparms[["tau"]]
+hist(tauoutput_res_df, xlab = bquote("% Change from Baseline Incidence (Tau = 0.00934)"), breaks = 50)
+
+sensit <- tauoutput_res_df
+sens <- sensitivity(x=sensit, numberf=12, make.plot=T, names = c("ra", "rh" ,"ua", "uh", "betaAA", "betaAH", "betaHH", "betaHA",
+                                                                 "phi", "kappa", "alpha", "zeta"))
+df.equilibrium_res <- NULL; df.equilibrium_res <- data.frame(parameter=rbind("ra", "rh" ,"ua", "uh", "betaAA", "betaAH", "betaHH", "betaHA",
+                                                                     "phi", "kappa", "alpha", "zeta"), value=sens)
+
+ggplot(df.equilibrium_res, aes(x = reorder(parameter, -value), y = value)) + geom_bar(stat="identity", fill="lightgrey", col = "black", width  = 0.8)
+
+p1 <- ggplot(df.equilibrium_res, aes(x = reorder(parameter, -value), y = value)) + geom_bar(stat="identity", fill="lightgrey", col = "black", width  = 0.8) + theme_bw() + 
+  scale_y_continuous(limits = c(0,  max(df.equilibrium_res$value)*1.1), expand = c(0, 0), name = "Partial Variance") + 
+  scale_x_discrete(expand = c(0, 0.7), name = "Parameter", 
+                   labels = c(expression(r[A]), expression(mu[A]), expression(alpha), expression(beta[AA]),
+                              expression(zeta), expression(mu[H]), expression(beta[HA]), expression(phi),
+                              expression(kappa), expression(r[H]), expression(beta[HH]), expression(beta[AH]))) + 
+  labs(fill = NULL, title = bquote(bold("Change in Resistance due to Curtailment" ~ tau ~ "=" ~ 0.00934 ~ "to" ~ tau ~ "=" ~  0))) + 
+  theme(legend.text=element_text(size=14), axis.text=element_text(size=14), plot.title = element_text(size = 15, vjust = 1.5, hjust = 0.5),
+        axis.title.y=element_text(size=14), axis.title.x= element_text(size=14), plot.margin = unit(c(0.4,0.4,0.4,0.55), "cm"))
+
+ggsave(p1, filename = "Sensitivity_res.png", dpi = 300, type = "cairo", width = 8, height = 4, units = "in",
+       path = "C:/Users/amorg/Documents/PhD/Chapter_2/Models/Github/Chapter-2/NewFits_041021/figures")
+

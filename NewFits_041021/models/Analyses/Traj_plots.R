@@ -351,7 +351,7 @@ end_time <- Sys.time(); end_time - start_time
 
 amp_broil <- ggplot(melt_amp_broil, aes(x = usage/1000, y= Resistance, color = Country))  + geom_point() + theme_bw() + 
   scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0), limits = c(0,1)) +
-  labs(x ="Broiler Poultry Ampicillin Sales (g/PCU)", y = "Ampicillin-Resistant Broiler Poultry Carriage") +
+  labs(x ="Ampicillin Usage in Broiler Poultry (g/PCU)", y = "Ampicillin-Resistant Broiler Poultry Carriage") +
   geom_errorbar(aes(ymin=lower, ymax=upper, color = Country), size=1.01, inherit.aes =  TRUE) + 
   geom_line(data = icombhdata[icombhdata$group == "ampbroil",], aes(x = tau, y= IResRatA), col = "red", size = 1.1)+
   geom_ribbon(data = HDI_ribbon[HDI_ribbon$scen == "ampbroil",],
@@ -362,7 +362,7 @@ amp_broil <- ggplot(melt_amp_broil, aes(x = usage/1000, y= Resistance, color = C
 
 tet_broil <- ggplot(melt_tet_broil, aes(x = usage/1000, y= Resistance, color = Country))  + geom_point() + theme_bw() + 
   scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0), limits = c(0,1)) +
-  labs(x ="Broiler Poultry Tetracycline Sales (g/PCU)", y = "Tetracycline-Resistant Broiler Poultry Carriage") +
+  labs(x ="Tetracycline Usage in Broiler Poultry (g/PCU)", y = "Tetracycline-Resistant Broiler Poultry Carriage") +
   geom_errorbar(aes(ymin=lower, ymax=upper, color = Country), size=1.01, inherit.aes =  TRUE) + 
   geom_ribbon(data = HDI_ribbon[HDI_ribbon$scen == "tetbroil",],
               aes(x = tau ,ymin = lowHDI, ymax = highHDI), fill = "hotpink", alpha = 0.7, inherit.aes=FALSE) +
@@ -373,7 +373,7 @@ tet_broil <- ggplot(melt_tet_broil, aes(x = usage/1000, y= Resistance, color = C
 
 amp_pig <- ggplot(melt_amp_pigs, aes(x = usage/1000, y= Resistance, color = Country))  + geom_point() + theme_bw() + 
   scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0), limits = c(0,1)) +
-  labs(x ="Fattening Pig Ampicillin Sales (g/PCU)", y = "Ampicillin-Resistant Fattening Pig Carriage") +
+  labs(x ="Ampicillin Usage in Fattening Pigs (g/PCU)", y = "Ampicillin-Resistant Fattening Pig Carriage") +
   geom_errorbar(aes(ymin=lower, ymax=upper, color = Country),  size=1.01, inherit.aes =  TRUE) + 
   geom_line(data = icombhdata[icombhdata$group == "amppigs",], aes(x = tau, y= IResRatA), col = "red", size = 1.1) +
   geom_ribbon(data = HDI_ribbon[HDI_ribbon$scen == "amppigs",],
@@ -384,7 +384,7 @@ amp_pig <- ggplot(melt_amp_pigs, aes(x = usage/1000, y= Resistance, color = Coun
 
 tet_pig <- ggplot(melt_tet_pigs, aes(x = usage/1000, y= Resistance, color = Country))  + geom_point() + theme_bw() + 
   scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0), limits = c(0,1)) +
-  labs(x ="Fattening Pig Tetracycline Sales (g/PCU)", y = "Tetracycline-Resistant Fattening Pig Carriage") +
+  labs(x ="Tetracycline Usage in Fattening Pigs (g/PCU)", y = "Tetracycline-Resistant Fattening Pig Carriage") +
   geom_errorbar(aes(ymin=lower, ymax=upper, color = Country), size=1.01, inherit.aes =  TRUE) + 
   geom_ribbon(data = HDI_ribbon[HDI_ribbon$scen == "tetpigs",],
               aes(x = tau ,ymin = lowHDI, ymax = highHDI), fill = "hotpink", alpha = 0.7, inherit.aes=FALSE) +
