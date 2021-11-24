@@ -2,7 +2,7 @@ library("deSolve"); library("ggplot2"); library("plotly"); library("reshape2"); 
 library("bayestestR"); library("tmvtnorm"); library("ggpubr"); library("sensitivity")
 
 rm(list=ls())
-setwd("C:/Users/amorg/Documents/PhD/Chapter_2/Models/Github/Chapter-2/NewFits_041021/data/new/full")
+setwd("//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Models/Chapter-2/NewFits_041021/data")
 
 # Model Functions ----------------------------------------------------------
 
@@ -50,7 +50,7 @@ lapply(1:4, function(x) data[[x]]$group = factor(data[[x]]$group, levels = uniqu
 
 #Import of Fitting Data
 #Ampicillin in Broiler
-dataamp_broil <- read.csv("C:/Users/amorg/Documents/PhD/Chapter_2/Models/Github/Chapter-2/NewFits_041021/data/Amp_Broil_Comb.csv")
+dataamp_broil <- read.csv("//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Models/Chapter-2/NewFits_041021/data/Amp_Broil_Comb.csv")
 dataamp_broil[,(2+4):(5+4)][dataamp_broil[,2:5] < 10] <- NA #If N > 10, replace the particular country/year with NA for the No. of pos isolates
 dataamp_broil[,(2+8):(5+8)][dataamp_broil[,2:5] < 10] <- NA #If N > 10, replace the particular country/year with NA for the prop of resistant isolates
 dataamp_broil[,2:5][dataamp_broil[,2:5] < 10] <- NA #If N > 10, replace the particular country/year with NA for N
@@ -70,7 +70,7 @@ colnames(melt_amp_broil)[c(2,3)] <- c("Year", "Resistance"); rm(dataamp_broil)
 melt_amp_broil <- melt_amp_broil[!(is.na(melt_amp_broil$Resistance) | is.na(melt_amp_broil$usage)),]
 
 #Tetracycline in Broiler
-datatet_broil <- read.csv("C:/Users/amorg/Documents/PhD/Chapter_2/Models/Github/Chapter-2/NewFits_041021/data/Tet_Broil_Comb.csv")
+datatet_broil <- read.csv("//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Models/Chapter-2/NewFits_041021/data/Tet_Broil_Comb.csv")
 datatet_broil[,(2+4):(5+4)][datatet_broil[,2:5] < 10] <- NA #If N > 10, replace the particular country/year with NA for the No. of pos isolates
 datatet_broil[,(2+8):(5+8)][datatet_broil[,2:5] < 10] <- NA #If N > 10, replace the particular country/year with NA for the prop of resistant isolates
 datatet_broil[,2:5][datatet_broil[,2:5] < 10] <- NA #If N > 10, replace the particular country/year with NA for N
@@ -90,7 +90,7 @@ colnames(melt_tet_broil)[c(2,3)] <- c("Year", "Resistance"); rm(datatet_broil)
 melt_tet_broil <- melt_tet_broil[!(is.na(melt_tet_broil$Resistance) | is.na(melt_tet_broil$usage)),]
 
 #Ampicillin in Pigs
-dataamp_pigs <- read.csv("C:/Users/amorg/Documents/PhD/Chapter_2/Models/Github/Chapter-2/NewFits_041021/data/Amp_FatPigs_Comb.csv")
+dataamp_pigs <- read.csv("//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Models/Chapter-2/NewFits_041021/data/Amp_FatPigs_Comb.csv")
 dataamp_pigs[,(2+5):(6+5)][dataamp_pigs[,2:6] < 10] <- NA #If N > 10, replace the particular country/year with NA for the No. of pos isolates
 dataamp_pigs[,(2+10):(6+10)][dataamp_pigs[,2:6] < 10] <- NA #If N > 10, replace the particular country/year with NA for the prop of resistant isolates
 dataamp_pigs[,2:6][dataamp_pigs[,2:6] < 10] <- NA #If N > 10, replace the particular country/year with NA for N
@@ -110,7 +110,7 @@ colnames(melt_amp_pigs)[c(2,3)] <- c("Year", "Resistance"); rm(dataamp_pigs)
 melt_amp_pigs <- melt_amp_pigs[!(is.na(melt_amp_pigs$Resistance) | is.na(melt_amp_pigs$usage)),]
 
 #Tetracycline in Pigs
-datatet_pigs <- read.csv("C:/Users/amorg/Documents/PhD/Chapter_2/Models/Github/Chapter-2/NewFits_041021/data/Tet_FatPigs_Comb.csv")
+datatet_pigs <- read.csv("//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Models/Chapter-2/NewFits_041021/data/Tet_FatPigs_Comb.csv")
 datatet_pigs[,(2+5):(6+5)][datatet_pigs[,2:6] < 10] <- NA #If N > 10, replace the particular country/year with NA for the No. of pos isolates
 datatet_pigs[,(2+10):(6+10)][datatet_pigs[,2:6] < 10] <- NA #If N > 10, replace the particular country/year with NA for the prop of resistant isolates
 datatet_pigs[,2:6][datatet_pigs[,2:6] < 10] <- NA #If N > 10, replace the particular country/year with NA for N
@@ -643,3 +643,72 @@ p1 <- ggplot(plotdata, aes(fill = variable, x = tau, y = value)) + theme_bw() +
 
 ggsave(p1, filename = "Icombh_nokappa.png", dpi = 300, type = "cairo", width = 7, height = 4, units = "in",
        path = "C:/Users/amorg/Documents/PhD/Chapter_2/Models/Github/Chapter-2/NewFits_041021/figures")
+
+# Normalised Effect of Zeta -----------------------------------------------
+
+
+mean_MAP <- colMeans(MAP)
+
+parmtau <- seq(0,0.08, by = 0.004)
+init <- c(Sa=0.98, Isa=0.01, Ira=0.01, Sh=1, Ish=0, Irh=0)
+
+zeta_list <- list()
+
+for(z in 1:2) {
+  output1 <- data.frame(matrix(ncol = 6, nrow = 0))
+  for (i in 1:length(parmtau)) {
+    temp <- data.frame(matrix(NA, nrow = 1, ncol=7))
+    
+    parms2 = c(ra = 60^-1, rh =  (5.5^-1), ua = 240^-1, uh = 28835^-1, betaAA = mean_MAP[["betaAA"]], betaAH = 0.00001, betaHH = 0.00001, 
+               betaHA = mean_MAP[["betaHA"]], phi = mean_MAP[["phi"]], kappa = 0, alpha = 0, tau = parmtau[i],
+               zeta = c(0,mean_MAP[["zeta"]])[z])
+    
+    out <- runsteady(y = init, func = amr, times = c(0, Inf), parms = parms2)
+    temp[1,1] <- parmtau[i]
+    temp[1,2] <- (out[[2]]*(446000000))/10000
+    temp[1,3] <- (out[[3]]*(446000000))/10000
+    temp[1,4] <- ((out[[2]] + out[[3]])*(446000000))/10000
+    temp[1,5] <- signif(as.numeric(out[[3]]/(out[[2]] + out[[3]])), digits = 3)
+    temp[1,6] <- 1-signif(as.numeric(out[[3]]/(out[[2]] + out[[3]])), digits = 3)
+    temp[1,7] <- c(0,1)[z]
+    print(temp[1,3])
+    output1 <- rbind.data.frame(output1, temp)
+  }
+  
+  colnames(output1)[1:7] <- c("tau","InfHumans","ResInfHumans","ICombH","Antibiotic-Resistant Infection", 
+                              "Antibiotic-Sensitive Infection", "zeta")
+  
+  zeta_list[[z]] <- output1
+}
+
+plotdata_zeta0 <- melt(zeta_list[[1]], id.vars = c("tau"), measure.vars = c("Antibiotic-Sensitive Infection",
+                                                                            "Antibiotic-Resistant Infection")) 
+
+p_zeta0 <- ggplot(plotdata_zeta0, aes(fill = variable, x = tau, y = value)) + theme_bw() +  
+  geom_col(color = "black",position= "stack", width  = 0.004) +
+  scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0)) +
+  labs(x ="Ampicillin Sales in Fattening Pig (g/PCU)", y = "Attributable Proportion of Daily Incidence", fill = "") + 
+  theme(legend.position= "bottom", legend.text=element_text(size=12), legend.title =element_text(size=12), axis.text=element_text(size=12), 
+        axis.title.y=element_text(size=12), axis.title.x= element_text(size=12), plot.margin = unit(c(0.35,1,0.35,1), "cm"),
+        legend.spacing.x = unit(0.3, 'cm')) + 
+  scale_fill_manual(values = c("#619CFF","#F8766D")) 
+
+plotdata_zeta1 <- melt(zeta_list[[2]], id.vars = c("tau"), measure.vars = c("Antibiotic-Sensitive Infection",
+                                                                            "Antibiotic-Resistant Infection")) 
+p_zeta1 <- ggplot(plotdata_zeta1, aes(fill = variable, x = tau, y = value)) + theme_bw() +  
+  geom_col(color = "black",position= "stack", width  = 0.004) +
+  scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0)) +
+  labs(x ="Ampicillin Sales in Fattening Pig (g/PCU)", y = "Attributable Proportion of Daily Incidence", fill = "") + 
+  theme(legend.position= "bottom", legend.text=element_text(size=12), legend.title =element_text(size=12), axis.text=element_text(size=12), 
+        axis.title.y=element_text(size=12), axis.title.x= element_text(size=12), plot.margin = unit(c(0.35,1,0.35,1), "cm"),
+        legend.spacing.x = unit(0.3, 'cm'))+ 
+  scale_fill_manual(values = c("#619CFF","#F8766D")) 
+
+
+p_zeta_comb <- ggarrange(p_zeta0, p_zeta1,nrow = 2, ncol = 1, align = "v", labels = c("A","B"), font.label = c(size = 20),
+          common.legend = TRUE, legend = "bottom") 
+
+ggsave(p_zeta_comb, filename = "zeta_compare_dilute.png", dpi = 300, type = "cairo", width = 7, height = 8.5, units = "in",
+       path = "//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Models/Chapter-2/NewFits_041021/figures")
+
+
