@@ -30,9 +30,9 @@ ggsave(plot_ampbroil, filename = "pairs_plot_ampbroil.png", dpi = 300, type = "c
        path = "C:/Users/amorg/Documents/PhD/Chapter_2/Models/Github/Chapter-2/NewFits_041021/figures")
 ggsave(plot_tetbroil, filename = "pairs_plot_tetbroil.png", dpi = 300, type = "cairo", width = 8, height = 8, units = "in",
        path = "C:/Users/amorg/Documents/PhD/Chapter_2/Models/Github/Chapter-2/NewFits_041021/figures")
-ggsave(plot_tetpig, filename = "pairs_plot_amppig.png", dpi = 300, type = "cairo", width = 8, height = 8, units = "in",
+ggsave(plot_amppig, filename = "pairs_plot_amppig.png", dpi = 300, type = "cairo", width = 8, height = 8, units = "in",
        path = "C:/Users/amorg/Documents/PhD/Chapter_2/Models/Github/Chapter-2/NewFits_041021/figures")
-ggsave(plot_amppig, filename = "pairs_plot_tetpig.png", dpi = 300, type = "cairo", width = 8, height = 8, units = "in",
+ggsave(plot_tetpig, filename = "pairs_plot_tetpig.png", dpi = 300, type = "cairo", width = 8, height = 8, units = "in",
        path = "C:/Users/amorg/Documents/PhD/Chapter_2/Models/Github/Chapter-2/NewFits_041021/figures")
 
 # Diagnostic Plots -------------------------------------------------------
