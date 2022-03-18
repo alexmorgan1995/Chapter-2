@@ -2,7 +2,7 @@ library("deSolve"); library("ggplot2"); library("plotly"); library("reshape2"); 
 library("bayestestR"); library("tmvtnorm"); library("ggpubr"); library("sensitivity")
 
 rm(list=ls())
-setwd("//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Models/Chapter-2/NewFits_041021/data")
+setwd("//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Models/Chapter-2/NewFits_041021/data/new/full")
 
 # Model Functions ----------------------------------------------------------
 
