@@ -1,9 +1,9 @@
 library("deSolve"); library("ggplot2"); library("reshape2")
-library("bayestestR"); library("tmvtnorm"); library("ggpubr"); library("sensitivity"); library("fast"); library("metR"); 
+library("bayestestR"); library("tmvtnorm"); library("ggpubr"); library("sensitivity"); library("metR"); 
 library("grid"); library("gridExtra"); library("rootSolve"); library("metR")
 
 rm(list=ls())
-setwd("C:/Users/amorg/Documents/PhD/Chapter_2/Models/Github/Chapter-2/NewFits_041021/data/new/full")
+setwd("/Users/amorgan/Documents/PhD_Work/Chapter-2/NewFits_041021/data/new/full")
 
 # Model Functions ----------------------------------------------------------
 
@@ -156,13 +156,13 @@ scentest4 <- heatmap[[4]][[3]]
 breaks1 <- c(0, seq(0.593, max(scentest1$icombh)+0.05, by = 0.02))
 
 plot1 <- ggplot(scentest1, aes(percdecrease, percbetaHA, z = icombh)) + metR::geom_contour_fill(breaks = breaks1, color = "black", size = 0.1)  + 
-  labs(x = bquote("% of Baseline"~beta["AA"]~"and"~ zeta), y = bquote("% of Baseline"~beta["HA"]), fill = bquote("I*"["H"]), title = "Ampicillin Usage in Broiler Poultry") +
+  labs(x = bquote("% of Baseline"~beta["AA"]~"and"~ zeta), y = bquote("% of Baseline"~beta["HA"]), fill = expression(paste("Daily \nIncidence")), title = "Ampicillin Usage in Broiler Poultry") +
   geom_contour(color = "red", size = 1, breaks = 0.593, alpha = 0.8) +
   geom_text_contour(col = "white",nudge_y = -0.4, fontface = "bold", size = 5, breaks = breaks1, label.placer = label_placer_fraction(frac = 0.5),
                           stroke = 0.05, stroke.color = "black",) +
   scale_fill_viridis_b(breaks = breaks1, direction = -1, begin = 0, end = 0.9, values = c(0, seq(0.75,1, by = 0.25/8))) +
   scale_y_continuous(expand = c(0,0), limits = c(75, 100)) + scale_x_continuous(expand = c(0, 0), limits = c(0, 100)) + theme_bw() +
-  theme(legend.position = "right", legend.title = element_text(size=14), legend.text=element_text(size=12),  axis.text=element_text(size=14),
+  theme(legend.position = "right", legend.title = element_text(size=12), legend.text=element_text(size=12),  axis.text=element_text(size=14),
         axis.title.y=element_text(size=14),axis.title.x = element_text(size=14),  
         plot.title = element_text(size = 15, vjust = 3, hjust = 0.1, face = "bold"),
         legend.spacing.x = unit(0.3, 'cm'), plot.margin=unit(c(0.5,0.4,0.4,0.4),"cm"), legend.key.height =unit(0.7, "cm"),
@@ -171,14 +171,14 @@ plot1 <- ggplot(scentest1, aes(percdecrease, percbetaHA, z = icombh)) + metR::ge
 breaks2 <- c(0,  seq(0.593, max(scentest2$icombh)+0.05, by = 0.015))
 
 plot2 <- ggplot(scentest2, aes(percdecrease, percbetaHA, z = icombh)) + metR::geom_contour_fill(breaks = breaks2, color = "black", size = 0.1)  + 
-  labs(x = bquote("% of Baseline"~beta["AA"]~"and"~ zeta), y = bquote("% of Baseline"~beta["HA"]), fill = bquote("I*"["H"]), 
+  labs(x = bquote("% of Baseline"~beta["AA"]~"and"~ zeta), y = bquote("% of Baseline"~beta["HA"]), fill = expression(paste("Daily \nIncidence")), 
        title = "Tetracycline Usage in Broiler Poultry") +
   geom_contour(color = "red", size = 1, breaks = 0.593, alpha = 0.8) +
   geom_text_contour(col = "white",nudge_y = -0.4, fontface = "bold", size = 5, breaks = breaks2, label.placer = label_placer_fraction(frac = 0.5),
                           stroke = 0.05, stroke.color = "black",) +
   scale_fill_viridis_b(breaks = breaks2, direction = -1, begin = 0, end = 0.9, values = c(0, seq(0.75,1, by = 0.25/8))) +
   scale_y_continuous(expand = c(0,0), limits = c(75, 100)) + scale_x_continuous(expand = c(0, 0), limits = c(0, 100)) + theme_bw() +
-  theme(legend.position = "right", legend.title = element_text(size=14), legend.text=element_text(size=12),  axis.text=element_text(size=14),
+  theme(legend.position = "right", legend.title = element_text(size=12), legend.text=element_text(size=12),  axis.text=element_text(size=14),
         axis.title.y=element_text(size=14),axis.title.x = element_text(size=14),  
         plot.title = element_text(size = 15, vjust = 3, hjust = 0.1, face = "bold"),
         legend.spacing.x = unit(0.3, 'cm'), plot.margin=unit(c(0.5,0.4,0.4,0.4),"cm"), legend.key.height =unit(0.7, "cm"),
@@ -187,13 +187,13 @@ plot2 <- ggplot(scentest2, aes(percdecrease, percbetaHA, z = icombh)) + metR::ge
 breaks3 <- c(0,  seq(0.593, max(scentest3$icombh)+0.05, by = 0.025))
 
 plot3 <- ggplot(scentest3, aes(percdecrease, percbetaHA, z = icombh)) + metR::geom_contour_fill(breaks = breaks3, color = "black", size = 0.1)  + 
-  labs(x = bquote("% of Baseline"~beta["AA"]~"and"~ zeta), y = bquote("% of Baseline"~beta["HA"]), fill = bquote("I*"["H"]), title = "Ampicillin Usage in Fattening Pigs") +
+  labs(x = bquote("% of Baseline"~beta["AA"]~"and"~ zeta), y = bquote("% of Baseline"~beta["HA"]), fill = expression(paste("Daily \nIncidence")), title = "Ampicillin Usage in Fattening Pigs") +
   geom_contour(color = "red", size = 1, breaks = 0.593, alpha = 0.8) +
   geom_text_contour(col = "white",nudge_y = -0.4, fontface = "bold", size = 5, breaks = breaks3, label.placer = label_placer_fraction(frac = 0.5),
                           stroke = 0.05, stroke.color = "black",) +
   scale_fill_viridis_b(breaks = breaks3, direction = -1, begin = 0, end = 0.9, values = c(0, seq(0.75,1, by = 0.25/8))) +
   scale_y_continuous(expand = c(0,0), limits = c(75, 100)) + scale_x_continuous(expand = c(0, 0), limits = c(0, 100)) + theme_bw() +
-  theme(legend.position = "right", legend.title = element_text(size=14), legend.text=element_text(size=12),  axis.text=element_text(size=14),
+  theme(legend.position = "right", legend.title = element_text(size=12), legend.text=element_text(size=12),  axis.text=element_text(size=14),
         axis.title.y=element_text(size=14),axis.title.x = element_text(size=14),  
         plot.title = element_text(size = 15, vjust = 3, hjust = 0.1, face = "bold"),
         legend.spacing.x = unit(0.3, 'cm'), plot.margin=unit(c(0.5,0.4,0.4,0.4),"cm"), legend.key.height =unit(0.7, "cm"),
@@ -202,23 +202,25 @@ plot3 <- ggplot(scentest3, aes(percdecrease, percbetaHA, z = icombh)) + metR::ge
 breaks4 <- c(0,  seq(0.593, max(scentest4$icombh)+0.05, by = 0.03))
 
 plot4 <- ggplot(scentest4, aes(percdecrease, percbetaHA, z = icombh)) + metR::geom_contour_fill(breaks = breaks4, color = "black", size = 0.1)  + 
-  labs(x = bquote("% of Baseline"~beta["AA"]~"and"~ zeta), y = bquote("% of Baseline"~beta["HA"]), fill = bquote("I*"["H"]), title = "Tetracycline Usage in Fattening Pigs") +
+  labs(x = bquote("% of Baseline"~beta["AA"]~"and"~ zeta), y = bquote("% of Baseline"~beta["HA"]), 
+       fill = expression(paste("Daily \nIncidence")), title = "Tetracycline Usage in Fattening Pigs") +
   geom_contour(color = "red", size = 1, breaks = 0.593, alpha = 0.8) +
   geom_text_contour(col = "white",nudge_y = -0.4, fontface = "bold", size = 5, breaks = breaks3, label.placer = label_placer_fraction(frac = 0.5),
                           stroke = 0.05, stroke.color = "black",) +
   scale_fill_viridis_b(breaks = breaks4, direction = -1, begin = 0, end = 0.9, values = c(0, seq(0.75,1, by = 0.25/8))) +
   scale_y_continuous(expand = c(0,0), limits = c(75, 100)) + scale_x_continuous(expand = c(0, 0), limits = c(0, 100)) + theme_bw() +
-  theme(legend.position = "right", legend.title = element_text(size=14), legend.text=element_text(size=12),  axis.text=element_text(size=14),
+  theme(legend.position = "right", legend.title = element_text(size=12), legend.text=element_text(size=12),  axis.text=element_text(size=14),
         axis.title.y=element_text(size=14),axis.title.x = element_text(size=14),  
         plot.title = element_text(size = 15, vjust = 3, hjust = 0.1, face = "bold"),
         legend.spacing.x = unit(0.3, 'cm'), plot.margin=unit(c(0.5,0.4,0.4,0.4),"cm"), legend.key.height =unit(0.7, "cm"),
         legend.key.width =  unit(0.5, "cm"))
 
-plot1 <- plot1 + theme(legend.position = "bottom", legend.key.height =unit(0.7, "cm"), legend.key.width =  unit(2, "cm"))
-plot2 <- plot2 + theme(legend.position = "bottom", legend.key.height =unit(0.7, "cm"), legend.key.width =  unit(2, "cm"))
-plot3 <- plot3 + theme(legend.position = "bottom", legend.key.height =unit(0.7, "cm"), legend.key.width =  unit(2, "cm"))
-plot4 <- plot4 + theme(legend.position = "bottom", legend.key.height =unit(0.7, "cm"), legend.key.width =  unit(2, "cm"))
-combplot_solo4by4 <- ggarrange(plot1, plot2, plot3,  plot4, ncol = 2, nrow = 2, labels = c("A", "B", "C", "D"), font.label = list(size = 20), vjust = 1.2)
+plot1 <- plot1 + theme(legend.position = "bottom", legend.key.height =unit(0.55, "cm"), legend.key.width =  unit(1.5, "cm"))
+plot2 <- plot2 + theme(legend.position = "bottom", legend.key.height =unit(0.55, "cm"), legend.key.width =  unit(1.5, "cm"))
+plot3 <- plot3 + theme(legend.position = "bottom", legend.key.height =unit(0.55, "cm"), legend.key.width =  unit(1.5, "cm"))
+plot4 <- plot4 + theme(legend.position = "bottom", legend.key.height =unit(0.55, "cm"), legend.key.width =  unit(1.5, "cm"))
+combplot_solo4by4 <- ggarrange(plot1, plot2, plot3,  plot4, ncol = 2, nrow = 2, labels = c("A", "B", "C", "D"), font.label = list(size = 20), vjust = 1.2)  +
+  bgcolor("white")
 
-ggsave(combplot_solo4by4, filename = "HeatMapcomb_solo_4x4_supplementary.png", dpi = 300, type = "cairo", width = 10, height = 10, units = "in",
-       path = "C:/Users/amorg/Documents/PhD/Chapter_2/Models/Github/Chapter-2/NewFits_041021/figures")
+ggsave(combplot_solo4by4, filename = "HeatMapcomb_solo_4x4_supplementary.png", dpi = 500, width = 10, height = 10, units = "in",
+       path = "/Users/amorgan/Documents/PhD_Work/Chapter-2/NewFits_041021/figures")

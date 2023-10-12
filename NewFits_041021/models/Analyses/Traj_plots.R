@@ -2,7 +2,7 @@ library("deSolve"); library("ggplot2"); library("plotly"); library("reshape2"); 
 library("bayestestR"); library("tmvtnorm"); library("ggpubr"); library("sensitivity")
 
 rm(list=ls())
-setwd("//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Models/Chapter-2/NewFits_041021/data/new/full")
+setwd("/Users/amorgan/Documents/PhD_Work/Chapter-2/NewFits_041021/data/new/full")
 
 # Model Functions ----------------------------------------------------------
 
@@ -50,7 +50,7 @@ lapply(1:4, function(x) data[[x]]$group = factor(data[[x]]$group, levels = uniqu
 
 #Import of Fitting Data
 #Ampicillin in Broiler
-dataamp_broil <- read.csv("//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Models/Chapter-2/NewFits_041021/data/Amp_Broil_Comb.csv")
+dataamp_broil <- read.csv("/Users/amorgan/Documents/PhD_Work/Chapter-2/NewFits_041021/data/Amp_Broil_Comb.csv")
 dataamp_broil[,(2+4):(5+4)][dataamp_broil[,2:5] < 10] <- NA #If N > 10, replace the particular country/year with NA for the No. of pos isolates
 dataamp_broil[,(2+8):(5+8)][dataamp_broil[,2:5] < 10] <- NA #If N > 10, replace the particular country/year with NA for the prop of resistant isolates
 dataamp_broil[,2:5][dataamp_broil[,2:5] < 10] <- NA #If N > 10, replace the particular country/year with NA for N
@@ -70,7 +70,7 @@ colnames(melt_amp_broil)[c(2,3)] <- c("Year", "Resistance"); rm(dataamp_broil)
 melt_amp_broil <- melt_amp_broil[!(is.na(melt_amp_broil$Resistance) | is.na(melt_amp_broil$usage)),]
 
 #Tetracycline in Broiler
-datatet_broil <- read.csv("//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Models/Chapter-2/NewFits_041021/data/Tet_Broil_Comb.csv")
+datatet_broil <- read.csv("/Users/amorgan/Documents/PhD_Work/Chapter-2/NewFits_041021/data/Tet_Broil_Comb.csv")
 datatet_broil[,(2+4):(5+4)][datatet_broil[,2:5] < 10] <- NA #If N > 10, replace the particular country/year with NA for the No. of pos isolates
 datatet_broil[,(2+8):(5+8)][datatet_broil[,2:5] < 10] <- NA #If N > 10, replace the particular country/year with NA for the prop of resistant isolates
 datatet_broil[,2:5][datatet_broil[,2:5] < 10] <- NA #If N > 10, replace the particular country/year with NA for N
@@ -90,7 +90,7 @@ colnames(melt_tet_broil)[c(2,3)] <- c("Year", "Resistance"); rm(datatet_broil)
 melt_tet_broil <- melt_tet_broil[!(is.na(melt_tet_broil$Resistance) | is.na(melt_tet_broil$usage)),]
 
 #Ampicillin in Pigs
-dataamp_pigs <- read.csv("//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Models/Chapter-2/NewFits_041021/data/Amp_FatPigs_Comb.csv")
+dataamp_pigs <- read.csv("/Users/amorgan/Documents/PhD_Work/Chapter-2/NewFits_041021/data/Amp_FatPigs_Comb.csv")
 dataamp_pigs[,(2+5):(6+5)][dataamp_pigs[,2:6] < 10] <- NA #If N > 10, replace the particular country/year with NA for the No. of pos isolates
 dataamp_pigs[,(2+10):(6+10)][dataamp_pigs[,2:6] < 10] <- NA #If N > 10, replace the particular country/year with NA for the prop of resistant isolates
 dataamp_pigs[,2:6][dataamp_pigs[,2:6] < 10] <- NA #If N > 10, replace the particular country/year with NA for N
@@ -110,7 +110,7 @@ colnames(melt_amp_pigs)[c(2,3)] <- c("Year", "Resistance"); rm(dataamp_pigs)
 melt_amp_pigs <- melt_amp_pigs[!(is.na(melt_amp_pigs$Resistance) | is.na(melt_amp_pigs$usage)),]
 
 #Tetracycline in Pigs
-datatet_pigs <- read.csv("//csce.datastore.ed.ac.uk/csce/biology/users/s1678248/PhD/Chapter_2/Models/Chapter-2/NewFits_041021/data/Tet_FatPigs_Comb.csv")
+datatet_pigs <- read.csv("/Users/amorgan/Documents/PhD_Work/Chapter-2/NewFits_041021/data/Tet_FatPigs_Comb.csv")
 datatet_pigs[,(2+5):(6+5)][datatet_pigs[,2:6] < 10] <- NA #If N > 10, replace the particular country/year with NA for the No. of pos isolates
 datatet_pigs[,(2+10):(6+10)][datatet_pigs[,2:6] < 10] <- NA #If N > 10, replace the particular country/year with NA for the prop of resistant isolates
 datatet_pigs[,2:6][datatet_pigs[,2:6] < 10] <- NA #If N > 10, replace the particular country/year with NA for N
@@ -166,7 +166,6 @@ rownames(MAP) <- c("ampbroil", "tetbroil","amppigs", "tetpigs")
 data_bind <- do.call(rbind,data)
 data_bind$fit <- factor(data_bind$fit, levels = c( "ampbroil", "tetbroil", "amppigs","tetpigs" ))
 data_bind <- data_bind[order(data_bind$fit),]
-
 
 plotlist1 <- list()
 
@@ -244,7 +243,7 @@ abc <- ggarrange(plotlist1[[1]][[1]], plotlist1[[2]][[1]], plotlist1[[3]][[1]], 
                  align = "hv", vjust = 1.05)
 
 ggsave(abc, filename = "ABC_SMC_Post_v2.png", dpi = 300, type = "cairo", width = 13, height = 12, units = "in",
-       path = "C:/Users/amorg/Documents/PhD/Chapter_2/Models/Github/Chapter-2/NewFits_041021/figures")
+       path = "/Users/amorgan/Documents/PhD_Work/Chapter-2/NewFits_041021/figures")
 
 # Model Fit with Data - Ribbon -----------------------------------------------------
 
@@ -397,7 +396,7 @@ fits <- ggarrange(amp_broil, tet_broil,amp_pig, tet_pig, nrow = 2, ncol = 2, ali
                   common.legend = TRUE, legend = "bottom") 
 
 ggsave(fits, filename = "Model_Fits_v1.png", dpi = 300, type = "cairo", width = 12, height = 11, units = "in",
-       path = "C:/Users/amorg/Documents/PhD/Chapter_2/Models/Github/Chapter-2/NewFits_041021/figures")
+       path = "/Users/amorgan/Documents/PhD_Work/Chapter-2/NewFits_041021/figures")
 
 # Tau and ICombH Base Plot - Requires you to run previous section ----------------------------------------------------------
 
@@ -415,7 +414,7 @@ for(i in 1:4){
     
     p1 <- ggplot(plotdata, aes(fill = variable, x = tau, y = value)) + theme_bw() + 
       geom_vline(xintercept = averagesales[i], alpha = 0.3, size = 2) + 
-      geom_col(color = "black",position= "stack", width  = 0.0035) + scale_x_continuous(expand = c(0, 0.0005)) + 
+      geom_col(color = "black",position= "stack", width  = 0.0035) + scale_x_continuous(expand = c(0, 0.002)) + 
       scale_y_continuous(limits = c(0, 1), expand = c(0, 0))  + 
       geom_text(label= c(round(icombhdata$IResRat[icombhdata$group == unique(icombhdata$group)[i]],digits = 2),rep("",length(parmtau))),vjust=-0.5, hjust = 0.05,
                 position = "stack", angle = 45) +
@@ -450,10 +449,10 @@ plotdata <- melt(icombhdata[icombhdata$group == unique(icombhdata$group)[2],],
 icombh <- ggarrange(icombhlist[[1]], icombhlist[[2]], 
                     icombhlist[[3]], icombhlist[[4]], 
                     nrow = 2, ncol = 2, align = "v", labels = c("A","B", "C", "D"), font.label = c(size = 20),
-                  common.legend = TRUE, legend = "bottom") 
+                  common.legend = TRUE, legend = "bottom") + bgcolor("white")   
 
-ggsave(icombh, filename = "Icombh.png", dpi = 300, type = "cairo", width = 11, height = 9, units = "in",
-       path = "C:/Users/amorg/Documents/PhD/Chapter_2/Models/Github/Chapter-2/NewFits_041021/figures")
+ggsave(icombh, filename = "Icombh.png", dpi = 500, width = 11, height = 9, units = "in",
+       path = "/Users/amorgan/Documents/PhD_Work/Chapter-2/NewFits_041021/figures")
 
 #ggsave(icombh, filename = "Icombh_poster.png", dpi = 300, type = "cairo", width = 10, height = 7, units = "in",
 #       path = "C:/Users/amorg/Documents/PhD/Chapter_2/Figures/Redraft_v1")
